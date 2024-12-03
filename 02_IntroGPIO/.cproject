@@ -47,7 +47,7 @@
 									<listOptionValue builtIn="false" value="STM32F411xE=1"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.includepaths.1616905110" name="Include paths (-I)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.includepaths" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/0x_isMagic/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="/home/ingfisica/github/julperezca_TallerV/02_IntroGPIO/Inc"/>
 									<listOptionValue builtIn="false" value="/home/ingfisica/STM32CubeIDE/T5-2024-2/STM32Cube_FW_F4_V1.27.0/Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="/home/ingfisica/STM32CubeIDE/T5-2024-2/STM32Cube_FW_F4_V1.27.0/Drivers/CMSIS/Device/ST/STM32F4xx/Include"/>
 								</option>

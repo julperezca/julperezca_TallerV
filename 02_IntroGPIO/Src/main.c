@@ -18,9 +18,9 @@
 
 
 #include <stdint.h>
-#include <stm32f4xx_hal.h>
+#include "stm32f4xx_hal.h"
 #include "stm32_assert.h"
-#include <gpio_driver_hal.h>
+#include "gpio_driver_hal.h"
 
 // headers definition
 int add(int x, int y);
@@ -39,7 +39,7 @@ int main (void)
 	userLed.pinConfig.GPIO_PinMode			= GPIO_MODE_OUT;
 	userLed.pinConfig.GPIO_PinOutputType	= GPIO_OTYPE_PUSHPULL;
 	userLed.pinConfig.GPIO_PinOutputSpeed	= GPIO_OSPEED_MEDIUM;
-	userLed.pingConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
+	userLed.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
 
 	/* Cargamos la configuración en los registros que gobiernan el puerto */
 	gpio_Config(&userLed);
@@ -61,4 +61,4 @@ void assert_failed(uint8_t* file, uint32_t line){
 		//problems
 	}
 }
-a
+

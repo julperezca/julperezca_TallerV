@@ -157,7 +157,7 @@ void gpio_config_output_speed(GPIO_Handler_t *pGPIOHandler){
 	auxConfig = (pGPIOHandler->pinConfig.GPIO_PinOutputSpeed << 2*pGPIOHandler->pinConfig.GPIO_PinNumber);
 
 	// Limpiando la posición antes de cargar la nueva configuración
-	pGPIOHandler->pGPIOx->OSPEED &= ~(0b11 << 2* pGPIOHandler->pinConfig.GPIO_PinNumber);
+	pGPIOHandler->pGPIOx->OSPEEDR &= ~(0b11 << 2* pGPIOHandler->pinConfig.GPIO_PinNumber);
 
 	// Cargamos el resultado sobre el registro adecuado
 	pGPIOHandler->pGPIOx->OSPEEDR |= auxConfig;
@@ -208,10 +208,10 @@ void gpio_config_alternate_function(GPIO_Handler_t *pGPIOHandler){
 			auxPosition = 4 * (pGPIOHandler->pinConfig.GPIO_PinNumber -8);
 
 			//Limpiamos primero la posición del registro que deseamos escribir a continuación
-			pGPIOHandler->pGPIOx->AFT[1] &= ~(0b1111 << auxPosition);
+			pGPIOHandler->pGPIOx->AFR[1] &= ~(0b1111 << auxPosition);
 
 			// Y escribimos el valor configurado en la posición seleccionada
-			pGPIOHandler->pGPIOx->AFR[1] |=(gGPIOHandler->pinConfig.GPIO_PinAltFunMode << auxPosition);
+			pGPIOHandler->pGPIOx->AFR[1] |=(pGPIOHandler->pinConfig.GPIO_PinAltFunMode << auxPosition);
 
 		}
 	}
