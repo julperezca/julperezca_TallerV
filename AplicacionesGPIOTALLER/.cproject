@@ -50,7 +50,6 @@
 									<listOptionValue builtIn="false" value="/home/ingfisica/github/julperezca_TallerV/02_IntroGPIO/Inc"/>
 									<listOptionValue builtIn="false" value="/home/ingfisica/STM32CubeIDE/T5-2024-2/STM32Cube_FW_F4_V1.27.0/Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="/home/ingfisica/STM32CubeIDE/T5-2024-2/STM32Cube_FW_F4_V1.27.0/Drivers/CMSIS/Device/ST/STM32F4xx/Include"/>
-									<listOptionValue builtIn="false" value="&quot;/${ProjDirPath}/Inc&quot;"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.1217176259" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
 							</tool>
