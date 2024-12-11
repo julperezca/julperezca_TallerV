@@ -169,12 +169,44 @@ uint8_t weirdFunction(uint8_t data){
  * */
 
 int dostuff(char *data, int value){
-	data = data;
+
 	dummy = value + 1;
 
 	return 0;
 }
 
+
+
+/* Punto 2. Explicación de cada elemento que se usa en el comando para utilizar cppcheck.
+ *
+ * -cppcheck --template=gcc --enable=all
+ * --platform=unix64 --std=c11 --suppress=missingIncludeSystem
+ * --verbose --suppress=unusedFunction --inconclusive CheckSourcesMain.c
+ *
+ * 1) cppcheck Corresponde a la herramienta que realiza el analisis del código, la cual encuentra los errores
+ * poco comunes y que normalmente no detecta el compilador.
+ *
+ * 2) --template=gcc: Corresponde a la ubicación donde esta el error, es el estilo de salidas de mensajes de error
+ * o warning
+ *
+ * 3) --enable=all: habilida las  verificaciones posibles
+ *
+ * 4) ..platform=unix64: analisis para el sistema unix de 64 bits
+ *
+ * 5)--std=c11: El código se verifica en el estándar C11 que mejora las capacidades del lenguaje.
+ *
+ * 6)--supress=missingINcludeSystem: Los warnings que vienen de los includes o cabeceras se ignoran.
+ *
+ * 7) --verbose: Se es más detallado en el analisis estático.
+ *
+ * 8) --suprpress=unusedFunction: No se tiene en cuenta las funciones que no son utilizadas
+ *
+ * 9) --inconclusive: halla los posibles errores o que no son del todo claros.
+ *
+ * 10) --checkSourcesmain.c: Es el archivo al que se realizará el análisis estático.
+ *
+ *
+ */
 
 
 
