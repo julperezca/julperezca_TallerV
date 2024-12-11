@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <stm32f4xx.h>
+//#include <stm32f4xx.h>
 
 /* Definiciond de variables */
 uint32_t rotation;
@@ -91,7 +91,7 @@ int16_t getTemperature(uint8_t getData){
 	if(getData == 1){
 		for(int i = 0; i < 10; i++){
 			temperatureValue = i*35;
-			i--;
+			i--;  							//independientemente del if, returna 0
 		}
 		return temperatureValue;
 	}

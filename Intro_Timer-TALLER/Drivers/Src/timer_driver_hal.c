@@ -183,7 +183,7 @@ void timer_SetState(Timer_Handler_t *pTimerHandler, uint8_t newState){
 	assert_param(IS_TIMER_STATE(newState));
 
 	/* 4. Reiniciamos el registro counter */
-	pTimerHandler->pTIMx->CNT = 0;        //CNT corresponde al registro contador que se compara con el rpescaler
+	pTimerHandler->pTIMx->CNT = 0;
 
 
 	if (newState ==TIMER_ON){
