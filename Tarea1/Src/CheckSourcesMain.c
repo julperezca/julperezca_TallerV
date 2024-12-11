@@ -110,7 +110,7 @@ int16_t getTemperature(uint8_t getData){
  /*
   *  Se tiene a[10] de diez elementos de 0 hasta 9. Se está evaluando en a[10]
   * Se tiene una variable de uint8, toma valor máximo 255. Por lo que 350 no corresponde a un
-  * valor definido para esa cantidad de bits.
+  * valor definido para esa cantidad de bits y se produce un desbordamiento en el ciclo for.
   *  */
 uint8_t leaking(uint16_t const range){
 	char a[10];
