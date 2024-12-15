@@ -56,9 +56,9 @@ int main(void)
 /*
  * overwrite function
  * */
-void Timer2_Callback(void){
-	gpio_TooglePin(&userLed);
-}
+//void Timer2_Callback(void){
+//	gpio_TooglePin(&userLed);
+//}
 
 /*
  * Esta funcion sirve para  detectar problemas de parametros
