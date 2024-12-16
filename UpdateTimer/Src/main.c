@@ -43,7 +43,7 @@ int main(void)
 	/* CONFIGURAMOS EL timer */
 	timer_Config(&blinkTimer);
 
-	//Encedemos el Timer
+	//Encendemos el Timer
 	timer_SetState(&blinkTimer, TIMER_ON);
 
 	while(1){

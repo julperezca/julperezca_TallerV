@@ -24,37 +24,38 @@ enum
 
 /* Valores estándar para las configuraciones */
 /* 8.4.1 GPIOx_MODER (dos bit por cada PIN) */
+/* These bits are written by software to configure the I/O direction mode. */
 enum
 {
-	GPIO_MODE_IN  = 0,
-	GPIO_MODE_OUT,
-	GPIO_MODE_ALTFN,
-	GPIO_MODE_ANALOG
+	GPIO_MODE_IN  = 0,				// 00: Input (reset state)    			0
+	GPIO_MODE_OUT,					// 01: General purpose output mode		1
+	GPIO_MODE_ALTFN,				// 10: Alternate function mode			2
+	GPIO_MODE_ANALOG				// 11: Analog mode 						3
 };
 
 /* 8.4.2 GPIOxOTYPER (un bit por PIN) */
 enum
 {
-	GPIO_OTYPE_PUSHPULL = 0,
-	GPIO_OTYPE_OPENDRAIN
+	GPIO_OTYPE_PUSHPULL = 0,		// 00: Estados altos y bajos			0
+	GPIO_OTYPE_OPENDRAIN			// 01: High Imp							1
 };
 
 /* 8.4.3 GPIOx_OSPEEDR (dos bits por cada PIN) */
 enum
 {
-	GPIO_OSPEED_LOW  = 0,
-	GPIO_OSPEED_MEDIUM,
-	GPIO_OSPEED_FAST,
-	GPIO_OSPEED_HIGH
+	GPIO_OSPEED_LOW  = 0, 			// 00: LowSpeed 						0
+	GPIO_OSPEED_MEDIUM,				// 01: MedSpeed							1
+	GPIO_OSPEED_FAST,				// 10: FasSpeed							2
+	GPIO_OSPEED_HIGH				// 11 HighSpeed							3
 };
 
 /* 8.4.4 GPIOx_PUPDR (dos bits por cada PIN) */
 enum
 {
-	GPIO_PUPDR_NOTHING = 0,
-	GPIO_PUPDR_PULLUP,
-	GPIO_PUPDR_PULLDOWN,
-	GPIO_PUPDR_RESERVED,
+	GPIO_PUPDR_NOTHING = 0,			// 00: Pin con valor indedifinido  		0
+	GPIO_PUPDR_PULLUP,				// 01: Pin definido como 1				1
+	GPIO_PUPDR_PULLDOWN,			// 10: Pin definido como 0				2
+	GPIO_PUPDR_RESERVED,			// 11: Pin reservado					3
 };
 
 
@@ -122,9 +123,10 @@ typedef struct
 
 } GPIO_PinConfig_t;
 
+
 /*
  * Pin Handler definition.
- * This handler is usted to configure the port at which the selected pin is working
+ * This handler is used to configure the port at which the selected pin is working
  * It holds two elements:
  *  	-Reference to the complete port (GPIOx), to have access for the specific registers.
  *  	-Configuration structure: GPIO_PinConfig_t
@@ -137,22 +139,24 @@ typedef struct
 
 
 /*  For testing assert parameters -checking basic configurations. */
-#define IS_GPIO_PIN_ACTION(ACTION) (((ACTION)==GPIO_PIN_RESET) || ((ACTION) == GPIO_PIN_SET))
+// DEFINICIONES MACRO  PARA VERIFICACIONES DE CONFIGURACIONES DE LOS PINES GPIO
+#define IS_GPIO_PIN_ACTION(ACTION) (((ACTION)==GPIO_PIN_RESET) || ((ACTION) == GPIO_PIN_SET)) // VERIFICACIÓN DE ACTION IGUAL A LOS DOS POSIBLES VALORES
 
+// Macro verifica el valor del pin esté dentro de los rangos validos GPIO_PIN_MASK=15 definido anteriormente
 #define IS_GPIO_PIN(PIN)		(((uint32_t)PIN) <= GPIO_PIN_MASK)
-
+// verificacion de los modos del GPIO
 #define IS_GPIO_MODE(MODE)	(((MODE) == GPIO_MODE_IN)   	|| \
 							  ((MODE) == GPIO_MODE_OUT) 	|| \
 							  ((MODE) == GPIO_MODE_ALTFN) 	|| \
 							  ((MODE) == GPIO_MODE_ANALOG))
-
+// verificación del tipo de salida,  push pull ur open drain
 #define IS_GPIO_OUTPUT_TYPE(OUTPUT)  (((OUTPUT)  == GPIO_OTYPE_PUSHPULL) || ((OUTPUT) == GPIO_OTYPE_OPENDRAIN))
-
+// verificación de los valores de la velocidad
 #define IS_GPIO_OSPEED(SPEED) 		 (((SPEED) == GPIO_OSPEED_LOW)   	|| \
 		  	  	  	  	  	  	  	  ((SPEED) == GPIO_OSPEED_MEDIUM) 	|| \
 									  ((SPEED) == GPIO_OSPEED_FAST) 	|| \
 									  ((SPEED) == GPIO_OSPEED_HIGH))
-
+ // tipo de valor del pin definido previamente "NOTE que no está la opcion de pin definido"
 #define IS_GPIO_PUPDR(PULL)		 	 (((PULL) == GPIO_PUPDR_NOTHING)   	|| \
 		  	  	  	  	  	  	  	  ((PULL) == GPIO_PUPDR_PULLUP) 	|| \
 									  ((PULL) == GPIO_PUPDR_PULLDOWN))

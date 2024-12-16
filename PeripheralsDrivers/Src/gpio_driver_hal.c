@@ -62,30 +62,30 @@ void gpio_enable_clock_peripheral(GPIO_Handler_t *pGPIOHandler){
 
 	// Verificamos para GPIOA
 		if (pGPIOHandler->pGPIOx == GPIOA){
-			// Escribimos 1 (SET) en la posiciön que corresponde
+			// Escribimos 1 (SET) en la posiciön que corresponde al GPIOA
 			RCC->AHB1ENR |=(1 << RCC_AHB1ENR_GPIOAEN);
 		}
-		// Verificamos para el GPIOB
+	// Verificamos para el GPIOB
 		else if (pGPIOHandler->pGPIOx == GPIOB){
 			// Escribimos 1 (SET) en la posición correspondiente al GPIOB
 			RCC->AHB1ENR |= (1 << RCC_AHB1ENR_GPIOBEN);
 		}
-		// Verificamos para el GPIOC
+	// Verificamos para el GPIOC
 		else if (pGPIOHandler->pGPIOx == GPIOC){
 			// Escribimos 1(SET) en la posición correspondiente al GPIOC
 			RCC->AHB1ENR |= (RCC_AHB1ENR_GPIOCEN);
 		}
-		// Verificamos para el GPIOD
+	// Verificamos para el GPIOD
 		else if (pGPIOHandler->pGPIOx == GPIOD){
 			// Escribimos 1(SET) en la posición correspondiente al GPIOD
 			RCC->AHB1ENR |= (RCC_AHB1ENR_GPIODEN);
 		}
-		// Verificamos para el GPIOE
+	// Verificamos para el GPIOE
 		else if (pGPIOHandler->pGPIOx == GPIOE){
 			// Escribimos 1(SET) en la posición correspondiente al GPIOE
 			RCC->AHB1ENR |= (RCC_AHB1ENR_GPIOEEN);
 		}
-		// Verificamos para el GPIOH
+	// Verificamos para el GPIOH
 		else if (pGPIOHandler->pGPIOx == GPIOH){
 			// Escribimos 1(SET) en la posición correspondiente al GPIOH
 			RCC->AHB1ENR |= (RCC_AHB1ENR_GPIOHEN);
@@ -254,8 +254,16 @@ uint32_t gpio_ReadPin(GPIO_Handler_t *pPinHandler){
 
 }
 
+void gpio_TooglePin(GPIO_Handler_t *pPinHandler){
+	// mascara  en la posición del numero del pin, colocan un 1 en esa posición
+	uint32_t auxState = 0xb1 << (pPinHandler ->pinConfig.GPIO_PinNumber);
+	// XOR con ODR y auxState, de manera que en la posición del pin
+	// si el pin tiene un 1, con la mascara en la posición del pin 1 ^ 1 = 0
+	// si el pin tiene un 0, con la mascara en la posición del pin 0 ^ 1 = 1
+	// el resto de pines leido en el ODR quedarán intactos dado el comportamiento del XOR
+	pPinHandler->pGPIOx->ODR ^= auxState;
+}
 
 
 
-// SEGÚN VIDEO HACE FALTA UNA FUNCIÓN LLAMADA TOOGGLE
 
