@@ -42,4 +42,12 @@ void callback_ExtInt13(void);
 void callback_ExtInt14(void);
 void callback_ExtInt15(void);
 
+
+
+
+
+
+
+
+
 #endif /* EXTI_DRIVER_HAL_H_ */
