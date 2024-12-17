@@ -1,8 +1,8 @@
 /*
  * exti_driver_hal.h
  *
- *  Created on: Sep 28, 2023
- *      Author: ingfisica
+ *  Created on: Dic 17, 2024
+ *      Author: Julian Perez Carvajal
  */
 
 #ifndef EXTI_DRIVER_HAL_H_
@@ -41,11 +41,6 @@ void callback_ExtInt12(void);
 void callback_ExtInt13(void);
 void callback_ExtInt14(void);
 void callback_ExtInt15(void);
-
-
-
-
-
 
 
 
