@@ -36,6 +36,7 @@ enum{
 uint8_t estado = 0;
 uint8_t data = 0;
 uint8_t clock = 0;
+uint8_t flag_enconder = 0;
 
 void init_System(void);
 /*
@@ -46,19 +47,21 @@ int main (void){
 	init_System();
 
 	while(1){
-
-		if(data == 0){
-			if(estado == 3){
-				estado = 0;
+		if(flag_enconder==1){
+			if(data == 0){
+				if(estado == 3){
+					estado = 0;
+				}else{
+					estado++;
+				}
 			}else{
-				estado++;
+				if(estado == 0){
+				estado = 3;
+			}else{
+				estado--;
 			}
-		}else{
-			if(estado == 0){
-			estado = 3;
-		}else{
-			estado--;
-		}
+			}
+			flag_enconder = 0;
 		}
 
 
@@ -203,6 +206,7 @@ void Timer2_Callback(void){
 void callback_ExtInt9(void){
 	data = gpio_ReadPin(&userData);
 	clock = gpio_ReadPin(&userClk);
+	flag_enconder = 1;
 }
 
 /*
