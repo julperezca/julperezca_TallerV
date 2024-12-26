@@ -79,7 +79,8 @@ uint8_t Velitas(void){
 		gpio_WritePin(&pinLed6, 0);
 		gpio_WritePin(&pinLed7, 0);
 		gpio_WritePin(&pinLed8, 0);
-		contador = 0;
+		contador++;
+//		contador = 0;
 		break;
 	}
 
