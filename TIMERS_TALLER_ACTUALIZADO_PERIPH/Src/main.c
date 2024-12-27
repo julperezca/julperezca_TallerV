@@ -40,7 +40,7 @@ int main(void){
 }
 
 // Callback del temporizador
-void Timer2_Callback(void)
+void Timer5_Callback(void)
 {
     gpio_TooglePin(&userLed); // Alterna el estado del LED
 }
@@ -62,7 +62,7 @@ void init_Config(void)
 	gpio_Config(&userBoton);
 
 	// Configuramos el temporizador
-	reloj1.pTIMx = TIM2;
+	reloj1.pTIMx = TIM5;
 	reloj1.TIMx_Config.TIMx_Prescaler = 16000; // Genera incrementos de 1 ms
 	reloj1.TIMx_Config.TIMx_Period = 250;      // LED parpadea cada 250 ms
 	reloj1.TIMx_Config.TIMx_mode = TIMER_UP_COUNTER;

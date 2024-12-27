@@ -6,7 +6,6 @@
  */
 #include "stm32f4xx.h"
 #include "stm32_assert.h"
-
 #include "timer_driver_hal.h"
 
 /* Variable que guardad la referencia del perfiérico que se está utilizando */
@@ -37,9 +36,11 @@ static void timer_config_interrupt(Timer_Handler_t *pTimerHandler);
  * 	el sistema global de interrupciones, activar la IRQ especifica y luego volver a
  * 	encencer el sistema
  */
-void timer_Config(Timer_Handler_t *pTimerHandler){
+void timer_Config(Timer_Handler_t *pTimerHandler){    // La estructura Timer_Handler_t
+													  // *pTimerHandler es el apuntador a los
+													  // elementos de las estructura
 	//Guardamos la referencia al periferico que estamos utilizando...
-	ptrTimerUsed = pTimerHandler->pTIMx;
+	ptrTimerUsed = pTimerHandler->pTIMx;    //pTimerHandler
 
 	/* 0. Desactivamos las interrupciones globales mientras configuramos el sistema.*/
 	__disable_irq();
@@ -72,12 +73,18 @@ void timer_enable_clock_peripheral(Timer_Handler_t *pTimerHandler){
 
 	//verificamos que es un timer permitido
 	assert_param(IS_TIM_INSTANCE(pTimerHandler->pTIMx));
-
+	//
 	if (pTimerHandler->pTIMx == TIM2){
 		RCC->APB1ENR |=RCC_APB1ENR_TIM2EN;
 	}
 	else if(pTimerHandler->pTIMx == TIM3){
 		RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
+	}
+	else if(pTimerHandler->pTIMx == TIM4){
+		RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;
+	}
+	else if(pTimerHandler->pTIMx == TIM5){
+		RCC->APB1ENR |= RCC_APB1ENR_TIM5EN;
 	}
 	else{
 		__NOP();
@@ -94,7 +101,7 @@ void timer_set_prescaler(Timer_Handler_t *pTimerHandler){
 	assert_param(IS_TIMER_PRESC(pTimerHandler->TIMx_Config.TIMx_Prescaler));
 
 	//configuramos el valor del prescaler
-	pTimerHandler->pTIMx->PSC= pTimerHandler-> TIMx_Config.TIMx_Prescaler -1; //(16000000)
+	pTimerHandler->pTIMx->PSC = pTimerHandler-> TIMx_Config.TIMx_Prescaler -1; //(16000000)
 }
 
 /**
@@ -107,8 +114,7 @@ void timer_set_period(Timer_Handler_t *pTimerHandler){
 
 	// Verificamos que el valor que genera el periodo es valido
 	assert_param(IS_TIMER_PERIOD(pTimerHandler->TIMx_Config.TIMx_Prescaler));
-
-	//acá hace falta algo...
+	//acá hace falta algo.. DOWN MODE.
 
 	// configuramos el valor del autoreload
 	pTimerHandler->pTIMx->ARR = pTimerHandler->TIMx_Config.TIMx_Period - 1;
@@ -153,6 +159,12 @@ void timer_config_interrupt(Timer_Handler_t *pTimerHandler){
 		else if (pTimerHandler->pTIMx == TIM3){
 			NVIC_EnableIRQ(TIM3_IRQn);
 		}
+		else if (pTimerHandler->pTIMx == TIM4){
+			NVIC_EnableIRQ(TIM4_IRQn);
+		}
+		else if (pTimerHandler->pTIMx == TIM5){
+			NVIC_EnableIRQ(TIM5_IRQn);
+		}
 		else{
 			__NOP();
 		}
@@ -167,6 +179,12 @@ void timer_config_interrupt(Timer_Handler_t *pTimerHandler){
 		}
 		else if (pTimerHandler->pTIMx ==TIM3){
 			NVIC_DisableIRQ(TIM3_IRQn);
+		}
+		else if (pTimerHandler->pTIMx ==TIM4){
+			NVIC_DisableIRQ(TIM4_IRQn);
+		}
+		else if (pTimerHandler->pTIMx ==TIM5){
+			NVIC_DisableIRQ(TIM5_IRQn);
 		}
 		else{
 			__NOP();
@@ -203,19 +221,50 @@ __attribute__ ((weak)) void Timer2_Callback(void){
 	__NOP();
 }
 
+/**/
+__attribute__ ((weak)) void Timer3_Callback(void){
+	__NOP();
+}
+
+/**/
+__attribute__ ((weak)) void Timer4_Callback(void){
+	__NOP();
+}
+
+/**/
+__attribute__ ((weak)) void Timer5_Callback(void){
+	__NOP();
+}
+
 
 /* Esta es la funcion a la que apunta el sistema en el vector de interrupciones
  * se debe utilizar usando exactamente el mismo nombre definido en el vector de interrupciones
  * Al hacerlo correctamente el sistema apunta a esta funcion cuando la interrupcion se la
  * el sistema inmediatamente salta a este lugar en la memoria */
+
 void TIM2_IRQHandler(void){
 	/* limpiamos la bandera que indica que la interrupcion se ha generado */
 	TIM2->SR &= ~TIM_SR_UIF;
 
 	/*LLAMAMOS A LA FUNCION QUE SE DEBE ENCARargar de hacer algo con esta interrupcion */
 	Timer2_Callback();
-
 }
+
+void TIM3_IRQHandler(void){
+	TIM3->SR &= ~TIM_SR_UIF;
+	Timer3_Callback();
+}
+
+void TIM4_IRQHandler(void){
+	TIM4->SR &= ~TIM_SR_UIF;
+	Timer4_Callback();
+}
+
+void TIM5_IRQHandler(void){
+	TIM5->SR &= ~TIM_SR_UIF;
+	Timer5_Callback();
+}
+
 
 
 
