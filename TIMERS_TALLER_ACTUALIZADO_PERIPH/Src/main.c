@@ -14,7 +14,7 @@
 // Definimos un pin de prueba
 GPIO_Handler_t userLed = {0};   // Pin A5
 GPIO_Handler_t userBoton = {0}; // Pin C13
-Timer_Handler_t reloj1 = {0};
+Timer_Handler_t reloj1 = {0};    /* Inicialización de la estrucutra con {0}, TODOS LOS VALORES SON CERO */
 uint8_t btnValue = 0;       // Valor leído del botón
 uint8_t lastBtnState = 0;   // Estado previo del botón
 uint8_t upStateInit = 1; // estado inicial alto
