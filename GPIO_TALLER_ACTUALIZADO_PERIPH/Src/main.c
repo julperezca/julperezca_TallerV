@@ -45,12 +45,19 @@ int main (void)
 uint8_t Velitas(void){
 
 	switch(contador){
-
 	case 0:{
 		gpio_WritePin(&pinLed5, 1);
+		gpio_WritePin(&pinLed6, 1);
+		gpio_WritePin(&pinLed7, 1);
+		gpio_WritePin(&pinLed8, 1);
 		contador++;
 		break;
 	}
+//	case 0:{
+//		gpio_WritePin(&pinLed5, 1);
+//		contador++;
+//		break;
+//	}
 	case 1:{
 		gpio_WritePin(&pinLed6, 1);
 		gpio_WritePin(&pinLed5, 0);
@@ -146,11 +153,6 @@ void init_System(void){
 	/* Cargamos la configuración en los registros que gobiernan el puerto */
 	gpio_Config(&userBtn);
 
-
-//	gpio_WritePin(&pinLed5, 1);
-//	gpio_WritePin(&pinLed6, 1);
-//	gpio_WritePin(&pinLed7, 1);
-//	gpio_WritePin(&pinLed8, 1);
 	gpio_WritePin(&userBtn, 1);
 	//gpio_WritePin(&pinLed5, SET);
 }

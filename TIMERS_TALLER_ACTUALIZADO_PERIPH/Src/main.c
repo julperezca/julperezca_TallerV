@@ -12,12 +12,12 @@
 
 // Definimos un pin de prueba
 // Definimos un pin de prueba
-GPIO_Handler_t userLed = {0};   // Pin A5
-GPIO_Handler_t userBoton = {0}; // Pin C13
-Timer_Handler_t reloj1 = {0};    /* Inicialización de la estrucutra con {0}, TODOS LOS VALORES SON CERO */
-uint8_t btnValue = 0;       // Valor leído del botón
-uint8_t lastBtnState = 0;   // Estado previo del botón
-uint8_t upStateInit = 1; // estado inicial alto
+GPIO_Handler_t userLed = {0};   	// Pin A5
+GPIO_Handler_t userBoton = {0}; 	// Pin C13
+Timer_Handler_t reloj1 = {0};       /* Inicialización de la estrucutra con {0}, TODOS LOS VALORES SON CERO */
+uint8_t btnValue = 0;		      	// Valor leído del botón
+uint8_t lastBtnState = 0;   		// Estado previo del botón
+uint8_t upStateInit = 1; 			// Estado inicial alto
 void init_Config(void);
 int main(void){
 
@@ -47,25 +47,25 @@ void Timer5_Callback(void)
 void init_Config(void)
 {
 	userLed.pGPIOx = GPIOA;
-	userLed.pinConfig.GPIO_PinNumber = PIN_5;
-	userLed.pinConfig.GPIO_PinMode = GPIO_MODE_OUT;
-	userLed.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
-	userLed.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_MEDIUM;
-	userLed.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	userLed.pinConfig.GPIO_PinNumber 		= PIN_5;
+	userLed.pinConfig.GPIO_PinMode 			= GPIO_MODE_OUT;
+	userLed.pinConfig.GPIO_PinOutputType 	= GPIO_OTYPE_PUSHPULL;
+	userLed.pinConfig.GPIO_PinOutputSpeed	= GPIO_OSPEED_MEDIUM;
+	userLed.pinConfig.GPIO_PinPuPdControl 	= GPIO_PUPDR_NOTHING;
 	gpio_Config(&userLed);
 
 	// Configuramos el pin del botón
-	userBoton.pGPIOx = GPIOC;
-	userBoton.pinConfig.GPIO_PinNumber = PIN_13;
-	userBoton.pinConfig.GPIO_PinMode = GPIO_MODE_IN;
+	userBoton.pGPIOx 						= GPIOC;
+	userBoton.pinConfig.GPIO_PinNumber 		= PIN_13;
+	userBoton.pinConfig.GPIO_PinMode 		= GPIO_MODE_IN;
 	userBoton.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
 	gpio_Config(&userBoton);
 
 	// Configuramos el temporizador
-	reloj1.pTIMx = TIM5;
-	reloj1.TIMx_Config.TIMx_Prescaler = 16000; // Genera incrementos de 1 ms
-	reloj1.TIMx_Config.TIMx_Period = 250;      // LED parpadea cada 250 ms
-	reloj1.TIMx_Config.TIMx_mode = TIMER_UP_COUNTER;
+	reloj1.pTIMx 							= TIM5;
+	reloj1.TIMx_Config.TIMx_Prescaler 		= 16000; // Genera incrementos de 1 ms
+	reloj1.TIMx_Config.TIMx_Period 			= 250;      // LED parpadea cada 250 ms
+	reloj1.TIMx_Config.TIMx_mode 			= TIMER_UP_COUNTER;
 	reloj1.TIMx_Config.TIMx_InterruptEnable = TIMER_INT_ENABLE;
 	timer_Config(&reloj1);
 

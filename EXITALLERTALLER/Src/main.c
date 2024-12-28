@@ -1,7 +1,7 @@
 /**
  ******************************************************************************
- * @file           : main.c
- * @author         : ImJeviz
+ * @file           : main.c- Prueba de EXTI
+ * @author         : Jesús, modificado por Julián
  * @brief          : Main program body
  ******************************************************************************
  */
@@ -11,7 +11,6 @@
 #include "stm32_assert.h"
 #include "exti_driver_hal.h"
 #include "timer_driver_hal.h"
-
 //Definimos un PIN de prueba
 GPIO_Handler_t userLed	 	= {0}; // PinA5
 GPIO_Handler_t userLed1 	= {0}; // PinC9
@@ -20,11 +19,8 @@ GPIO_Handler_t userLed3 	= {0}; // PinC8
 GPIO_Handler_t userLed4 	= {0}; // PinC6
 GPIO_Handler_t userClk 		= {0}; // PinB9
 GPIO_Handler_t userData 	= {0}; // PinC5
-
-Timer_Handler_t blinkyTimer = {0}; //TIM2
-
+Timer_Handler_t blinkyTimer = {0}; // TIM2
 EXTI_Config_t extiClk	 	= {0};
-
 
 enum{
 	silencio = 0,
@@ -32,11 +28,9 @@ enum{
 	volumen_alto,
 	volumen_muy_alto
 };
-
 uint8_t estado = 0;
 uint8_t data = 0;
 uint8_t clock = 0;
-uint8_t flag_enconder = 0;
 
 void init_System(void);
 /*
@@ -47,21 +41,20 @@ int main (void){
 	init_System();
 
 	while(1){
-		if(flag_enconder==1){
-			if(data == 0){
-				if(estado == 3){
-					estado = 0;
-				}else{
-					estado++;
-				}
+		if(data == 0){
+			if(estado == 3){
+				estado = 0;
 			}else{
-				if(estado == 0){
-				estado = 3;
-			}else{
-				estado--;
+				estado++;
 			}
-			}
-			flag_enconder = 0;
+		}
+		else{
+			if(estado == 0){
+			estado = 3;
+		}
+		else{
+			estado--;
+		}
 		}
 
 
@@ -71,6 +64,8 @@ int main (void){
 			gpio_WritePin(&userLed2, RESET);
 			gpio_WritePin(&userLed3, RESET);
 			gpio_WritePin(&userLed4, RESET);
+			for (uint32_t i = 0; i <  1600000; i++) {
+			    }
 			break;
 		}
 		case volumen_medio:{
@@ -78,6 +73,8 @@ int main (void){
 			gpio_WritePin(&userLed2, RESET);
 			gpio_WritePin(&userLed3, RESET);
 			gpio_WritePin(&userLed4, RESET);
+			for (uint32_t i = 0; i <  1600000; i++) {
+			   }
 			break;
 		}
 		case volumen_alto:{
@@ -85,13 +82,17 @@ int main (void){
 			gpio_WritePin(&userLed2, SET);
 			gpio_WritePin(&userLed3, RESET);
 			gpio_WritePin(&userLed4, RESET);
+			for (uint32_t i = 0; i <  1600000; i++) {
+			    }
 			break;
 		}
 		case volumen_muy_alto:{
 			gpio_WritePin(&userLed1, SET);
 			gpio_WritePin(&userLed2, SET);
 			gpio_WritePin(&userLed3, SET);
-			gpio_WritePin(&userLed4, RESET);
+			gpio_WritePin(&userLed4, SET);
+			for (uint32_t i = 0; i <  1600000; i++) {
+			    }
 			break;
 		}
 		default:{
@@ -99,14 +100,10 @@ int main (void){
 			break;
 		}
 		}
-
 	}
 }
 
-
-
 void init_System(void){
-
 	//Configuramos el pin
 	userLed.pGPIOx							= GPIOA;
 	userLed.pinConfig.GPIO_PinNumber		= PIN_5;
@@ -114,9 +111,9 @@ void init_System(void){
 	userLed.pinConfig.GPIO_PinOutputType	= GPIO_OTYPE_PUSHPULL;
 	userLed.pinConfig.GPIO_PinOutputSpeed	= GPIO_OSPEED_MEDIUM;
 	userLed.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
-
 	//Cargamos la configuracion  en los registros que gobiernan el puerto.
 	gpio_Config(&userLed);
+
 
 	//Configuramos el pin
 	userLed1.pGPIOx							= GPIOC;
@@ -125,9 +122,9 @@ void init_System(void){
 	userLed1.pinConfig.GPIO_PinOutputType	= GPIO_OTYPE_PUSHPULL;
 	userLed1.pinConfig.GPIO_PinOutputSpeed	= GPIO_OSPEED_MEDIUM;
 	userLed1.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
-
 	//Cargamos la configuracion  en los registros que gobiernan el puerto.
 	gpio_Config(&userLed1);
+
 
 	//Configuramos el pin
 	userLed2.pGPIOx							= GPIOB;
@@ -136,9 +133,9 @@ void init_System(void){
 	userLed2.pinConfig.GPIO_PinOutputType	= GPIO_OTYPE_PUSHPULL;
 	userLed2.pinConfig.GPIO_PinOutputSpeed	= GPIO_OSPEED_MEDIUM;
 	userLed2.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
-
 	//Cargamos la configuracion  en los registros que gobiernan el puerto.
 	gpio_Config(&userLed2);
+
 
 	//Configuramos el pin
 	userLed3.pGPIOx							= GPIOC;
@@ -147,7 +144,6 @@ void init_System(void){
 	userLed3.pinConfig.GPIO_PinOutputType	= GPIO_OTYPE_PUSHPULL;
 	userLed3.pinConfig.GPIO_PinOutputSpeed	= GPIO_OSPEED_MEDIUM;
 	userLed3.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
-
 	//Cargamos la configuracion  en los registros que gobiernan el puerto.
 	gpio_Config(&userLed3);
 
@@ -159,56 +155,53 @@ void init_System(void){
 	userLed4.pinConfig.GPIO_PinOutputType	= GPIO_OTYPE_PUSHPULL;
 	userLed4.pinConfig.GPIO_PinOutputSpeed	= GPIO_OSPEED_MEDIUM;
 	userLed4.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
-
 	//Cargamos la configuracion  en los registros que gobiernan el puerto.
 	gpio_Config(&userLed4);
+
 
 	//Configuramos el pin
 	userClk.pGPIOx							= GPIOB;
 	userClk.pinConfig.GPIO_PinNumber		= PIN_9;
 	userClk.pinConfig.GPIO_PinMode			= GPIO_MODE_IN;
 	userClk.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
-
 	//Cargamos la configuracion  en los registros que gobiernan el puerto.
 	gpio_Config(&userClk);
+
 
 	//Configuramos el pin
 	userData.pGPIOx							= GPIOC;
 	userData.pinConfig.GPIO_PinNumber		= PIN_5;
 	userData.pinConfig.GPIO_PinMode			= GPIO_MODE_IN;
 	userData.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
-
 	//Cargamos la configuracion  en los registros que gobiernan el puerto.
 	gpio_Config(&userData);
 
+
 	blinkyTimer.pTIMx								= TIM2;
-	blinkyTimer.TIMx_Config.TIMx_mode				= TIMER_UP_COUNTER;
 	blinkyTimer.TIMx_Config.TIMx_Prescaler  		= 16000; //1ms conversion
 	blinkyTimer.TIMx_Config.TIMx_Period				= 250;
+	blinkyTimer.TIMx_Config.TIMx_mode				= TIMER_UP_COUNTER;
 	blinkyTimer.TIMx_Config.TIMx_InterruptEnable 	= TIMER_INT_ENABLE;
+	timer_Config(&blinkyTimer);			     	//CARGAMOS CONFIGURACIÓN TIMER
+	timer_SetState(&blinkyTimer, TIMER_ON);     //ENCENDEMOS EL TIMER
 
-	timer_Config(&blinkyTimer);
-
-	extiClk.pGPIOHandler					= &userClk;
-	extiClk.edgeType						= EXTERNAL_INTERRUPT_RISING_EDGE;
-
+	// RISING EDGE para el clock, se carga la config del exti para el clk
+	extiClk.pGPIOHandler			= &userClk;
+	extiClk.edgeType				= EXTERNAL_INTERRUPT_RISING_EDGE;
 	exti_Config(&extiClk);
 
+	// inicialmente el pin de estado está encendido
 	gpio_WritePin(&userLed, SET);
 }
 
-/*
- * Overwrite function
- */
+
 void Timer2_Callback(void){
 	gpio_TooglePin(&userLed);
 }
 void callback_ExtInt9(void){
 	data = gpio_ReadPin(&userData);
 	clock = gpio_ReadPin(&userClk);
-	flag_enconder = 1;
 }
-
 /*
  * Esta función sirve para detectar problemas de parametros
  * incorrectos al momento de ejecutar un programa.

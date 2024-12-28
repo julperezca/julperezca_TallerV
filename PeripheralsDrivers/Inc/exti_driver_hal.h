@@ -14,13 +14,15 @@
 enum
 {
 	EXTERNAL_INTERRUPT_FALLING_EDGE	= 0,
-	EXTERNAL_INTERRUPT_RISING_EDGE
+	EXTERNAL_INTERRUPT_RISING_EDGE,
+	EXTERNAL_INTERRUPT_BOTH_EDGE
 };
 
 typedef struct
 {
 	GPIO_Handler_t *pGPIOHandler;	// Handler del pin GPIO que lanzara la interrupción
 	uint8_t			edgeType;		// Se selecciona si se desea un tipo de flanco subiendo o bajando
+	uint8_t			priorityInterrupt;
 }EXTI_Config_t;
 
 
@@ -42,7 +44,11 @@ void callback_ExtInt13(void);
 void callback_ExtInt14(void);
 void callback_ExtInt15(void);
 
-
-
-
+void EXTI0_IRQHandler(void);
+void EXTI1_IRQHandler(void);
+void EXTI2_IRQHandler(void);
+void EXTI3_IRQHandler(void);
+void EXTI4_IRQHandler(void);
+void EXTI9_5_IRQHandler(void);
+void EXTI15_10_IRQHandler(void);
 #endif /* EXTI_DRIVER_HAL_H_ */
