@@ -31,6 +31,8 @@ enum{
 uint8_t estado = 0;
 uint8_t data = 0;
 uint8_t clock = 0;
+uint8_t counterLeft = 0;
+uint8_t counterRight = 0;
 
 void init_System(void);
 /*
@@ -42,19 +44,21 @@ int main (void){
 
 	while(1){
 		if(data == 0){
-			if(estado == 3){
+
+			if(estado == 4){
 				estado = 0;
 			}else{
 				estado++;
 			}
 		}
 		else{
+
 			if(estado == 0){
-			estado = 3;
-		}
-		else{
-			estado--;
-		}
+			estado = 4;
+			}
+			else{
+				estado--;
+			}
 		}
 
 
@@ -64,7 +68,7 @@ int main (void){
 			gpio_WritePin(&userLed2, RESET);
 			gpio_WritePin(&userLed3, RESET);
 			gpio_WritePin(&userLed4, RESET);
-			for (uint32_t i = 0; i <  1600000; i++) {
+			for (uint32_t i = 0; i <  200000; i++) {
 			    }
 			break;
 		}
@@ -73,7 +77,7 @@ int main (void){
 			gpio_WritePin(&userLed2, RESET);
 			gpio_WritePin(&userLed3, RESET);
 			gpio_WritePin(&userLed4, RESET);
-			for (uint32_t i = 0; i <  1600000; i++) {
+			for (uint32_t i = 0; i <  200000; i++) {
 			   }
 			break;
 		}
@@ -82,7 +86,7 @@ int main (void){
 			gpio_WritePin(&userLed2, SET);
 			gpio_WritePin(&userLed3, RESET);
 			gpio_WritePin(&userLed4, RESET);
-			for (uint32_t i = 0; i <  1600000; i++) {
+			for (uint32_t i = 0; i <  200000; i++) {
 			    }
 			break;
 		}
@@ -90,8 +94,17 @@ int main (void){
 			gpio_WritePin(&userLed1, SET);
 			gpio_WritePin(&userLed2, SET);
 			gpio_WritePin(&userLed3, SET);
+			gpio_WritePin(&userLed4, RESET);
+			for (uint32_t i = 0; i <  200000; i++) {
+			    }
+			break;
+		}
+		case 4:{
+			gpio_WritePin(&userLed1, SET);
+			gpio_WritePin(&userLed2, SET);
+			gpio_WritePin(&userLed3, SET);
 			gpio_WritePin(&userLed4, SET);
-			for (uint32_t i = 0; i <  1600000; i++) {
+			for (uint32_t i = 0; i <  200000; i++) {
 			    }
 			break;
 		}
@@ -201,6 +214,19 @@ void Timer2_Callback(void){
 void callback_ExtInt9(void){
 	data = gpio_ReadPin(&userData);
 	clock = gpio_ReadPin(&userClk);
+	// dato que se está dando la interrupción por flanco de subida
+	// clock siempre será 1 al momento de realizar la interrupción
+	// NOTA: si se utiliza el schmit trigger, se debe intercambiar
+	// los valores, pues esta es una compuerta negadora.
+	if (clock==1){
+		if(data==0){
+				counterRight++;
+		}
+		else if(data==1){
+				counterLeft++;
+		}
+	}
+
 }
 /*
  * Esta función sirve para detectar problemas de parametros
