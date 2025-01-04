@@ -1,8 +1,8 @@
 /**
  ******************************************************************************
- * @file           : main.c- Prueba de EXTI
- * @author         : Jesús, modificado por Julián
- * @brief          : Main program body
+ * @file           : main.c- Tarea 2
+ * @author         : Julián Pérez Carvajal (julperezca@unal.edu.co)
+ * @brief          :
  ******************************************************************************
  */
 #include <stdint.h>
@@ -11,7 +11,7 @@
 #include "stm32_assert.h"
 #include "exti_driver_hal.h"
 #include "timer_driver_hal.h"
-
+//Definimos un PIN de prueba
 // LED de estado
 GPIO_Handler_t userLed	 	= {0}; // PinB14
 
@@ -20,7 +20,6 @@ GPIO_Handler_t ledRed 		= {0}; // PinC9
 GPIO_Handler_t ledGreen 	= {0}; // PinB8
 GPIO_Handler_t ledBlue	 	= {0}; // PinC8
 
-//Definimos un PINES para siete-segmentos
 GPIO_Handler_t segA 		= {0}; // PinB12 segmento a
 GPIO_Handler_t segB  		= {0}; // PinA12 segmento b
 GPIO_Handler_t segC 	 	= {0}; // PinC13 segmento c
@@ -29,39 +28,35 @@ GPIO_Handler_t segE 		= {0}; // PinC11 segmento e
 GPIO_Handler_t segF 	 	= {0}; // PinA11 segmento f
 GPIO_Handler_t segG 	 	= {0}; // PinB7  segmento g
 
+
 //Digitos del siete segmentos
 GPIO_Handler_t digito1  	= {0}; // PinC5 D1
 GPIO_Handler_t digito2		= {0}; // PinC6 D2
 GPIO_Handler_t digito3 	 	= {0}; // PinC10 D3
 GPIO_Handler_t digito4	 	= {0}; // PinD2  D4
 
-
-
 // Pines de encoder
-GPIO_Handler_t userSw 	= {0}; // PinB15
-GPIO_Handler_t userData 	= {0}; // PinB1
 GPIO_Handler_t userClk 		= {0}; // PinB2
-
-
+GPIO_Handler_t userData 	= {0}; // PinB1
+GPIO_Handler_t userSw 		= {0}; // PinB15
 
 Timer_Handler_t blinkyTimer = {0}; // TIM2  Timer para led de estado
-Timer_Handler_t segTimer 	= {0}; // 		Timer para control de segmentos
-EXTI_Config_t extiClk	 	= {0}; //
-EXTI_Config_t extiSw 		= {0}; //
+Timer_Handler_t segTimer 	= {0}; // TIM3  Timer para control de segmentos
+EXTI_Config_t extiClk	 	= {0}; // EXTI2
+EXTI_Config_t extiSw 		= {0}; // EXTI15
 
-enum{
-	silencio = 0,
-	volumen_medio,
-	volumen_alto,
-	volumen_muy_alto
-};
+
 uint8_t estado = 0;
-uint8_t btnSw = 0;
 uint8_t data = 0;
 uint8_t clock = 0;
 uint8_t counterLeft = 0;
 uint8_t counterRight = 0;
+uint8_t counterSw = 0;
 
+enum {
+	ON = 0,
+	OFF
+};
 void init_System(void);
 /*
  * The main function, where everything happens.
@@ -71,65 +66,96 @@ int main (void){
 	init_System();
 
 	while(1){
-		if(data == 0){
+		data = gpio_ReadPin(&userData);
+		clock = gpio_ReadPin(&userClk);
 
-			if(estado == 3){
-				estado = 0;
-			}else{
-				estado++;
-			}
+		if (estado == 0){
+			gpio_WritePin(&segA, OFF);
+			gpio_WritePin(&segB, OFF);
+			gpio_WritePin(&segC, OFF);
+			gpio_WritePin(&segD, OFF);
+			gpio_WritePin(&segE, OFF);
+			gpio_WritePin(&segF, OFF);
+			gpio_WritePin(&segG, OFF);
+		for (uint32_t i = 0; i <  1600000; i++) {
+		    }
+		estado++;
 		}
-		else{
-
-			if(estado == 0){
-			estado = 3;
-			}
-			else{
-				estado--;
-			}
+		else if(estado ==1){
+			gpio_WritePin(&segA, ON);
+			gpio_WritePin(&segB, ON);
+			gpio_WritePin(&segC, OFF);
+			gpio_WritePin(&segD, OFF);
+			gpio_WritePin(&segE, OFF);
+			gpio_WritePin(&segF, OFF);
+			gpio_WritePin(&segG, OFF);
+		for (uint32_t i = 0; i <  1600000; i++) {
+		    }
+		estado++;
 		}
-
-
-		switch(estado){
-		case silencio:{
-			gpio_WritePin(&ledBlue, SET);
-			gpio_WritePin(&ledRed, RESET);
-			gpio_WritePin(&ledGreen, RESET);
-			for (uint32_t i = 0; i <  1600000; i++) {
-			    }
-			break;
+		else if(estado == 2){
+			gpio_WritePin(&segA, ON);
+			gpio_WritePin(&segB, ON);
+			gpio_WritePin(&segC, ON);
+			gpio_WritePin(&segD, OFF);
+			gpio_WritePin(&segE, OFF);
+			gpio_WritePin(&segF, OFF);
+			gpio_WritePin(&segG, OFF);
+		for (uint32_t i = 0; i <  1600000; i++) {
+		    }
+		estado++;
 		}
-		case volumen_medio:{
-			gpio_WritePin(&ledBlue, RESET);
-			gpio_WritePin(&ledRed, SET);
-			gpio_WritePin(&ledGreen, RESET);
-			for (uint32_t i = 0; i <  1600000; i++) {
-			   }
-			break;
+		else if(estado == 3){
+			gpio_WritePin(&segA, ON);
+			gpio_WritePin(&segB, ON);
+			gpio_WritePin(&segC, ON);
+			gpio_WritePin(&segD, ON);
+			gpio_WritePin(&segE, OFF);
+			gpio_WritePin(&segF, OFF);
+			gpio_WritePin(&segG, OFF);
+		for (uint32_t i = 0; i <  1600000; i++) {
+		    }
+		estado++;
 		}
-		case volumen_alto:{
-			gpio_WritePin(&ledBlue, RESET);
-			gpio_WritePin(&ledRed, RESET);
-			gpio_WritePin(&ledGreen, SET);
-			for (uint32_t i = 0; i <  1600000; i++) {
-			    }
-			break;
+		else if(estado == 4){
+			gpio_WritePin(&segA, ON);
+			gpio_WritePin(&segB, ON);
+			gpio_WritePin(&segC, ON);
+			gpio_WritePin(&segD, ON);
+			gpio_WritePin(&segE, ON);
+			gpio_WritePin(&segF, OFF);
+			gpio_WritePin(&segG, OFF);
+		for (uint32_t i = 0; i <  1600000; i++) {
+		    }
+		estado++;
 		}
-		case volumen_muy_alto:{
-			gpio_WritePin(&ledBlue, SET);
-			gpio_WritePin(&ledRed, SET);
-			gpio_WritePin(&ledGreen, SET);
-			for (uint32_t i = 0; i <  1600000; i++) {
-			    }
-			break;
+		else if(estado == 5){
+			gpio_WritePin(&segA, ON);
+			gpio_WritePin(&segB, ON);
+			gpio_WritePin(&segC, ON);
+			gpio_WritePin(&segD, ON);
+			gpio_WritePin(&segE, ON);
+			gpio_WritePin(&segF, ON);
+			gpio_WritePin(&segG, OFF);
+		for (uint32_t i = 0; i <  1600000; i++) {
+		    }
+		estado++;
 		}
-		default:{
-			//No se hace nada
-			break;
-		}
+		else if(estado == 6){
+			gpio_WritePin(&segA, ON);
+			gpio_WritePin(&segB, ON);
+			gpio_WritePin(&segC, ON);
+			gpio_WritePin(&segD, ON);
+			gpio_WritePin(&segE, ON);
+			gpio_WritePin(&segF, ON);
+			gpio_WritePin(&segG, ON);
+		for (uint32_t i = 0; i <  1600000; i++) {
+		    }
+		estado = 0;
 		}
 	}
 }
+
 
 void init_System(void){
 	//Configuramos el pin
@@ -144,19 +170,8 @@ void init_System(void){
 
 
 	//Configuramos el pin
-	ledRed.pGPIOx							= GPIOC;
-	ledRed.pinConfig.GPIO_PinNumber			= PIN_9;
-	ledRed.pinConfig.GPIO_PinMode			= GPIO_MODE_OUT;
-	ledRed.pinConfig.GPIO_PinOutputType		= GPIO_OTYPE_PUSHPULL;
-	ledRed.pinConfig.GPIO_PinOutputSpeed	= GPIO_OSPEED_MEDIUM;
-	ledRed.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
-	//Cargamos la configuracion  en los registros que gobiernan el puerto.
-	gpio_Config(&ledRed);
-
-
-	//Configuramos el pin
-	ledGreen.pGPIOx							= GPIOB;
-	ledGreen.pinConfig.GPIO_PinNumber		= PIN_8;
+	ledGreen.pGPIOx							= GPIOC;
+	ledGreen.pinConfig.GPIO_PinNumber		= PIN_9;
 	ledGreen.pinConfig.GPIO_PinMode			= GPIO_MODE_OUT;
 	ledGreen.pinConfig.GPIO_PinOutputType	= GPIO_OTYPE_PUSHPULL;
 	ledGreen.pinConfig.GPIO_PinOutputSpeed	= GPIO_OSPEED_MEDIUM;
@@ -164,6 +179,15 @@ void init_System(void){
 	//Cargamos la configuracion  en los registros que gobiernan el puerto.
 	gpio_Config(&ledGreen);
 
+	//Configuramos el pin
+	ledRed.pGPIOx							= GPIOB;
+	ledRed.pinConfig.GPIO_PinNumber			= PIN_8;
+	ledRed.pinConfig.GPIO_PinMode			= GPIO_MODE_OUT;
+	ledRed.pinConfig.GPIO_PinOutputType		= GPIO_OTYPE_PUSHPULL;
+	ledRed.pinConfig.GPIO_PinOutputSpeed	= GPIO_OSPEED_MEDIUM;
+	ledRed.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
+	//Cargamos la configuracion  en los registros que gobiernan el puerto.
+	gpio_Config(&ledRed);
 
 	//Configuramos el pin
 	ledBlue.pGPIOx							= GPIOC;
@@ -176,7 +200,6 @@ void init_System(void){
 	gpio_Config(&ledBlue);
 
 	/////////////////************DIGITOS*******////////////////
-
 	//Configuramos el pin
 	digito1.pGPIOx							= GPIOC;
 	digito1.pinConfig.GPIO_PinNumber		= PIN_5;
@@ -207,8 +230,8 @@ void init_System(void){
 	gpio_Config(&digito3);
 
 	//Configuramos el pin
-	digito4.pGPIOx							= GPIOD;
-	digito4.pinConfig.GPIO_PinNumber		= PIN_2;
+	digito4.pGPIOx							= GPIOB;
+	digito4.pinConfig.GPIO_PinNumber		= PIN_9;
 	digito4.pinConfig.GPIO_PinMode			= GPIO_MODE_OUT;
 	digito4.pinConfig.GPIO_PinOutputType	= GPIO_OTYPE_PUSHPULL;
 	digito4.pinConfig.GPIO_PinOutputSpeed	= GPIO_OSPEED_MEDIUM;
@@ -248,8 +271,8 @@ void init_System(void){
 	gpio_Config(&segC);
 
 	//Configuramos el pin
-	segD.pGPIOx							= GPIOC;
-	segD.pinConfig.GPIO_PinNumber		= PIN_12;
+	segD.pGPIOx							= GPIOD;
+	segD.pinConfig.GPIO_PinNumber		= PIN_2;
 	segD.pinConfig.GPIO_PinMode			= GPIO_MODE_OUT;
 	segD.pinConfig.GPIO_PinOutputType	= GPIO_OTYPE_PUSHPULL;
 	segD.pinConfig.GPIO_PinOutputSpeed	= GPIO_OSPEED_MEDIUM;
@@ -287,6 +310,24 @@ void init_System(void){
 	//Cargamos la configuracion  en los registros que gobiernan el puerto.
 	gpio_Config(&segG);
 
+
+	//Configuramos el pin
+	userClk.pGPIOx							= GPIOB;
+	userClk.pinConfig.GPIO_PinNumber		= PIN_2;
+	userClk.pinConfig.GPIO_PinMode			= GPIO_MODE_IN;
+	userClk.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
+	//Cargamos la configuracion  en los registros que gobiernan el puerto.
+	gpio_Config(&userClk);
+
+
+	//Configuramos el pin
+	userData.pGPIOx							= GPIOB;
+	userData.pinConfig.GPIO_PinNumber		= PIN_1;
+	userData.pinConfig.GPIO_PinMode			= GPIO_MODE_IN;
+	userData.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
+	//Cargamos la configuracion  en los registros que gobiernan el puerto.
+	gpio_Config(&userData);
+
 	//Configuramos el pin
 	userSw.pGPIOx							= GPIOB;
 	userSw.pinConfig.GPIO_PinNumber			= PIN_15;
@@ -295,25 +336,9 @@ void init_System(void){
 	//Cargamos la configuracion  en los registros que gobiernan el puerto.
 	gpio_Config(&userSw);
 
-	//Configuramos el pin
-	userClk.pGPIOx							= GPIOB;
-	userClk.pinConfig.GPIO_PinNumber		= PIN_9;
-	userClk.pinConfig.GPIO_PinMode			= GPIO_MODE_IN;
-	userClk.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
-	//Cargamos la configuracion  en los registros que gobiernan el puerto.
-	gpio_Config(&userClk);
 
 
-	//Configuramos el pin
-	userData.pGPIOx							= GPIOC;
-	userData.pinConfig.GPIO_PinNumber		= PIN_5;
-	userData.pinConfig.GPIO_PinMode			= GPIO_MODE_IN;
-	userData.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
-	//Cargamos la configuracion  en los registros que gobiernan el puerto.
-	gpio_Config(&userData);
-
-	// control del led de estado
-	blinkyTimer.pTIMx								= TIM1;
+	blinkyTimer.pTIMx								= TIM2;
 	blinkyTimer.TIMx_Config.TIMx_Prescaler  		= 16000; //1ms conversion
 	blinkyTimer.TIMx_Config.TIMx_Period				= 250;
 	blinkyTimer.TIMx_Config.TIMx_mode				= TIMER_UP_COUNTER;
@@ -321,45 +346,23 @@ void init_System(void){
 	timer_Config(&blinkyTimer);			     	//CARGAMOS CONFIGURACIÓN TIMER
 	timer_SetState(&blinkyTimer, TIMER_ON);     //ENCENDEMOS EL TIMER
 
-	// control de siete segmentos
-	segTimer.pTIMx								= TIM2;
-	segTimer.TIMx_Config.TIMx_Prescaler  		= 16000; //1ms conversion
-	segTimer.TIMx_Config.TIMx_Period			= 8;
-	segTimer.TIMx_Config.TIMx_mode				= TIMER_UP_COUNTER;
-	segTimer.TIMx_Config.TIMx_InterruptEnable 	= TIMER_INT_ENABLE;
-	timer_Config(&segTimer);			     	//CARGAMOS CONFIGURACIÓN TIMER
-	timer_SetState(&segTimer, TIMER_ON);     //ENCENDEMOS EL TIMER
-
 	// RISING EDGE para el clock, se carga la config del exti para el clk
-	exti.pGPIOHandler		= &userClk;
-	extiClk.edgeType		= EXTERNAL_INTERRUPT_RISING_EDGE;
+	extiClk.pGPIOHandler			= &userClk;
+	extiClk.edgeType				= EXTERNAL_INTERRUPT_RISING_EDGE;
 	exti_Config(&extiClk);
 
-	// RISING EDGE para el boton
-	extiSw.pGPIOHandler		= &userSw;
-	extiSw.edgeType			= EXTERNAL_INTERRUPT_FALLING_EDGE;
-	exti_Config(&extiSw);
-
-
+//	extiSw.pGPIOHandler				= &userSw;
+//	extiSw.edgeType					= EXTERNAL_INTERRUPT_RISING_EDGE;
+//	exti_Config(&extiSw);
+	// inicialmente el pin de estado está encendido
 	gpio_WritePin(&userLed, SET);
 }
 
 
-void Timer1_Callback(void){
+void Timer2_Callback(void){
 	gpio_TooglePin(&userLed);
 }
-void Timer2_Callback(void){
-	//Segmentos
-}
-
-
-// Callback para boton Sw del encoder
-void callback_ExtInt8(void){
-}
-
-
-// Callback para giros del encoder
-void callback_ExtInt9(void){
+void callback_ExtInt2(void){
 	data = gpio_ReadPin(&userData);
 	clock = gpio_ReadPin(&userClk);
 	// dato que se está dando la interrupción por flanco de subida
@@ -373,6 +376,69 @@ void callback_ExtInt9(void){
 		else if(data==1){
 				counterLeft++;
 		}
+	}
+}
+void callback_ExtInt15(void){
+	switch (counterSw){
+	case 0:{
+		gpio_WritePin(&ledRed,OFF);
+		gpio_WritePin(&ledGreen,ON);
+		gpio_WritePin(&ledBlue,ON);
+		counterSw++;
+		break;
+	}
+	case 1:{
+		gpio_WritePin(&ledRed,ON);
+		gpio_WritePin(&ledGreen,SET);
+		gpio_WritePin(&ledBlue,ON);
+		counterSw++;
+		break;
+	}
+	case 2:{
+		gpio_WritePin(&ledRed,ON);
+		gpio_WritePin(&ledGreen,ON);
+		gpio_WritePin(&ledBlue,SET);
+		counterSw++;
+		break;
+	}
+	case 3:{
+		gpio_WritePin(&ledRed,ON);
+		gpio_WritePin(&ledGreen,SET);
+		gpio_WritePin(&ledBlue,SET);
+		counterSw++;
+		break;
+	}
+	case 4:{
+		gpio_WritePin(&ledRed,SET);
+		gpio_WritePin(&ledGreen,ON);
+		gpio_WritePin(&ledBlue,SET);
+		counterSw++;
+		break;
+	}
+	case 5:{
+		gpio_WritePin(&ledRed,SET);
+		gpio_WritePin(&ledGreen,SET);
+		gpio_WritePin(&ledBlue,ON);
+		counterSw++;
+		break;
+	}
+	case 6:{
+		gpio_WritePin(&ledRed,SET);
+		gpio_WritePin(&ledGreen,SET);
+		gpio_WritePin(&ledBlue,SET);
+		counterSw++;
+		break;
+	}
+	case 7:{
+		gpio_WritePin(&ledRed,ON);
+		gpio_WritePin(&ledGreen,ON);
+		gpio_WritePin(&ledBlue,ON);
+		counterSw = 0;
+		break;
+	}
+	default:{
+		break;
+	}
 	}
 }
 /*

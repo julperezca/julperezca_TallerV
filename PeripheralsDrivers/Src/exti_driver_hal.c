@@ -127,7 +127,7 @@ static void exti_assign_channel(EXTI_Config_t *extiConfig){
 
 	/* Configurando para el todos los pines GPIOX_2*/
 		case 2: {
-			SYSCFG->EXTICR[2] &= ~(0xF << SYSCFG_EXTICR1_EXTI2_Pos);
+			SYSCFG->EXTICR[0] &= ~(0xF << SYSCFG_EXTICR1_EXTI2_Pos);
 			if (extiConfig->pGPIOHandler->pGPIOx == GPIOA) {
 				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI2_PA);
 
@@ -542,10 +542,10 @@ static void exti_select_edge(EXTI_Config_t *extiConfig){
 		EXTI->RTSR |= 1<<(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber);
 	}
 	/* Falling and Rising Trigger selection register*/
-	else if(extiConfig->edgeType == EXTERNAL_INTERRUPT_BOTH_EDGE ){
-		EXTI->FTSR |= 1<<(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber);
-		EXTI->RTSR |= 1<<(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber);
-	}
+//	else if(extiConfig->edgeType == EXTERNAL_INTERRUPT_BOTH_EDGE ){
+//		EXTI->FTSR |= 1<<(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber);
+//		EXTI->RTSR |= 1<<(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber);
+//	}
 	else{
 		__NOP();
 	}
@@ -641,43 +641,43 @@ static void exti_config_interrupt(EXTI_Config_t *extiConfig){
 	switch (extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber){
 
 	case 0: {
-		__NVIC_SetPriority(EXTI0_IRQn, extiConfig->priorityInterrupt);
+//		__NVIC_SetPriority(EXTI0_IRQn, extiConfig->priorityInterrupt);
 		__NVIC_EnableIRQ(EXTI0_IRQn);
 		break;
 	}
 
 	case 1: {
-		__NVIC_SetPriority(EXTI1_IRQn, extiConfig->priorityInterrupt);
+//		__NVIC_SetPriority(EXTI1_IRQn, extiConfig->priorityInterrupt);
 		__NVIC_EnableIRQ(EXTI1_IRQn);
 		break;
 	}
 
 	case 2: {
-		__NVIC_SetPriority(EXTI2_IRQn, extiConfig->priorityInterrupt);
+//		__NVIC_SetPriority(EXTI2_IRQn, extiConfig->priorityInterrupt);
 		__NVIC_EnableIRQ(EXTI2_IRQn);
 		break;
 	}
 
 	case 3: {
-		__NVIC_SetPriority(EXTI3_IRQn, extiConfig->priorityInterrupt);
+//		__NVIC_SetPriority(EXTI3_IRQn, extiConfig->priorityInterrupt);
 		__NVIC_EnableIRQ(EXTI3_IRQn);
 		break;
 	}
 
 	case 4: {
-		__NVIC_SetPriority(EXTI4_IRQn, extiConfig->priorityInterrupt);
+//		__NVIC_SetPriority(EXTI4_IRQn, extiConfig->priorityInterrupt);
 		__NVIC_EnableIRQ(EXTI4_IRQn);
 		break;
 	}
 
 	case 5 ... 9: {
-		__NVIC_SetPriority(EXTI9_5_IRQn, extiConfig->priorityInterrupt);
+//		__NVIC_SetPriority(EXTI9_5_IRQn, extiConfig->priorityInterrupt);
 		__NVIC_EnableIRQ(EXTI9_5_IRQn);
 		break;
 	}
 
 	case 10 ... 15: {
-		__NVIC_SetPriority(EXTI15_10_IRQn, extiConfig->priorityInterrupt);
+//		__NVIC_SetPriority(EXTI15_10_IRQn, extiConfig->priorityInterrupt);
 		__NVIC_EnableIRQ(EXTI15_10_IRQn);
 		break;
 	}
