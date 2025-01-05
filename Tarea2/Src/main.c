@@ -47,17 +47,23 @@ EXTI_Config_t extiSw 			= {0}; // EXTI15
 
 
 uint8_t number = 0;
-uint8_t digit = 0;
+uint8_t digit = 1;
 uint8_t data = 0;
 uint8_t clock = 0;
-uint8_t counterLeft = 0;
-uint8_t counterRight = 0;
 uint8_t counterSw = 0;
+int16_t counterRight = 0;
+uint8_t units = 0;
+uint8_t tens = 0;
+uint8_t hundreds = 0;
+uint8_t oneThousand = 0;
 
+
+/* Estado de los transistores y segmentos */
 enum {
 	ON = 0,
 	OFF
 };
+/*  */
 void init_System(void);
 void numberSelection(uint8_t number);
 void digitSelection(uint8_t digit);
@@ -68,17 +74,11 @@ int main (void){
 
 	init_System();
 	numberSelection(number);
-	while(1){
-		data = gpio_ReadPin(&userData);
-		clock = gpio_ReadPin(&userClk);
-		digitSelection(digit);
 
-		digit++;
-		for (uint32_t i = 0; i <  1600000; i++){
-		}
-		if (digit==5){
-			digit = 0;
-		}
+	while(1){
+
+
+
 	}
 }
 
@@ -269,7 +269,7 @@ void init_System(void){
 	/*Se configura el timer de los digitos */
 	segmentsTimer.pTIMx								= TIM3;
 	segmentsTimer.TIMx_Config.TIMx_Prescaler  		= 16000; //1ms conversion
-	segmentsTimer.TIMx_Config.TIMx_Period				= 250;
+	segmentsTimer.TIMx_Config.TIMx_Period			= 4;
 	segmentsTimer.TIMx_Config.TIMx_mode				= TIMER_UP_COUNTER;
 	segmentsTimer.TIMx_Config.TIMx_InterruptEnable 	= TIMER_INT_ENABLE;
 	timer_Config(&segmentsTimer);
@@ -291,19 +291,37 @@ void Timer2_Callback(void){
 	gpio_TooglePin(&userLed);
 }
 
+void Timer3_Callback(void){
+	digitSelection(digit);
+	digit++;
+	if (digit==5){
+		digit = 1;
+	}
+
+}
+
 // Callback para la interrupcion del pin B2 que corresponde al Clk
 void callback_ExtInt2(void){
 	data = gpio_ReadPin(&userData);
 	clock = gpio_ReadPin(&userClk);
 	// Schmitd trigger niega el valor del Clk y DT del encoder.
 
-	if (clock==1){
-		if(data==0){
-				counterRight++;
+	if(data==0){
+		counterRight++;
+		if (counterRight == 4096){
+			counterRight = 0;
 		}
-		else if(data==1){
-				counterLeft++;
+	}
+	else if(data==1){
+		counterRight--;
+		if (counterRight == -1){
+			counterRight = 4095;
 		}
+	units = counterRight%10;
+	tens = (counterRight/10)%10;
+	hundreds = (counterRight/100)%10;
+	oneThousand = counterRight/1000;
+
 	}
 }
 
@@ -379,6 +397,7 @@ void callback_ExtInt15(void){
 	}
 	}
 }
+
 
 void digitSelection(uint8_t digit){
 	switch (digit) {
