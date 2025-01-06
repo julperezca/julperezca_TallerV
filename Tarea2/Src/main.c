@@ -54,6 +54,7 @@ uint8_t counterSw = 0;
 int16_t counterRight = 0;
 uint8_t rgbFlag = 0;
 uint8_t digitFlag = 0;
+uint8_t rotationFlag = 0;
 
 
 
@@ -67,6 +68,7 @@ void rgbModeSelection(void);
 void init_System(void);
 void numberSelection(uint8_t number);
 void digitSelection(uint8_t digit);
+void dirOfRotation(void);
 /*
  * The main function, where everything happens.
  */
@@ -86,7 +88,10 @@ int main (void){
 			numberSelection(10);
 			digitSelection(5);
 			digitFlag = 0;
-
+			if (rotationFlag){
+				rotationFlag = 0;
+				dirOfRotation();
+			}
 			switch (digit){
 			case 1:{
 				numberSelection(counterRight%10); // Unidades del valor mostrado
@@ -332,27 +337,36 @@ void init_System(void){
 	gpio_WritePin(&digito4, OFF);
 }
 
-// Callback del blinkytimer con funcion que alterna el estado del userLed
+/* Callback del blinkytimer con funcion que alterna el estado del userLed */
 void Timer2_Callback(void){
 	gpio_TooglePin(&userLed);
 }
-// Callback del timer que enciende y apaga los transistores
+/* Callback del timer que enciende y apaga los transistores */
 void Timer3_Callback(void){
 	digitFlag = 1;
 }
 
-// Callback para la interrupcion del pin B2 que corresponde al Clk
+/* Callback para la interrupcion del pin B2 que corresponde al Clk */
 void callback_ExtInt2(void){
-
+	rotationFlag = 1;
 	data = gpio_ReadPin(&userData);
 	clock = gpio_ReadPin(&userClk);
 	// Schmitd trigger niega el valor del CLK y DT del encoder.
+}
+
+/* Callback para la interrupcion del Switch del encoder que controla el Led RGB */
+void callback_ExtInt15(void){
+	rgbFlag = 1;
+}
+
+/* Funcion que determina el sentido de giro y aumenta o disminuye el valor */
+void dirOfRotation(void){
 	if(data == 0){
-	counterRight++;
-		if (counterRight == 4096){
-			counterRight = 0;
+		counterRight++;
+			if (counterRight == 4096){
+				counterRight = 0;
+			}
 		}
-	}
 	else if(data == 1){
 		counterRight--;
 		if (counterRight == -1){
@@ -361,12 +375,9 @@ void callback_ExtInt2(void){
 	}
 }
 
-/* Callback para la interrupcion del Switch del encoder que controla el Led RGB */
-void callback_ExtInt15(void){
-	rgbFlag = 1;
-}
 
-// Funcion para  seleccionar los modos del Led RGB
+
+/* Funcion para  seleccionar los modos del Led RGB */
 void rgbModeSelection(void){
 	switch (counterSw){
 		// Rojo
@@ -439,7 +450,7 @@ void rgbModeSelection(void){
 		}
 }
 
-// Funcion para seleccionar el digito en uso. Ingresa digito con valor de 1 hasta 4
+/* Funcion para seleccionar el digito en uso */
 void digitSelection(uint8_t digit){
 	switch (digit) {
 
@@ -481,7 +492,7 @@ void digitSelection(uint8_t digit){
 	}
 }
 
-// Funcion que selecciona los segmentos para asignar un numero en el display
+/* Funcion que selecciona los segmentos para asignar un numero en el display */
 void numberSelection(uint8_t number){
 	switch (number) {
 		case 0:{

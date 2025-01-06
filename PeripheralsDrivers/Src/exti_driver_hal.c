@@ -524,31 +524,240 @@ static void exti_assign_channel(EXTI_Config_t *extiConfig){
 	}// Fin del switch-case
 }
 
-
 /*
  * Funcion para seleccionar adecuadamente el flanco que lanza la interrupcion
  * en el canal EXTI especifico.
  * */
 static void exti_select_edge(EXTI_Config_t *extiConfig){
 
-	EXTI->FTSR &= ~ 1<<(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber);   // limpieza del registro al que
-	EXTI->RTSR &= ~ 1<<(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber);   // se le asignará falling rising
+	EXTI->FTSR &= ~(0b1<<(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber));   // limpieza del registro al que
+	EXTI->RTSR &= ~(0b1<<(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber));   // se le asignará falling rising
 	/* Falling Trigger selection register*/
 	if(extiConfig->edgeType == EXTERNAL_INTERRUPT_FALLING_EDGE){
-		EXTI->FTSR |= 1<<(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber);
+		EXTI->FTSR |= 0b1<<(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber);
 	}
 	/* Rising Trigger selection register*/
 	else if(extiConfig->edgeType == EXTERNAL_INTERRUPT_RISING_EDGE ){
-		EXTI->RTSR |= 1<<(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber);
+		EXTI->RTSR |= 0b1<<(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber);
 	}
-	/* Falling and Rising Trigger selection register*/
-//	else if(extiConfig->edgeType == EXTERNAL_INTERRUPT_BOTH_EDGE ){
-//		EXTI->FTSR |= 1<<(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber);
-//		EXTI->RTSR |= 1<<(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber);
-//	}
+
 	else{
 		__NOP();
 	}
+	// LO QUE ESTÁ COMENTADO ES EQUIVALENTE A LAS 15 LINEAS DE ARRIBA.
+//	/* Registro para el flanco de bajada */
+//	/* Se limpian los registros del RISING y se escribe el correspondiente al FALLING */
+//	if(extiConfig->edgeType == EXTERNAL_INTERRUPT_FALLING_EDGE){
+//			switch(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber){
+//			case 0: {
+//				EXTI->RTSR &= ~EXTI_RTSR_TR0;
+//				EXTI->FTSR &= ~EXTI_FTSR_TR0;
+//				EXTI->FTSR |= EXTI_FTSR_TR0;
+//				break;
+//			}
+//			case 1: {
+//				EXTI->RTSR &= ~EXTI_RTSR_TR1;
+//				EXTI->FTSR &= ~EXTI_FTSR_TR1;
+//				EXTI->FTSR |= EXTI_FTSR_TR1;
+//				break;
+//			}
+//			case 2: {
+//				EXTI->RTSR &= ~EXTI_RTSR_TR2;
+//				EXTI->FTSR &= ~EXTI_FTSR_TR2;
+//				EXTI->FTSR |= EXTI_FTSR_TR2;
+//				break;
+//			}
+//			case 3: {
+//				EXTI->RTSR &= ~EXTI_RTSR_TR3;
+//				EXTI->FTSR &= ~EXTI_FTSR_TR3;
+//				EXTI->FTSR |= EXTI_FTSR_TR3;
+//				break;
+//			}
+//			case 4: {
+//				EXTI->RTSR &= ~EXTI_RTSR_TR4;
+//				EXTI->FTSR &= ~EXTI_FTSR_TR4;
+//				EXTI->FTSR |= EXTI_FTSR_TR4;
+//				break;
+//			}
+//			case 5: {
+//				EXTI->RTSR &= ~EXTI_RTSR_TR5;
+//				EXTI->FTSR &= ~EXTI_FTSR_TR5;
+//				EXTI->FTSR |= EXTI_FTSR_TR5;
+//				break;
+//			}
+//			case 6: {
+//				EXTI->RTSR &= ~EXTI_RTSR_TR6;
+//				EXTI->FTSR &= ~EXTI_FTSR_TR6;
+//				EXTI->FTSR |= EXTI_FTSR_TR6;
+//				break;
+//			}
+//			case 7: {
+//				EXTI->RTSR &= ~EXTI_RTSR_TR7;
+//				EXTI->FTSR &= ~EXTI_FTSR_TR7;
+//				EXTI->FTSR |= EXTI_FTSR_TR7;
+//				break;
+//			}
+//			case 8: {
+//				EXTI->RTSR &= ~EXTI_RTSR_TR8;
+//				EXTI->FTSR &= ~EXTI_FTSR_TR8;
+//				EXTI->FTSR |= EXTI_FTSR_TR8;
+//				break;
+//			}
+//			case 9: {
+//				EXTI->RTSR &= ~EXTI_RTSR_TR9;
+//				EXTI->FTSR &= ~EXTI_FTSR_TR9;
+//				EXTI->FTSR |= EXTI_FTSR_TR9;
+//				break;
+//			}
+//			case 10: {
+//				EXTI->RTSR &= ~EXTI_RTSR_TR10;
+//				EXTI->FTSR &= ~EXTI_FTSR_TR10;
+//				EXTI->FTSR |= EXTI_FTSR_TR10;
+//				break;
+//			}
+//			case 11: {
+//				EXTI->RTSR &= ~EXTI_RTSR_TR11;
+//				EXTI->FTSR &= ~EXTI_FTSR_TR11;
+//				EXTI->FTSR |= EXTI_FTSR_TR11;
+//				break;
+//			}
+//			case 12: {
+//				EXTI->RTSR &= ~EXTI_RTSR_TR12;
+//				EXTI->FTSR &= ~EXTI_FTSR_TR12;
+//				EXTI->FTSR |= EXTI_FTSR_TR12;
+//				break;
+//			}
+//			case 13: {
+//				EXTI->RTSR &= ~EXTI_RTSR_TR13;
+//				EXTI->FTSR &= ~EXTI_FTSR_TR13;
+//				EXTI->FTSR |= EXTI_FTSR_TR13;
+//				break;
+//			}
+//			case 14: {
+//				EXTI->RTSR &= ~EXTI_RTSR_TR14;
+//				EXTI->FTSR &= ~EXTI_FTSR_TR14;
+//				EXTI->FTSR |= EXTI_FTSR_TR14;
+//				break;
+//			}
+//			case 15: {
+//				EXTI->RTSR &= ~EXTI_RTSR_TR15;
+//				EXTI->FTSR &= ~EXTI_FTSR_TR15;
+//				EXTI->FTSR |= EXTI_FTSR_TR15;
+//				break;
+//			}
+//			default: {
+//				__NOP();
+//				break;
+//			}
+//			}
+//		}
+//		/* Registro para el flanco de subida RISING EDGE */
+//	/* Se limpian los registros del FALLING y se escribe el correspondiente al RISING */
+//		else if(extiConfig->edgeType == EXTERNAL_INTERRUPT_RISING_EDGE){
+//
+//			switch(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber){
+//			case 0: {
+//				EXTI->FTSR &= ~EXTI_FTSR_TR0;
+//				EXTI->RTSR &= ~EXTI_RTSR_TR0;
+//				EXTI->RTSR |= EXTI_RTSR_TR0;
+//				break;
+//			}
+//			case 1: {
+//				EXTI->FTSR &= ~EXTI_FTSR_TR1;
+//				EXTI->RTSR &= ~EXTI_RTSR_TR1;
+//				EXTI->RTSR |= EXTI_RTSR_TR1;
+//				break;
+//			}
+//			case 2: {
+//				EXTI->FTSR &= ~EXTI_FTSR_TR2;
+//				EXTI->RTSR &= ~EXTI_RTSR_TR2;
+//				EXTI->RTSR |= EXTI_RTSR_TR2;
+//				break;
+//			}
+//			case 3: {
+//				EXTI->FTSR &= ~EXTI_FTSR_TR3;
+//				EXTI->RTSR &= ~EXTI_RTSR_TR3;
+//				EXTI->RTSR |= EXTI_RTSR_TR3;
+//				break;
+//			}
+//			case 4: {
+//				EXTI->FTSR &= ~EXTI_FTSR_TR4;
+//				EXTI->RTSR &= ~EXTI_RTSR_TR4;
+//				EXTI->RTSR |= EXTI_RTSR_TR4;
+//				break;
+//			}
+//			case 5: {
+//				EXTI->FTSR &= ~EXTI_FTSR_TR5;
+//				EXTI->RTSR &= ~EXTI_RTSR_TR5;
+//				EXTI->RTSR |= EXTI_RTSR_TR5;
+//				break;
+//			}
+//			case 6: {
+//				EXTI->FTSR &= ~EXTI_FTSR_TR6;
+//				EXTI->RTSR &= ~EXTI_RTSR_TR6;
+//				EXTI->RTSR |= EXTI_RTSR_TR6;
+//				break;
+//			}
+//			case 7: {
+//				EXTI->FTSR &= ~EXTI_FTSR_TR7;
+//				EXTI->RTSR &= ~EXTI_RTSR_TR7;
+//				EXTI->RTSR |= EXTI_RTSR_TR7;
+//				break;
+//			}
+//			case 8: {
+//				EXTI->FTSR &= ~EXTI_FTSR_TR8;
+//				EXTI->RTSR &= ~EXTI_RTSR_TR8;
+//				EXTI->RTSR |= EXTI_RTSR_TR8;
+//				break;
+//			}
+//			case 9: {
+//				EXTI->FTSR &= ~EXTI_FTSR_TR9;
+//				EXTI->RTSR &= ~EXTI_RTSR_TR9;
+//				EXTI->RTSR |= EXTI_RTSR_TR9;
+//				break;
+//			}
+//			case 10: {
+//				EXTI->FTSR &= ~EXTI_FTSR_TR10;
+//				EXTI->RTSR &= ~EXTI_RTSR_TR10;
+//				EXTI->RTSR |= EXTI_RTSR_TR10;
+//				break;
+//			}
+//			case 11: {
+//				EXTI->FTSR &= ~EXTI_FTSR_TR11;
+//				EXTI->RTSR &= ~EXTI_RTSR_TR11;
+//				EXTI->RTSR |= EXTI_RTSR_TR11;
+//				break;
+//			}
+//			case 12: {
+//				EXTI->FTSR &= ~EXTI_FTSR_TR12;
+//				EXTI->RTSR &= ~EXTI_RTSR_TR12;
+//				EXTI->RTSR |= EXTI_RTSR_TR12;
+//				break;
+//			}
+//			case 13: {
+//				EXTI->FTSR &= ~EXTI_FTSR_TR13;
+//				EXTI->RTSR &= ~EXTI_RTSR_TR13;
+//				EXTI->RTSR |= EXTI_RTSR_TR13;
+//				break;
+//			}
+//			case 14: {
+//				EXTI->FTSR &= ~EXTI_FTSR_TR14;
+//				EXTI->RTSR &= ~EXTI_RTSR_TR14;
+//				EXTI->RTSR |= EXTI_RTSR_TR14;
+//				break;
+//			}
+//			case 15: {
+//				EXTI->FTSR &= ~EXTI_FTSR_TR15;
+//				EXTI->RTSR &= ~EXTI_RTSR_TR15;
+//				EXTI->RTSR |= EXTI_RTSR_TR15;
+//				break;
+//			}
+//			default: {
+//				__NOP();
+//				break;
+//			}
+//			}
+//		}
 }
 
 /*
@@ -566,66 +775,82 @@ static void exti_config_interrupt(EXTI_Config_t *extiConfig){
 	case 0:{
 		EXTI->IMR &= ~EXTI_IMR_IM0;
 		EXTI->IMR |= EXTI_IMR_IM0;
+		break;
 	}
 	case 1:{
 		EXTI->IMR &= ~EXTI_IMR_IM1;
 		EXTI->IMR |= EXTI_IMR_IM1;
+		break;
 	}
 	case 2:{
 		EXTI->IMR &= ~EXTI_IMR_IM2;
 		EXTI->IMR |= EXTI_IMR_IM2;
+		break;
 	}
 	case 3:{
 		EXTI->IMR &= ~EXTI_IMR_IM3;
 		EXTI->IMR |= EXTI_IMR_IM3;
+		break;
 	}
 	case 4:{
 		EXTI->IMR &= ~EXTI_IMR_IM4;
 		EXTI->IMR |= EXTI_IMR_IM4;
+		break;
 	}
 	case 5:{
 		EXTI->IMR &= ~EXTI_IMR_IM5;
 		EXTI->IMR |= EXTI_IMR_IM5;
+		break;
 	}
 	case 6:{
 		EXTI->IMR &= ~EXTI_IMR_IM6;
 		EXTI->IMR |= EXTI_IMR_IM6;
+		break;
 	}
 	case 7:{
 		EXTI->IMR &= ~EXTI_IMR_IM7;
 		EXTI->IMR |= EXTI_IMR_IM7;
+		break;
 	}
 	case 8:{
 		EXTI->IMR &= ~EXTI_IMR_IM8;
 		EXTI->IMR |= EXTI_IMR_IM8;
+		break;
 	}
 	case 9:{
 		EXTI->IMR &= ~EXTI_IMR_IM9;
 		EXTI->IMR |= EXTI_IMR_IM9;
+		break;
 	}
 	case 10:{
 		EXTI->IMR &= ~EXTI_IMR_IM10;
 		EXTI->IMR |= EXTI_IMR_IM10;
+		break;
 	}
 	case 11:{
 		EXTI->IMR &= ~EXTI_IMR_IM11;
 		EXTI->IMR |= EXTI_IMR_IM11;
+		break;
 	}
 	case 12:{
 		EXTI->IMR &= ~EXTI_IMR_IM12;
 		EXTI->IMR |= EXTI_IMR_IM12;
+		break;
 	}
 	case 13:{
 		EXTI->IMR &= ~EXTI_IMR_IM13;
 		EXTI->IMR |= EXTI_IMR_IM13;
+		break;
 	}
 	case 14:{
 		EXTI->IMR &= ~EXTI_IMR_IM14;
 		EXTI->IMR |= EXTI_IMR_IM14;
+		break;
 	}
 	case 15:{
 		EXTI->IMR &= ~EXTI_IMR_IM15;
 		EXTI->IMR |= EXTI_IMR_IM15;
+		break;
 	}
 	default:{
 		__NOP();
@@ -659,25 +884,21 @@ static void exti_config_interrupt(EXTI_Config_t *extiConfig){
 	}
 
 	case 3: {
-//		__NVIC_SetPriority(EXTI3_IRQn, extiConfig->priorityInterrupt);
 		__NVIC_EnableIRQ(EXTI3_IRQn);
 		break;
 	}
 
 	case 4: {
-//		__NVIC_SetPriority(EXTI4_IRQn, extiConfig->priorityInterrupt);
 		__NVIC_EnableIRQ(EXTI4_IRQn);
 		break;
 	}
 
 	case 5 ... 9: {
-//		__NVIC_SetPriority(EXTI9_5_IRQn, extiConfig->priorityInterrupt);
 		__NVIC_EnableIRQ(EXTI9_5_IRQn);
 		break;
 	}
 
 	case 10 ... 15: {
-//		__NVIC_SetPriority(EXTI15_10_IRQn, extiConfig->priorityInterrupt);
 		__NVIC_EnableIRQ(EXTI15_10_IRQn);
 		break;
 	}
