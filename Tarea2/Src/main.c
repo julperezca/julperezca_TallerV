@@ -1,6 +1,6 @@
 /**
  ******************************************************************************
- * @file           : main.c-
+ * @file           : main.c
  * @author         : Julián Pérez Carvajal (julperezca@unal.edu.co)
  * @brief          : Tarea 2. Drivers GPIO, EXTI, TIMERS, magicProject.
  ******************************************************************************
@@ -85,7 +85,7 @@ int main (void){
 	configMagic();  // Se inicia la configuracion de Magic
 	init_Config();	// Se inicia la configuracion del sistema
 
-	printf("Hola mundo!\n");
+
 	while(1){
 
 		// Toogle del led de estado
@@ -392,6 +392,7 @@ void callback_ExtInt15(void){
 void dirOfRotation(void){
 	// si data es cero, se gira en sentido CW y aumenta el valor del contador hasta 4095 y luego 0
 	if(data == 0){
+		printf("Giro CW\n");
 		rotationCounter++;
 			if (rotationCounter == 4096){
 				rotationCounter = 0;
@@ -399,6 +400,7 @@ void dirOfRotation(void){
 		}
 	// si data es uno, se gira en sentido CCW y disminuye el valor del contador hasta 0 y luego 4095
 	else if(data == 1){
+		printf("Giro CCW\n");
 		rotationCounter--;
 		if (rotationCounter == -1){
 			rotationCounter = 4095;
