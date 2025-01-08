@@ -1,1110 +1,136 @@
-		/*
- * exti_driver_hal.c
- *  Created on: Dic 17, 2024
- *      Author: Julian Perez Carvajal
+/*
+ * timer_driver_hal.c
+ *
+ *  Created on:
+ *  		Author: Julian
+ */
+#include "stm32f4xx.h"
+#include "stm32_assert.h"
+#include "systick_driver.h"
+
+/* Variable que guardad la referencia del perfiérico que se está utilizando */
+
+/* === Headeers for private functions === */
+
+
+/* Funcion en la que cargamos la config del timer
+ * Recordar que siempre se debe comenzar con activar la señal de reloj
+ * del periferico que se está utilizando.
+ * Además en este caso debemos ser cuidadosos al momento de utilizar interrupciones
+ * Los Timers están conectados directamente al elemento NVIC del cortex-Mx
+ * debemos configurar y/o utilizar:
+ * 		-TIMx_CR1 (control Register 1)
+ * 		-TIMx_SMCR (slave mode contron register ) -> mantener en 0 para modo Timer básico
+ * 		-TIMx_DIER (DMA and interrupt enable register)
+ * 		-TIM_SR (status register)
+ * 		-TIMx_CNT (counter)
+ * 		-TIMx_PSC (Pre-scaler)
+ * 		-TIMx_ARR (Auto-reload register)
+ *
+ * 	Como vamos a trabajar con interruptions antes de config una nueva debemos desacti
+ * 	el sistema global de interrupciones, activar la IRQ especifica y luego volver a
+ * 	encencer el sistema
  */
 
-#include "exti_driver_hal.h"
-#include "gpio_driver_hal.h"
+/**
+ *
+ */
+uint32_t countertick = 0;
+uint32_t scaledTicks = 0;
 
-/* === Headers for private functions === */
-static void exti_enable_clock_peripheral(void);
-static void exti_assign_channel(EXTI_Config_t *extiConfig);
-static void exti_select_edge(EXTI_Config_t *extiConfig);
-static void exti_config_interrupt(EXTI_Config_t *extiConfig);
 
-/*
- * Funcion de configuracion del sistema EXTI.
- * Requiere que un pinX ya se encuentre configurado como
- * entrada digital
- * */
-void exti_Config(EXTI_Config_t *extiConfig){
+void systick_CTRL(Systick_Handler_t *pSysTickHandler);
+void systick_RVR(Systick_Handler_t *pSysTickHandler);
+void systick_CVR (Systick_Handler_t *pSysTickHandler);
 
-	/* 1.0 Se carga la configuración, que debe ser el PINx como entrada "simple" */
-	gpio_Config(extiConfig->pGPIOHandler);
 
-	/* 2.0 Activamos el acceso al SYSCFG */
-	exti_enable_clock_peripheral();
 
-	/* 3.0 Seleccion de canal */
-	exti_assign_channel(extiConfig);
 
-	/* 4.0 Seleccionamos el tipo de flanco */
-	exti_select_edge(extiConfig);
+void sistick_Config(Systick_Handler_t *pSysTickHandler){
 
-	/* 5.0 Desactivo primero las interrupciones globales */
-	/*Agregue su código acá*/
+	// se carga la config del Reload
+	systick_RVR(Systick_Handler_t *pSysTickHandler);
+
+	// se pone el valor actual en 0
+	systick_CVR (Systick_Handler_t *pSysTickHandler);
+
+
+	/* 0. Desactivamos las interrupciones globales mientras configuramos el sistema.*/
 	__disable_irq();
 
-	/* 6. 0 Manejo de Interrupciones */
-	exti_config_interrupt(extiConfig);
+	NVIC_EnableIRQ(SysTick_IRQn);
+	// Se habilita el conteo hasta cero con system exception register
+	pSysTickHandler->pSysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
 
-	/* 7.0 Volvemos a activar las interrupciones globales */
-	/*Agregue su código acá*/
+	systick_CTRL(Systick_Handler_t *pSysTickHandler);
+
+	/*. Volvemos a activar las interrupciones del sistema */
 	__enable_irq();
+
+
+
 }
 
-/*
- * No requiere el periferico, ya que solo es necesario activar
- * al SYCFG
- * */
-static void exti_enable_clock_peripheral(void){
-	/* 2.0 Activamos el acceso al SYSCFG */
-	/*Agregue su código acá*/
-	RCC->APB2ENR = (RCC_APB2ENR_SYSCFGEN);
-}
 
-/*
- * Funcion que configura los MUX para asignar el pinX del puerto Y
- * a la entrada EXTI correspondiente.
- * */
-static void exti_assign_channel(EXTI_Config_t *extiConfig){
-	/*Asignamos el canal EXTI que corresponde al PIN_y del puerto GPIO_X
-		 * Debemos activar la línea PIN_Xy (Y = A, B, C... y x = 0, 1, 2, 3...)
-		 * en el módulo EXTI */
-		switch (extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber) {
-		/* Configurando para el todos los pines GPIOX_0*/
-		case 0: {
-			/* SYSCFG_EXTICR1 */
-			// Limpiamos primero la posición que deseamos configurar
-			SYSCFG->EXTICR[0] &= ~(0xF << SYSCFG_EXTICR1_EXTI0_Pos);
 
-			// Ahora seleccionamos el valor a cargar en la posición, segun sea la selección
-			// del puerto que vamos a utilizar: GPIOA_0, ó GPIOB_0, ó GPIOC_0, etc
-			if (extiConfig->pGPIOHandler->pGPIOx == GPIOA) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI0_PA);
 
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOB) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI0_PB);
+void systick_CTRL(Systick_Handler_t *pSysTickHandler){
 
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOC) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI0_PC);
+	// Se habilita el contador
+	pSysTickHandler->pSysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
 
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOD) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI0_PD);
 
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOE) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI0_PE);
 
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOH) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI0_PH);
+	// Opcion de reloj Externo para el Systick
+	if (pSysTickHandler->ExternalCLockEnable == EXTERNAL_CLOCK){
 
-			} else {
-				__NOP();
-			}
-			break;
-		}
-
-		/* Configurando para el todos los pines GPIOX_1*/
-		case 1: {
-			/* SYSCFG_EXTICR1 */
-			SYSCFG->EXTICR[0] &= ~(0xF << SYSCFG_EXTICR1_EXTI1_Pos);
-
-			if (extiConfig->pGPIOHandler->pGPIOx == GPIOA) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI1_PA);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOB) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI1_PB);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOC) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI1_PC);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOD) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI1_PD);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOE) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI1_PE);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOH) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI1_PH);
-
-			} else {
-				__NOP();
-			}
-
-			break;
-		}
-
-	/* Configurando para el todos los pines GPIOX_2*/
-		case 2: {
-			SYSCFG->EXTICR[0] &= ~(0xF << SYSCFG_EXTICR1_EXTI2_Pos);
-			if (extiConfig->pGPIOHandler->pGPIOx == GPIOA) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI2_PA);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOB) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI2_PB);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOC) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI2_PC);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOD) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI2_PD);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOE) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI2_PE);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOH) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI2_PH);
-
-			} else {
-				__NOP();
-			}
-
-			break;
-		}
-
-		case 3: {
-			SYSCFG->EXTICR[0] &= ~(0xF << SYSCFG_EXTICR1_EXTI3_Pos);
-			if (extiConfig->pGPIOHandler->pGPIOx == GPIOA) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI3_PA);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOB) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI3_PB);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOC) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI3_PC);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOD) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI3_PD);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOE) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI3_PE);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOH) {
-				SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI3_PH);
-
-			} else {
-				__NOP();
-			}
-
-			break;
-		}
-
-		// SE VIENE PARA EXTICR2
-		case 4: {
-				SYSCFG->EXTICR[1] &= ~(0xF << SYSCFG_EXTICR2_EXTI4_Pos);
-			if (extiConfig->pGPIOHandler->pGPIOx == GPIOA) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI4_PA);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOB) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI4_PB);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOC) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI4_PC);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOD) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI4_PD);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOE) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI4_PE);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOH) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI4_PH);
-
-			} else {
-				__NOP();
-			}
-
-			break;
-		}
-
-		case 5: {
-				SYSCFG->EXTICR[1] &= ~(0xF << SYSCFG_EXTICR2_EXTI5_Pos);
-			if (extiConfig->pGPIOHandler->pGPIOx == GPIOA) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI5_PA);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOB) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI5_PB);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOC) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI5_PC);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOD) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI5_PD);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOE) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI5_PE);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOH) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI5_PH);
-
-			} else {
-				__NOP();
-			}
-
-			break;
-		}
-
-
-		case 6: {
-				SYSCFG->EXTICR[1] &= ~(0xF << SYSCFG_EXTICR2_EXTI6_Pos);
-			if (extiConfig->pGPIOHandler->pGPIOx == GPIOA) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI6_PA);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOB) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI6_PB);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOC) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI6_PC);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOD) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI6_PD);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOE) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI6_PE);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOH) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI6_PH);
-
-			} else {
-				__NOP();
-			}
-
-			break;
-		}
-
-		case 7: {
-				SYSCFG->EXTICR[1] &= ~(0xF << SYSCFG_EXTICR2_EXTI7_Pos);
-			if (extiConfig->pGPIOHandler->pGPIOx == GPIOA) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI7_PA);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOB) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI7_PB);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOC) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI7_PC);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOD) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI7_PD);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOE) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI7_PE);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOH) {
-				SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI7_PH);
-
-			} else {
-				__NOP();
-			}
-
-			break;
-		}
-
-
-		//EXTICR3
-		case 8: {
-				SYSCFG->EXTICR[2] &= ~(0xF << SYSCFG_EXTICR3_EXTI8_Pos);
-			if (extiConfig->pGPIOHandler->pGPIOx == GPIOA) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI8_PA);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOB) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI8_PB);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOC) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI8_PC);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOD) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI8_PD);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOE) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI8_PE);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOH) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI8_PH);
-
-			} else {
-				__NOP();
-			}
-
-			break;
-		}
-
-		case 9: {
-				SYSCFG->EXTICR[2] &= ~(0xF << SYSCFG_EXTICR3_EXTI9_Pos);
-			if (extiConfig->pGPIOHandler->pGPIOx == GPIOA) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI9_PA);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOB) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI9_PB);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOC) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI9_PC);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOD) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI9_PD);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOE) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI9_PE);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOH) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI9_PH);
-
-			} else {
-				__NOP();
-			}
-
-			break;
-		}
-
-		case 10: {
-				SYSCFG->EXTICR[2] &= ~(0xF << SYSCFG_EXTICR3_EXTI10_Pos);
-			if (extiConfig->pGPIOHandler->pGPIOx == GPIOA) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI10_PA);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOB) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI10_PB);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOC) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI10_PC);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOD) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI10_PD);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOE) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI10_PE);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOH) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI10_PH);
-
-			} else {
-				__NOP();
-			}
-
-			break;
-		}
-
-		case 11: {
-				SYSCFG->EXTICR[2] &= ~(0xF << SYSCFG_EXTICR3_EXTI11_Pos);
-			if (extiConfig->pGPIOHandler->pGPIOx == GPIOA) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI11_PA);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOB) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI11_PB);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOC) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI11_PC);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOD) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI11_PD);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOE) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI11_PE);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOH) {
-				SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI11_PH);
-
-			} else {
-				__NOP();
-			}
-
-			break;
-		}
-
-								// EXTICR4
-
-		case 12: {
-				SYSCFG->EXTICR[3] &= ~(0xF << SYSCFG_EXTICR4_EXTI12_Pos);
-			if (extiConfig->pGPIOHandler->pGPIOx == GPIOA) {
-				SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI12_PA);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOB) {
-				SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI12_PB);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOC) {
-				SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI12_PC);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOD) {
-				SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI12_PD);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOE) {
-				SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI12_PE);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOH) {
-				SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI12_PH);
-
-			} else {
-				__NOP();
-			}
-
-			break;
-		}
-
-		case 13: {
-				SYSCFG->EXTICR[3] &= ~(0xF << SYSCFG_EXTICR4_EXTI13_Pos);
-			if (extiConfig->pGPIOHandler->pGPIOx == GPIOA) {
-				SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI13_PA);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOB) {
-				SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI13_PB);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOC) {
-				SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI13_PC);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOD) {
-				SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI13_PD);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOE) {
-				SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI13_PE);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOH) {
-				SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI13_PH);
-
-			} else {
-				__NOP();
-			}
-
-			break;
-		}
-
-		case 14: {
-				SYSCFG->EXTICR[3] &= ~(0xF << SYSCFG_EXTICR4_EXTI14_Pos);
-			if (extiConfig->pGPIOHandler->pGPIOx == GPIOA) {
-				SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI14_PA);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOB) {
-				SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI14_PB);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOC) {
-				SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI14_PC);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOD) {
-				SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI14_PD);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOE) {
-				SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI14_PE);
-
-			} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOH) {
-				SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI14_PH);
-
-			} else {
-				__NOP();
-			}
-
-			break;
-		}
-
-
-	/* Configurando para el todos los pines GPIOX_15 */
-	case 15: {
-		/* SYSCFG_EXTICR4 */
-		// Limpiamos primero la posición que deseamos configurar
-			SYSCFG->EXTICR[3] &= ~(0xF << SYSCFG_EXTICR4_EXTI15_Pos);
-
-		// Ahora seleccionamos el valor a cargar en la posición, segun sea la selección
-		// del puerto que vamos a utilizar: GPIOA_0, ó GPIOB_0, ó GPIOC_0, etc
-		if (extiConfig->pGPIOHandler->pGPIOx == GPIOA) {
-			SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI15_PA);
-
-		} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOB) {
-			SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI15_PB);
-
-		} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOC) {
-			SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI15_PC);
-
-		} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOD) {
-			SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI15_PD);
-
-		} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOE) {
-			SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI15_PE);
-
-		} else if (extiConfig->pGPIOHandler->pGPIOx == GPIOH) {
-			SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI15_PH);
-
-		} else {
-			__NOP();
-		}
-		break;
+		pSysTickHandler->pSysTick->CTRL &= ~SysTick_CTRL_CLKSOURCE_Msk;
 	}
-
-	default: {
-		__NOP();
-		break;
-	}
-
-	}// Fin del switch-case
-}
-
-/*
- * Funcion para seleccionar adecuadamente el flanco que lanza la interrupcion
- * en el canal EXTI especifico.
- * */
-static void exti_select_edge(EXTI_Config_t *extiConfig){
-
-	EXTI->FTSR &= ~(0b1<<(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber));   // limpieza del registro al que
-	EXTI->RTSR &= ~(0b1<<(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber));   // se le asignará falling rising
-	/* Falling Trigger selection register*/
-	if(extiConfig->edgeType == EXTERNAL_INTERRUPT_FALLING_EDGE){
-		EXTI->FTSR |= 0b1<<(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber);
-	}
-	/* Rising Trigger selection register*/
-	else if(extiConfig->edgeType == EXTERNAL_INTERRUPT_RISING_EDGE ){
-		EXTI->RTSR |= 0b1<<(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber);
-	}
-
 	else{
-		__NOP();
+		pSysTickHandler->pSysTick->CTRL |= SysTick_CTRL_CLKSOURCE_Msk;
 	}
-	// LO QUE ESTÁ COMENTADO ES EQUIVALENTE A LAS 15 LINEAS DE ARRIBA.
-//	/* Registro para el flanco de bajada */
-//	/* Se limpian los registros del RISING y se escribe el correspondiente al FALLING */
-//	if(extiConfig->edgeType == EXTERNAL_INTERRUPT_FALLING_EDGE){
-//			switch(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber){
-//			case 0: {
-//				EXTI->RTSR &= ~EXTI_RTSR_TR0;
-//				EXTI->FTSR &= ~EXTI_FTSR_TR0;
-//				EXTI->FTSR |= EXTI_FTSR_TR0;
-//				break;
-//			}
-//			case 1: {
-//				EXTI->RTSR &= ~EXTI_RTSR_TR1;
-//				EXTI->FTSR &= ~EXTI_FTSR_TR1;
-//				EXTI->FTSR |= EXTI_FTSR_TR1;
-//				break;
-//			}
-//			case 2: {
-//				EXTI->RTSR &= ~EXTI_RTSR_TR2;
-//				EXTI->FTSR &= ~EXTI_FTSR_TR2;
-//				EXTI->FTSR |= EXTI_FTSR_TR2;
-//				break;
-//			}
-//			case 3: {
-//				EXTI->RTSR &= ~EXTI_RTSR_TR3;
-//				EXTI->FTSR &= ~EXTI_FTSR_TR3;
-//				EXTI->FTSR |= EXTI_FTSR_TR3;
-//				break;
-//			}
-//			case 4: {
-//				EXTI->RTSR &= ~EXTI_RTSR_TR4;
-//				EXTI->FTSR &= ~EXTI_FTSR_TR4;
-//				EXTI->FTSR |= EXTI_FTSR_TR4;
-//				break;
-//			}
-//			case 5: {
-//				EXTI->RTSR &= ~EXTI_RTSR_TR5;
-//				EXTI->FTSR &= ~EXTI_FTSR_TR5;
-//				EXTI->FTSR |= EXTI_FTSR_TR5;
-//				break;
-//			}
-//			case 6: {
-//				EXTI->RTSR &= ~EXTI_RTSR_TR6;
-//				EXTI->FTSR &= ~EXTI_FTSR_TR6;
-//				EXTI->FTSR |= EXTI_FTSR_TR6;
-//				break;
-//			}
-//			case 7: {
-//				EXTI->RTSR &= ~EXTI_RTSR_TR7;
-//				EXTI->FTSR &= ~EXTI_FTSR_TR7;
-//				EXTI->FTSR |= EXTI_FTSR_TR7;
-//				break;
-//			}
-//			case 8: {
-//				EXTI->RTSR &= ~EXTI_RTSR_TR8;
-//				EXTI->FTSR &= ~EXTI_FTSR_TR8;
-//				EXTI->FTSR |= EXTI_FTSR_TR8;
-//				break;
-//			}
-//			case 9: {
-//				EXTI->RTSR &= ~EXTI_RTSR_TR9;
-//				EXTI->FTSR &= ~EXTI_FTSR_TR9;
-//				EXTI->FTSR |= EXTI_FTSR_TR9;
-//				break;
-//			}
-//			case 10: {
-//				EXTI->RTSR &= ~EXTI_RTSR_TR10;
-//				EXTI->FTSR &= ~EXTI_FTSR_TR10;
-//				EXTI->FTSR |= EXTI_FTSR_TR10;
-//				break;
-//			}
-//			case 11: {
-//				EXTI->RTSR &= ~EXTI_RTSR_TR11;
-//				EXTI->FTSR &= ~EXTI_FTSR_TR11;
-//				EXTI->FTSR |= EXTI_FTSR_TR11;
-//				break;
-//			}
-//			case 12: {
-//				EXTI->RTSR &= ~EXTI_RTSR_TR12;
-//				EXTI->FTSR &= ~EXTI_FTSR_TR12;
-//				EXTI->FTSR |= EXTI_FTSR_TR12;
-//				break;
-//			}
-//			case 13: {
-//				EXTI->RTSR &= ~EXTI_RTSR_TR13;
-//				EXTI->FTSR &= ~EXTI_FTSR_TR13;
-//				EXTI->FTSR |= EXTI_FTSR_TR13;
-//				break;
-//			}
-//			case 14: {
-//				EXTI->RTSR &= ~EXTI_RTSR_TR14;
-//				EXTI->FTSR &= ~EXTI_FTSR_TR14;
-//				EXTI->FTSR |= EXTI_FTSR_TR14;
-//				break;
-//			}
-//			case 15: {
-//				EXTI->RTSR &= ~EXTI_RTSR_TR15;
-//				EXTI->FTSR &= ~EXTI_FTSR_TR15;
-//				EXTI->FTSR |= EXTI_FTSR_TR15;
-//				break;
-//			}
-//			default: {
-//				__NOP();
-//				break;
-//			}
-//			}
-//		}
-//		/* Registro para el flanco de subida RISING EDGE */
-//	/* Se limpian los registros del FALLING y se escribe el correspondiente al RISING */
-//		else if(extiConfig->edgeType == EXTERNAL_INTERRUPT_RISING_EDGE){
-//
-//			switch(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber){
-//			case 0: {
-//				EXTI->FTSR &= ~EXTI_FTSR_TR0;
-//				EXTI->RTSR &= ~EXTI_RTSR_TR0;
-//				EXTI->RTSR |= EXTI_RTSR_TR0;
-//				break;
-//			}
-//			case 1: {
-//				EXTI->FTSR &= ~EXTI_FTSR_TR1;
-//				EXTI->RTSR &= ~EXTI_RTSR_TR1;
-//				EXTI->RTSR |= EXTI_RTSR_TR1;
-//				break;
-//			}
-//			case 2: {
-//				EXTI->FTSR &= ~EXTI_FTSR_TR2;
-//				EXTI->RTSR &= ~EXTI_RTSR_TR2;
-//				EXTI->RTSR |= EXTI_RTSR_TR2;
-//				break;
-//			}
-//			case 3: {
-//				EXTI->FTSR &= ~EXTI_FTSR_TR3;
-//				EXTI->RTSR &= ~EXTI_RTSR_TR3;
-//				EXTI->RTSR |= EXTI_RTSR_TR3;
-//				break;
-//			}
-//			case 4: {
-//				EXTI->FTSR &= ~EXTI_FTSR_TR4;
-//				EXTI->RTSR &= ~EXTI_RTSR_TR4;
-//				EXTI->RTSR |= EXTI_RTSR_TR4;
-//				break;
-//			}
-//			case 5: {
-//				EXTI->FTSR &= ~EXTI_FTSR_TR5;
-//				EXTI->RTSR &= ~EXTI_RTSR_TR5;
-//				EXTI->RTSR |= EXTI_RTSR_TR5;
-//				break;
-//			}
-//			case 6: {
-//				EXTI->FTSR &= ~EXTI_FTSR_TR6;
-//				EXTI->RTSR &= ~EXTI_RTSR_TR6;
-//				EXTI->RTSR |= EXTI_RTSR_TR6;
-//				break;
-//			}
-//			case 7: {
-//				EXTI->FTSR &= ~EXTI_FTSR_TR7;
-//				EXTI->RTSR &= ~EXTI_RTSR_TR7;
-//				EXTI->RTSR |= EXTI_RTSR_TR7;
-//				break;
-//			}
-//			case 8: {
-//				EXTI->FTSR &= ~EXTI_FTSR_TR8;
-//				EXTI->RTSR &= ~EXTI_RTSR_TR8;
-//				EXTI->RTSR |= EXTI_RTSR_TR8;
-//				break;
-//			}
-//			case 9: {
-//				EXTI->FTSR &= ~EXTI_FTSR_TR9;
-//				EXTI->RTSR &= ~EXTI_RTSR_TR9;
-//				EXTI->RTSR |= EXTI_RTSR_TR9;
-//				break;
-//			}
-//			case 10: {
-//				EXTI->FTSR &= ~EXTI_FTSR_TR10;
-//				EXTI->RTSR &= ~EXTI_RTSR_TR10;
-//				EXTI->RTSR |= EXTI_RTSR_TR10;
-//				break;
-//			}
-//			case 11: {
-//				EXTI->FTSR &= ~EXTI_FTSR_TR11;
-//				EXTI->RTSR &= ~EXTI_RTSR_TR11;
-//				EXTI->RTSR |= EXTI_RTSR_TR11;
-//				break;
-//			}
-//			case 12: {
-//				EXTI->FTSR &= ~EXTI_FTSR_TR12;
-//				EXTI->RTSR &= ~EXTI_RTSR_TR12;
-//				EXTI->RTSR |= EXTI_RTSR_TR12;
-//				break;
-//			}
-//			case 13: {
-//				EXTI->FTSR &= ~EXTI_FTSR_TR13;
-//				EXTI->RTSR &= ~EXTI_RTSR_TR13;
-//				EXTI->RTSR |= EXTI_RTSR_TR13;
-//				break;
-//			}
-//			case 14: {
-//				EXTI->FTSR &= ~EXTI_FTSR_TR14;
-//				EXTI->RTSR &= ~EXTI_RTSR_TR14;
-//				EXTI->RTSR |= EXTI_RTSR_TR14;
-//				break;
-//			}
-//			case 15: {
-//				EXTI->FTSR &= ~EXTI_FTSR_TR15;
-//				EXTI->RTSR &= ~EXTI_RTSR_TR15;
-//				EXTI->RTSR |= EXTI_RTSR_TR15;
-//				break;
-//			}
-//			default: {
-//				__NOP();
-//				break;
-//			}
-//			}
-//		}
+
 }
 
-/*
- * Funcion que configura las mascaras de interrupciones (registro de mascaras) y
- * ademas matricula cada una de las posibles interrupciones en el NVIC
- * */
-static void exti_config_interrupt(EXTI_Config_t *extiConfig){
-/* 6.0 Activamos la interrupción del canal que estamos configurando */
-	//
-	switch(extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber){
-	// ESTE SWITCH CASE ES EQUIVALENTE A ESTAS DOS LINEAS:
-	/* EXTI->IMR &= ~extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber
-	 * EXTI->IMR |= extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber
-	 * */
-	case 0:{
-		EXTI->IMR &= ~EXTI_IMR_IM0;
-		EXTI->IMR |= EXTI_IMR_IM0;
-		break;
-	}
-	case 1:{
-		EXTI->IMR &= ~EXTI_IMR_IM1;
-		EXTI->IMR |= EXTI_IMR_IM1;
-		break;
-	}
-	case 2:{
-		EXTI->IMR &= ~EXTI_IMR_IM2;
-		EXTI->IMR |= EXTI_IMR_IM2;
-		break;
-	}
-	case 3:{
-		EXTI->IMR &= ~EXTI_IMR_IM3;
-		EXTI->IMR |= EXTI_IMR_IM3;
-		break;
-	}
-	case 4:{
-		EXTI->IMR &= ~EXTI_IMR_IM4;
-		EXTI->IMR |= EXTI_IMR_IM4;
-		break;
-	}
-	case 5:{
-		EXTI->IMR &= ~EXTI_IMR_IM5;
-		EXTI->IMR |= EXTI_IMR_IM5;
-		break;
-	}
-	case 6:{
-		EXTI->IMR &= ~EXTI_IMR_IM6;
-		EXTI->IMR |= EXTI_IMR_IM6;
-		break;
-	}
-	case 7:{
-		EXTI->IMR &= ~EXTI_IMR_IM7;
-		EXTI->IMR |= EXTI_IMR_IM7;
-		break;
-	}
-	case 8:{
-		EXTI->IMR &= ~EXTI_IMR_IM8;
-		EXTI->IMR |= EXTI_IMR_IM8;
-		break;
-	}
-	case 9:{
-		EXTI->IMR &= ~EXTI_IMR_IM9;
-		EXTI->IMR |= EXTI_IMR_IM9;
-		break;
-	}
-	case 10:{
-		EXTI->IMR &= ~EXTI_IMR_IM10;
-		EXTI->IMR |= EXTI_IMR_IM10;
-		break;
-	}
-	case 11:{
-		EXTI->IMR &= ~EXTI_IMR_IM11;
-		EXTI->IMR |= EXTI_IMR_IM11;
-		break;
-	}
-	case 12:{
-		EXTI->IMR &= ~EXTI_IMR_IM12;
-		EXTI->IMR |= EXTI_IMR_IM12;
-		break;
-	}
-	case 13:{
-		EXTI->IMR &= ~EXTI_IMR_IM13;
-		EXTI->IMR |= EXTI_IMR_IM13;
-		break;
-	}
-	case 14:{
-		EXTI->IMR &= ~EXTI_IMR_IM14;
-		EXTI->IMR |= EXTI_IMR_IM14;
-		break;
-	}
-	case 15:{
-		EXTI->IMR &= ~EXTI_IMR_IM15;
-		EXTI->IMR |= EXTI_IMR_IM15;
-		break;
-	}
-	default:{
-		__NOP();
-		break;
-	}
-	}
+// Reload Value Register
+void systick_RVR(Systick_Handler_t *pSysTickHandler){
+	// el reloj es de 16MHz hasta ahora
+	pSysTickHandler->pSysTick->LOAD = SYSTICKLOAD_16MHz;
 
-	/* 6.1 Matriculamos la interrupción en el NVIC para el canal correspondiente,
-	 * donde el canal 0 corresponde al EXTI_0, canal 1 al EXTI_1, etc.
-	 *
-	 * NOTA: Observar que algunos canales EXTI comparten un mismo vector de interrupción
-	 * */
-	switch (extiConfig->pGPIOHandler->pinConfig.GPIO_PinNumber){
-
-	case 0: {
-//		__NVIC_SetPriority(EXTI0_IRQn, extiConfig->priorityInterrupt);
-		__NVIC_EnableIRQ(EXTI0_IRQn);
-		break;
-	}
-
-	case 1: {
-//		__NVIC_SetPriority(EXTI1_IRQn, extiConfig->priorityInterrupt);
-		__NVIC_EnableIRQ(EXTI1_IRQn);
-		break;
-	}
-
-	case 2: {
-//		__NVIC_SetPriority(EXTI2_IRQn, extiConfig->priorityInterrupt);
-		__NVIC_EnableIRQ(EXTI2_IRQn);
-		break;
-	}
-
-	case 3: {
-		__NVIC_EnableIRQ(EXTI3_IRQn);
-		break;
-	}
-
-	case 4: {
-		__NVIC_EnableIRQ(EXTI4_IRQn);
-		break;
-	}
-
-	case 5 ... 9: {
-		__NVIC_EnableIRQ(EXTI9_5_IRQn);
-		break;
-	}
-
-	case 10 ... 15: {
-		__NVIC_EnableIRQ(EXTI15_10_IRQn);
-		break;
-	}
-
-
-	default: {
-		break;
-	}
-
-	}
 }
 
-
-/**/
-__attribute__ ((weak)) void callback_ExtInt0(void){
-	__NOP();
-}
-
-
-/**/
-__attribute__ ((weak)) void callback_ExtInt1(void){
-	__NOP();
-}
-
-/**/
-__attribute__ ((weak)) void callback_ExtInt2(void){
-	__NOP();
-}
-
-/**/
-__attribute__ ((weak)) void callback_ExtInt3(void){
-	__NOP();
-}
-
-/**/
-__attribute__ ((weak)) void callback_ExtInt4(void){
-	__NOP();
-}
-
-/**/
-__attribute__ ((weak)) void callback_ExtInt5(void){
-	__NOP();
-}
-
-/**/
-__attribute__ ((weak)) void callback_ExtInt6(void){
-	__NOP();
-}
-
-/**/
-__attribute__ ((weak)) void callback_ExtInt7(void){
-	__NOP();
-}
-
-/**/
-__attribute__ ((weak)) void callback_ExtInt8(void){
-	__NOP();
-}
-
-/**/
-__attribute__ ((weak)) void callback_ExtInt9(void){
-	__NOP();
-}
-
-/**/
-__attribute__ ((weak)) void callback_ExtInt10(void){
-	__NOP();
-}
-
-/**/
-__attribute__ ((weak)) void callback_ExtInt11(void){
-	__NOP();
-}
-
-/**/
-__attribute__ ((weak)) void callback_ExtInt12(void){
-	__NOP();
-}
-
-/**/
-__attribute__ ((weak)) void callback_ExtInt13(void){
-	__NOP();
-}
-
-/**/
-__attribute__ ((weak)) void callback_ExtInt14(void){
-	__NOP();
-}
-
-/**/
-__attribute__ ((weak)) void callback_ExtInt15(void){
-	__NOP();
-}
-
-
-/* 
- * Agregar TODOS los demas callbacks (del 1 al 15) para un total
- * de  16 posibles interrupciones 
- */
-
-
-/* ISR de la interrupción canal 0*/
-void EXTI0_IRQHandler(void){
-	// Evaluamos si la interrupción que se lanzo corresponde al PIN_0 del GPIO_X
-	if(EXTI->PR & EXTI_PR_PR0){
-		// Bajamos la bandera correspondiente
-		EXTI->PR |= EXTI_PR_PR0;
-
-		// llamamos al callback
-		callback_ExtInt0();
-	}
-}
-
-void EXTI1_IRQHandler(void){
-	if(EXTI->PR & EXTI_PR_PR1){
-		EXTI->PR |= EXTI_PR_PR1;
-		callback_ExtInt1();
-	}
-}
-
-void EXTI2_IRQHandler(void){
-	if(EXTI->PR & EXTI_PR_PR2){
-		EXTI->PR |= EXTI_PR_PR2;
-		callback_ExtInt2();
-	}
-}
-
-
-void EXTI3_IRQHandler(void){
-	if(EXTI->PR & EXTI_PR_PR3){
-		EXTI->PR |= EXTI_PR_PR3;
-		callback_ExtInt3();
-	}
-}
-
-void EXTI4_IRQHandler(void){
-	if(EXTI->PR & EXTI_PR_PR4){
-		EXTI->PR |= EXTI_PR_PR4;
-		callback_ExtInt4();
-	}
-}
-
-/* Agregue las demas IRQs de las interrupciones EXTI independientes ... 
- * Por favor recuerde que debe agregar el bloque if para verificar que 
- * en efecto esa es la interrupcion que se está atendiendo.
- */
-
-/* ISR de la interrupción canales 9_5
- * Observe que debe agregar totos los posibles casos, los cuales
- * son identificados por un bloque if() y el analisis de la bandera
- * (pending register -> EXTI_PR)
- */
-void EXTI9_5_IRQHandler(void){
-	if(EXTI->PR & EXTI_PR_PR5){
-		EXTI->PR |= EXTI_PR_PR5;
-		callback_ExtInt5();
-
-	}
-	else if(EXTI->PR & EXTI_PR_PR6){
-		EXTI->PR |= EXTI_PR_PR6;
-		callback_ExtInt6();
-	}
-	else if(EXTI->PR & EXTI_PR_PR7){
-		EXTI->PR |= EXTI_PR_PR7;
-		callback_ExtInt7();
-	}
-	else if(EXTI->PR & EXTI_PR_PR8){
-		EXTI->PR |= EXTI_PR_PR8;
-		callback_ExtInt8();
-	}
-	else if(EXTI->PR & EXTI_PR_PR9){
-		EXTI->PR |= EXTI_PR_PR9;
-		callback_ExtInt9();
-	}
+// Current Value Register
+void systick_CVR (Systick_Handler_t *pSysTickHandler){
+	// inicialización de  el valor actual en cero
+	pSysTickHandler->pSysTick->VAL = 0;
 }
 
 
 
-/* ISR de la interrupción canales 15_10
- * Observe que debe agregar totos los posibles casos, los cuales
- * son identificados por un bloque if() y el analisis de la bandera
- * (pending register -> EXTI_PR)
- */
-void EXTI15_10_IRQHandler(void){
-	if(EXTI->PR & EXTI_PR_PR10){
-		EXTI->PR |= EXTI_PR_PR10;
-		callback_ExtInt10();
+
+
+
+void ticksFunction(Systick_Handler_t *pSysTickHandler){
+// si se alza la bandera de COUNTFLAG al llegar a cero la cuenta
+	if (pSysTickHandler->pSysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk){
+		// aumentar los ticks de llegada a cero
+		countertick++;
+		// se limpia la bandera
+		pSysTickHandler->pSysTick->CTRL &= ~SysTick_CTRL_COUNTFLAG_Msk;
 	}
-	else if(EXTI->PR & EXTI_PR_PR11){
-		EXTI->PR |= EXTI_PR_PR11;
-		callback_ExtInt11();
+}
+
+
+void msConversion(uint32_t delay){
+	while(countertick < delay){
+		scaledTicks++;
 	}
-	else if(EXTI->PR & EXTI_PR_PR12){
-		EXTI->PR |= EXTI_PR_PR12;
-		callback_ExtInt12();
-	}
-	else if(EXTI->PR & EXTI_PR_PR13){
-		EXTI->PR |= EXTI_PR_PR13;
-		callback_ExtInt13();
-	}
-	else if(EXTI->PR & EXTI_PR_PR14){
-		EXTI->PR |= EXTI_PR_PR14;
-		callback_ExtInt14();
-		}
-	else if(EXTI->PR & EXTI_PR_PR15){
-		EXTI->PR |= EXTI_PR_PR15;
-		callback_ExtInt15();
-		}
-	}
+
+}
+
+
+
+
+
+
+

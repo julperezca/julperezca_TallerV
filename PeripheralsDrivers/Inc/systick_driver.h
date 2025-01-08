@@ -1,54 +1,64 @@
 /*
- * exti_driver_hal.h
+ * systick_driver.h
  *
- *  Created on: Dic 17, 2024
- *      Author: Julian Perez Carvajal
+ * Created on:
+ *  	Author: julperezca
  */
 
-#ifndef EXTI_DRIVER_HAL_H_
-#define EXTI_DRIVER_HAL_H_
+#ifndef SYSTICK_DRIVER_H_
+#define SYSTICK_DRIVER_H_
 
 #include "stm32f4xx.h"
-#include "gpio_driver_hal.h"
+
+#define SYSTICKLOAD_16MHz  16000     // CONVERSION A ms
+#define SYSTICKLOAD_80MHz  80000
+#define SYSTICKLOAD_100MHz  100000
 
 enum
 {
-	EXTERNAL_INTERRUPT_FALLING_EDGE	= 0,
-	EXTERNAL_INTERRUPT_RISING_EDGE,
+	EXTERNAL_CLOCK 	= 0,   // Elegir una señal de reloj extern
+	INTERNAL_CLOCK		   // Elegir señal de reloj interna
 };
 
+
+/* Estructurar que contiene la contig minima nec par ael manejo del t*/
 typedef struct
 {
-	GPIO_Handler_t *pGPIOHandler;	// Handler del pin GPIO que lanzara la interrupción
-	uint8_t			edgeType;		// Se selecciona si se desea un tipo de flanco subiendo o bajando
-}EXTI_Config_t;
+	uint32_t 	SysTick_CSR;		//UP or DOWN
+	uint32_t	SysTick_RVR;		// prescaler...
+	uint32_t	SysTick_CVR;		// valor en ms del periodo del Timer
+	uint32_t	SysTick_CALIB;
+} SysTick_Config_t;
+
+/* Handler para el systick*/
+typedef struct
+{
+	SysTick_Type 		*pSysTick;
+	SysTick_Config_t	SysTick_Config;
+	uint8_t				ExternalCLockEnable;
+} Systick_Handler_t;
 
 
-void exti_Config(EXTI_Config_t *extiConfig);
-void callback_ExtInt0(void);
-void callback_ExtInt1(void);
-void callback_ExtInt2(void);
-void callback_ExtInt3(void);
-void callback_ExtInt4(void);
-void callback_ExtInt5(void);
-void callback_ExtInt6(void);
-void callback_ExtInt7(void);
-void callback_ExtInt8(void);
-void callback_ExtInt9(void);
-void callback_ExtInt10(void);
-void callback_ExtInt11(void);
-void callback_ExtInt12(void);
-void callback_ExtInt13(void);
-void callback_ExtInt14(void);
-void callback_ExtInt15(void);
-
-//void EXTI0_IRQHandler(void);
-//void EXTI1_IRQHandler(void);
-//void EXTI2_IRQHandler(void);
-//void EXTI3_IRQHandler(void);
-//void EXTI4_IRQHandler(void);
-//void EXTI9_5_IRQHandler(void);
-//void EXTI15_10_IRQHandler(void);
+/*for testing asserrt parameters -checking basic configuration */
+//#define IS_TIMER_INTERRUP(VALUE) 	(((VALUE) == TIMER_INT_DISABLE) ||((VALUE)==TIMER_INT_ENABLE))
+//
+//#define IS_TIMER_MODE(VALUE)		(((VALUE) == TIMER_UP_COUNTER) ||((VALUE)==TIMER_DOWN_COUNTER))
+//
+//#define IS_TIMER_STATE(VALUE)		(((VALUE) == TIMER_OFF) ||((VALUE)==TIMER_ON))
+//
+//#define IS_TIMER_PRESC(VALUE)		(((uint32_t)VALUE)>1 && ((uint32_t)VALUE)<0xFFFE)
+//
+//#define IS_TIMER_PERIOD(PERIOD)		(((uint32_t)PERIOD)>1)
+//
+//void timer_Config(Timer_Handler_t *pTimerHandler);
+//void timer_SetState(Timer_Handler_t *pTimerHandler, uint8_t newState);
+//
+///* Esta funcion debe ser sobre-escrrita en el main para que el sistema funcione */
+//void Timer2_Callback(void);
+//void Timer3_Callback(void);
+//void Timer4_Callback(void);
+//void Timer5_Callback(void);
 
 
-#endif /* EXTI_DRIVER_HAL_H_ */
+
+#endif /* SYSTICK_DRIVER_H_ */

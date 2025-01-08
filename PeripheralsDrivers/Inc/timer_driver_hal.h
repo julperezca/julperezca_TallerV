@@ -2,7 +2,7 @@
  * timer_driver_hal.h
  *
  * Created on:
- *  	Author: Julián
+ *  	Author: julperezca
  */
 
 

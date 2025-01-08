@@ -15,7 +15,7 @@
 
 
 	/* GPIO handler y TIMER para el led de estado */
-GPIO_Handler_t ledState	 	= {0}; 		// PinB14
+GPIO_Handler_t  ledState     = {0}; 		// PinB14
 Timer_Handler_t blinkyTimer	 = {0}; 	// TIM2 Led de estado
 
 	/* GPIO handler para led RGB*/
@@ -32,13 +32,13 @@ GPIO_Handler_t segmentE 		= {0}; 		// PinC11 segmento e
 GPIO_Handler_t segmentF 	 	= {0}; 		// PinA11 segmento f
 GPIO_Handler_t segmentG 	 	= {0}; 		// PinB7  segmento g
 
-
 	/* GPIO handler y TIMER para los transistores  */
 GPIO_Handler_t digitoUnidad 	 	= {0}; 		// PinC5
 GPIO_Handler_t digitoDecena			= {0}; 		// PinC6
 GPIO_Handler_t digitoCentena 		= {0}; 		// PinC10
 GPIO_Handler_t digitoUnMillar 		= {0}; 		// PinD2
 Timer_Handler_t transistorsTimer	= {0}; 		// TIM3 para los transistores
+
 	/* GPIO y EXTI para el CLK del encoder*/
 GPIO_Handler_t userClock 			= {0}; 		// PinB2
 EXTI_Config_t extiClock	 			= {0}; 		// EXTI2
@@ -49,6 +49,7 @@ EXTI_Config_t extiSwitch 			= {0}; 		// EXTI15
 
 	/* GPIO handler para el DT del encoder*/
 GPIO_Handler_t userData 			= {0}; 		// PinB1
+
 
 /* Variables globales */
 uint8_t digit = 1;  			// Variable que indica qué transistor está activo
@@ -70,12 +71,12 @@ enum {
 };
 
 /*  */
-extern void configMagic(void);  		// Función del magic para
+extern void configMagic(void);  		// Config del Magic para comunicación serial-coolTerm
 void rgbModeSelection(void);			// Función que selecciona el modo del led RGB
 void init_Config(void);					// Función que inicia la config. de los pines, timers y EXTI
 void numberSelection(uint8_t number);	// Función que selecciona los segmentos encendidos
-void digitSelection(uint8_t digit);		// Función que elige que transistor encender
-void dirOfRotation(void); 				// Función encargada de el sentido de rotation y el valor de la misma
+void digitSelection(uint8_t digit);		// Función que elige el transistor a encender
+void dirOfRotation(void); 				// Función encargada del sentido de rotation y el valor de la misma
 
 
 /*
@@ -85,6 +86,7 @@ int main (void){
 	configMagic();  // Se inicia la configuracion de Magic
 	init_Config();	// Se inicia la configuracion del sistema
 
+	/* loop */
 
 	while(1){
 
@@ -167,7 +169,6 @@ void init_Config(void){
 	timer_SetState(&blinkyTimer, TIMER_ON);
 
 		/* FIN de configuración de Led de estado y su timer */
-
 
 
 			/* Se configuran los pines para el led RGB */
@@ -378,6 +379,8 @@ void Timer3_Callback(void){
 /* Callback de la interrupcion del pin B2 que corresponde al Clk */
 void callback_ExtInt2(void){
 	rotationFlag = 1;
+
+	// Se lee el valor del data y clock para determinar el giro en sentido CW o CCW
 	data = gpio_ReadPin(&userData);
 	clock = gpio_ReadPin(&userClock);
 	// Schmitd trigger niega el valor del CLK y DT del encoder.
