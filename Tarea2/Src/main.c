@@ -5,14 +5,15 @@
  * @brief          : Tarea 2. Drivers GPIO, EXTI, TIMERS, magicProject.
  ******************************************************************************
  */
+#include <main.h>
 #include <stdio.h>
 #include <stdint.h>
 #include "stm32f4xx.h"
-#include "gpio_driver_hal.h"
 #include "stm32_assert.h"
 #include "exti_driver_hal.h"
 #include "timer_driver_hal.h"
 #include "systick_driver.h"
+
 
 
 	/* GPIO handler y TIMER para el led de estado */
