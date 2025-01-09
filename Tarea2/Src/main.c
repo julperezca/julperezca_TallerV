@@ -12,6 +12,7 @@
 #include "stm32_assert.h"
 #include "exti_driver_hal.h"
 #include "timer_driver_hal.h"
+#include "systick_driver.h"
 
 
 	/* GPIO handler y TIMER para el led de estado */
@@ -51,6 +52,7 @@ EXTI_Config_t extiSwitch 			= {0}; 		// EXTI15
 GPIO_Handler_t userData 			= {0}; 		// PinB1
 
 
+
 /* Variables globales */
 uint8_t digit = 1;  			// Variable que indica qué transistor está activo
 uint8_t data = 0;				// Variable que almacena el estado del DT del encoder
@@ -77,7 +79,7 @@ void init_Config(void);					// Función que inicia la config. de los pines, time
 void numberSelection(uint8_t number);	// Función que selecciona los segmentos encendidos
 void digitSelection(uint8_t digit);		// Función que elige el transistor a encender
 void dirOfRotation(void); 				// Función encargada del sentido de rotation y el valor de la misma
-
+void disableTransistors(void);			// Función encargada de apagar los transistores para evitar el "fantasma"
 
 /*
  * The main function, where everything happens.
@@ -90,26 +92,31 @@ int main (void){
 
 	while(1){
 
+		// Modificación del modo del LED RGB si se alza la bandera
+		// print en CoolTerm del tiempo en ms
+		if (rgbFlag){
+			uint32_t currentTime = ticksNumber(); 				// se guarda el valor de los ticks en la variable currentTime
+			printf("Current time value: %lu\n", currentTime);	// se imprime el tiempo cada vez que se oprime el boton
+			rgbModeSelection();									// Se cambia el estado del Led RGB
+			rgbFlag = 0;										// Se baja la bandera
+		}
+
 		// Toogle del led de estado
 		if (ledStateFlag){
 			gpio_TooglePin(&ledState);
 			ledStateFlag = 0;
 		}
-		// Modificación del modo del LED RGB si se alza la bandera
-		if (rgbFlag){
-			rgbModeSelection();
-			rgbFlag = 0;
-		}
+
 		// Switching de los transistores
 		if (digitFlag){
-			numberSelection(10); 	//
-			digitSelection(5);		// Se apagan los transistores
-			digitFlag = 0;
 
-			// Se alza la bandera de rotacoion y se determina el valor + sentido de giro
+			digitFlag = 0;
+			disableTransistors();		// Se apagan los transistores
+
+			// Se alza la bandera de rotacción y se determina el valor + sentido de giro
 			if (rotationFlag){
-				dirOfRotation();
-				rotationFlag = 0;
+				dirOfRotation();	// Cambia la variable global rotationCounter para mostrar en el display
+				rotationFlag = 0;	// Se baja la bandera
 			}
 
 			// Casos donde se descompone el valor de rotationCounter y se asigna a cada transistor
@@ -135,11 +142,11 @@ int main (void){
 			}
 
 			digitSelection(digit);  // Se enciende el digito con el numero seleccionado
-			digit++;
+			digit++;				// Pasamos al siguiente digito
 
 			// El desborde del digito lo reinicia
 			if (digit == 5){
-				digit = 1;
+				digit = 1;			// Reiniciamos al digito 1 (unidad)
 			}
 		}
     }
@@ -356,7 +363,14 @@ void init_Config(void){
 			/* FIN de GPIO and EXTI config */
 
 
-	// Inicialmente el pin de estado está encendido
+			/* Se configura el SysTick con la señal de reloj de 16 MHz	*/
+
+	systickConfig();
+
+			/* FIN del SysTick config*/
+
+
+	// Inicialmente led de estado está encendido
 	gpio_WritePin(&ledState, SET);
 
 	// Inicia con los digitos apagados
@@ -395,7 +409,6 @@ void callback_ExtInt15(void){
 void dirOfRotation(void){
 	// si data es cero, se gira en sentido CW y aumenta el valor del contador hasta 4095 y luego 0
 	if(data == 0){
-		printf("Giro CW\n");
 		rotationCounter++;
 			if (rotationCounter == 4096){
 				rotationCounter = 0;
@@ -403,7 +416,6 @@ void dirOfRotation(void){
 		}
 	// si data es uno, se gira en sentido CCW y disminuye el valor del contador hasta 0 y luego 4095
 	else if(data == 1){
-		printf("Giro CCW\n");
 		rotationCounter--;
 		if (rotationCounter == -1){
 			rotationCounter = 4095;
@@ -516,14 +528,18 @@ void digitSelection(uint8_t digit){
 			gpio_WritePin(&digitoUnMillar, ON);
 			break;
 			}
-		case 5:{
-			gpio_WritePin(&digitoUnidad, OFF);
-			gpio_WritePin(&digitoDecena, OFF);
-			gpio_WritePin(&digitoCentena, OFF);
-			gpio_WritePin(&digitoUnMillar, OFF);
+		default:{
 			break;
-			}
+		}
 	}
+}
+
+/* Función que apaga los transistores para evitar el ghosting */
+void disableTransistors(void){
+	gpio_WritePin(&digitoUnidad, OFF);
+	gpio_WritePin(&digitoDecena, OFF);
+	gpio_WritePin(&digitoCentena, OFF);
+	gpio_WritePin(&digitoUnMillar, OFF);
 }
 
 /* Funcion que selecciona los segmentos para asignar un numero en el display */
@@ -644,6 +660,8 @@ void numberSelection(uint8_t number){
 			}
 	}
 }
+
+
 /*
  * Esta función sirve para detectar problemas de parametros
  * incorrectos al momento de ejecutar un programa.
