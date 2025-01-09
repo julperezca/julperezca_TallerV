@@ -6,21 +6,15 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../Src/magic.c \
-../Src/main.c \
-../Src/syscalls.c \
-../Src/sysmem.c 
+../Src/main.c 
 
 OBJS += \
 ./Src/magic.o \
-./Src/main.o \
-./Src/syscalls.o \
-./Src/sysmem.o 
+./Src/main.o 
 
 C_DEPS += \
 ./Src/magic.d \
-./Src/main.d \
-./Src/syscalls.d \
-./Src/sysmem.d 
+./Src/main.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
@@ -30,7 +24,7 @@ Src/%.o Src/%.su: ../Src/%.c Src/subdir.mk
 clean: clean-Src
 
 clean-Src:
-	-$(RM) ./Src/magic.d ./Src/magic.o ./Src/magic.su ./Src/main.d ./Src/main.o ./Src/main.su ./Src/syscalls.d ./Src/syscalls.o ./Src/syscalls.su ./Src/sysmem.d ./Src/sysmem.o ./Src/sysmem.su
+	-$(RM) ./Src/magic.d ./Src/magic.o ./Src/magic.su ./Src/main.d ./Src/main.o ./Src/main.su
 
 .PHONY: clean-Src
 

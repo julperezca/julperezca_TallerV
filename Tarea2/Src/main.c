@@ -52,19 +52,19 @@ EXTI_Config_t extiSwitch 			= {0}; 		// EXTI15
 	/* GPIO handler para el DT del encoder*/
 GPIO_Handler_t userData 			= {0}; 		// PinB1
 
-
+fsm_RGB_t fsm_RGB = {0};
+fsm_transistor_t fsm_transistor = {0};
+fsm_segments_t fsm_segments = {0};
 
 /* Variables globales */
-uint8_t digit = 1;  			// Variable que indica qué transistor está activo
 uint8_t data = 0;				// Variable que almacena el estado del DT del encoder
 uint8_t clock = 0;				// Variable que almacena el estado el CLK del encoder
-uint8_t counterSwitching = 0;	// Variable que almacena el valor del SW del encoder
 int16_t rotationCounter = 0;	// Variable que es mostrada en el display (giros del encoder)
-uint8_t rgbFlag = 0;			// Bandera de la interrupción del led RGB
-uint8_t digitFlag = 0;			// Bandera del timer3 para cambiar de transistor activo
-uint8_t rotationFlag = 0;		// Bandera  indicativa de una rotation del encoder
-uint8_t ledStateFlag = 0;		// Bandera del led de estado
-
+//uint8_t rgbFlag = 0;			// Bandera de la interrupción del led RGB
+//uint8_t digitFlag = 0;			// Bandera del timer3 para cambiar de transistor activo
+//uint8_t rotationFlag = 0;		// Bandera  indicativa de una rotation del encoder
+//uint8_t ledStateFlag = 0;		// Bandera del led de estado
+uint8_t flags = 0;
 
 
 /* Estado de los transistores y segmentos */
@@ -75,13 +75,13 @@ enum {
 
 /*  */
 extern void configMagic(void);  		// Config del Magic para comunicación serial-coolTerm
-void rgbModeSelection(void);			// Función que selecciona el modo del led RGB
+void fsm_rgb_modeSelection(void);			// Función que selecciona el modo del led RGB
 void init_Config(void);					// Función que inicia la config. de los pines, timers y EXTI
-void numberSelection(uint8_t number);	// Función que selecciona los segmentos encendidos
-void digitSelection(uint8_t digit);		// Función que elige el transistor a encender
+void numberSelection(uint8_t displayNumber);	// Función que selecciona los segmentos encendidos
 void dirOfRotation(void); 				// Función encargada del sentido de rotation y el valor de la misma
 void disableTransistors(void);			// Función encargada de apagar los transistores para evitar el "fantasma"
-
+void fsm_digit_selection(void);
+void fsm_segmentsHandler(void);
 /*
  * The main function, where everything happens.
  */
@@ -97,8 +97,8 @@ int main (void){
 		// print en CoolTerm del tiempo en ms
 		if (rgbFlag){
 			uint32_t currentTime = ticksNumber(); 				// se guarda el valor de los ticks en la variable currentTime
-			printf("Current time value: %lu\n", currentTime);	// se imprime el tiempo cada vez que se oprime el boton
-			rgbModeSelection();									// Se cambia el estado del Led RGB
+			printf("Current time value in ms: %lu\n", currentTime);	// se imprime el tiempo cada vez que se oprime el boton
+			fsm_rgb_modeSelection();									// Se cambia el estado del Led RGB
 			rgbFlag = 0;										// Se baja la bandera
 		}
 
@@ -120,35 +120,9 @@ int main (void){
 				rotationFlag = 0;	// Se baja la bandera
 			}
 
-			// Casos donde se descompone el valor de rotationCounter y se asigna a cada transistor
-			switch (digit){
-			case 1:{
-				numberSelection(rotationCounter%10); // Unidades del valor mostrado
-			break;
-			}
-			case 2:{
-				numberSelection((rotationCounter/10)%10); // Decenas del valor mostrado
-			break;
-			}
-			case 3:{
-				numberSelection((rotationCounter/100)%10); // Centenas del valor mostrado
-			break;
-			}
-			case 4:{
-				numberSelection((rotationCounter/1000)%10); // Un millar del valor mostrado
-			break;
-			}
-			default:
-				break;
-			}
+			fsm_segmentsHandler();
 
-			digitSelection(digit);  // Se enciende el digito con el numero seleccionado
-			digit++;				// Pasamos al siguiente digito
 
-			// El desborde del digito lo reinicia
-			if (digit == 5){
-				digit = 1;			// Reiniciamos al digito 1 (unidad)
-			}
 		}
     }
 }
@@ -379,21 +353,27 @@ void init_Config(void){
 	gpio_WritePin(&digitoDecena, OFF);
 	gpio_WritePin(&digitoCentena, OFF);
 	gpio_WritePin(&digitoUnMillar, OFF);
+
+	//fsm_RGB.stateRGB = RED_STATE;
+	fsm_transistor.transState = UNIT;
 }
 
 /* Callback del blinkytimer alterna el estado del ledState */
 void Timer2_Callback(void){
-	ledStateFlag = 1;
+//	ledStateFlag = 1;
+	flags |= 0x1;
 }
 
 /* Callback del timer que enciende y apaga los transistores */
 void Timer3_Callback(void){
-	digitFlag = 1;
+//	digitFlag = 1;
+	flags |= 0x2;
 }
 
 /* Callback de la interrupcion del pin B2 que corresponde al Clk */
 void callback_ExtInt2(void){
-	rotationFlag = 1;
+//	rotationFlag = 1;
+	flags |= 0x4;
 
 	// Se lee el valor del data y clock para determinar el giro en sentido CW o CCW
 	data = gpio_ReadPin(&userData);
@@ -403,8 +383,36 @@ void callback_ExtInt2(void){
 
 /* Callback de la interrupcion del Switch SW del encoder que controla el Led RGB */
 void callback_ExtInt15(void){
-	rgbFlag = 1;
+//	rgbFlag = 1;
+	flags |= 0x8;
 }
+
+
+
+void fsm_segmentsHandler(void){
+    switch (fsm_transistor.transState) {
+        case UNIT:
+            numberSelection(rotationCounter % 10);
+            break;
+        case TENS:
+            numberSelection((rotationCounter / 10) % 10);
+            break;
+        case ONE_HUNDRED:
+            numberSelection((rotationCounter / 100) % 10);
+            break;
+        case ONE_THOUSAND:
+            numberSelection((rotationCounter / 1000) % 10);
+            break;
+        default:
+            break;
+    }
+    fsm_digit_selection();
+}
+
+
+
+
+
 
 /* Funcion que determina el sentido de giro y aumenta o disminuye el valor */
 void dirOfRotation(void){
@@ -425,71 +433,71 @@ void dirOfRotation(void){
 }
 
 /* Funcion para  seleccionar los modos del Led RGB */
-void rgbModeSelection(void){
+void fsm_rgb_modeSelection(void){
 	// Cada que ingresa en un case se aumenta el valor del counter siguiendo la secuencia indicada
-	switch (counterSwitching){
+	switch (fsm_RGB.stateRGB){
 		// Rojo
-		case 0:{
+		case RED_STATE:{
 			gpio_WritePin(&ledRed,SET);
 			gpio_WritePin(&ledGreen,RESET);
 			gpio_WritePin(&ledBlue,RESET);
-			counterSwitching++;
+			fsm_RGB.stateRGB = GREEN_STATE;
 			break;
 		}
 		// Verde
-		case 1:{
+		case GREEN_STATE:{
 			gpio_WritePin(&ledRed,RESET);
 			gpio_WritePin(&ledGreen,SET);
 			gpio_WritePin(&ledBlue,RESET);
-			counterSwitching++;
+			fsm_RGB.stateRGB = BLUE_STATE;
 			break;
 		}
 		// Azul
-		case 2:{
+		case BLUE_STATE:{
 			gpio_WritePin(&ledRed,RESET);
 			gpio_WritePin(&ledGreen,RESET);
 			gpio_WritePin(&ledBlue,SET);
-			counterSwitching++;
+			fsm_RGB.stateRGB = BLUE_GREEN_STATE;
 			break;
 		}
 		// Azul + verde
-		case 3:{
+		case BLUE_GREEN_STATE:{
 			gpio_WritePin(&ledRed,RESET);
 			gpio_WritePin(&ledGreen,SET);
 			gpio_WritePin(&ledBlue,SET);
-			counterSwitching++;
+			fsm_RGB.stateRGB = BLUE_RED_STATE;
 			break;
 		}
 		// Azul + rojo
-		case 4:{
+		case BLUE_RED_STATE:{
 			gpio_WritePin(&ledRed,SET);
 			gpio_WritePin(&ledGreen,RESET);
 			gpio_WritePin(&ledBlue,SET);
-			counterSwitching++;
+			fsm_RGB.stateRGB = RED_GREEN_STATE;
 			break;
 		}
 		// Rojo + verde
-		case 5:{
+		case RED_GREEN_STATE:{
 			gpio_WritePin(&ledRed,SET);
 			gpio_WritePin(&ledGreen,SET);
 			gpio_WritePin(&ledBlue,RESET);
-			counterSwitching++;
+			fsm_RGB.stateRGB = RED_GREEN_BLUE_STATE;
 			break;
 		}
 		// Rojo + verde + azul = blanco
-		case 6:{
+		case RED_GREEN_BLUE_STATE:{
 			gpio_WritePin(&ledRed,SET);
 			gpio_WritePin(&ledGreen,SET);
 			gpio_WritePin(&ledBlue,SET);
-			counterSwitching++;
+			fsm_RGB.stateRGB = DISABLE_STATE;
 			break;
 		}
 		// Apagado
-		case 7:{
+		case DISABLE_STATE:{
 			gpio_WritePin(&ledRed,RESET);
 			gpio_WritePin(&ledGreen,RESET);
 			gpio_WritePin(&ledBlue,RESET);
-			counterSwitching = 0;
+			fsm_RGB.stateRGB = RED_STATE;
 			break;
 		}
 		default:{
@@ -499,36 +507,42 @@ void rgbModeSelection(void){
 }
 
 /* Funcion para seleccionar el digito en uso */
-void digitSelection(uint8_t digit){
-	switch (digit) {
-		case 1:{
+void fsm_digit_selection(void){
+
+	switch (fsm_transistor.transState) {
+		case UNIT:{
 			gpio_WritePin(&digitoUnidad, ON);
 			gpio_WritePin(&digitoDecena, OFF);
 			gpio_WritePin(&digitoCentena, OFF);
 			gpio_WritePin(&digitoUnMillar, OFF);
+			fsm_transistor.transState = TENS;
 			break;
 			}
-		case 2:{
+		case TENS:{
 			gpio_WritePin(&digitoUnidad, OFF);
 			gpio_WritePin(&digitoDecena, ON);
 			gpio_WritePin(&digitoCentena, OFF);
 			gpio_WritePin(&digitoUnMillar, OFF);
+			fsm_transistor.transState = ONE_HUNDRED;
 			break;
 			}
-		case 3:{
+		case ONE_HUNDRED:{
 			gpio_WritePin(&digitoUnidad, OFF);
 			gpio_WritePin(&digitoDecena, OFF);
 			gpio_WritePin(&digitoCentena, ON);
 			gpio_WritePin(&digitoUnMillar, OFF);
+			fsm_transistor.transState = ONE_THOUSAND;
 			break;
 			}
-		case 4:{
+		case ONE_THOUSAND:{
 			gpio_WritePin(&digitoUnidad, OFF);
 			gpio_WritePin(&digitoDecena, OFF);
 			gpio_WritePin(&digitoCentena, OFF);
 			gpio_WritePin(&digitoUnMillar, ON);
+			fsm_transistor.transState = UNIT;
 			break;
 			}
+
 		default:{
 			break;
 		}
@@ -544,8 +558,8 @@ void disableTransistors(void){
 }
 
 /* Funcion que selecciona los segmentos para asignar un numero en el display */
-void numberSelection(uint8_t number){
-	switch (number) {
+void numberSelection(uint8_t displayNumber){
+	switch (displayNumber) {
 		case 0:{
 			gpio_WritePin(&segmentA, ON);
 			gpio_WritePin(&segmentB, ON);

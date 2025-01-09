@@ -48,6 +48,7 @@ int main(void)
 			printf("Wrong key...\n");
 		}
 	}
+	return 1;
 }
 
 
@@ -56,6 +57,7 @@ int main(void)
 
 void initProgram(void){
 	fsm_torniquete.state = LOCKED;
+
 }
 
 /**/

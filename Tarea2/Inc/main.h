@@ -13,7 +13,7 @@
 #include <stm32f4xx.h>
 
 
-
+/* Enumeración de estados del led RGB para Finite State Machine */
 typedef enum
 {
 	RED_STATE,
@@ -26,12 +26,28 @@ typedef enum
 	DISABLE_STATE
 }led_RGBState;
 
+/* Estructura con el uso de la finite state para led RGB */
+typedef struct
+{
+	led_RGBState stateRGB;
+}fsm_RGB_t;
+
+
+
+
+typedef enum
+{
+	UNIT,
+	TENS,
+	ONE_HUNDRED,
+	ONE_THOUSAND,
+	DISABLE_TRANSISTOR
+} transistor_state;
 
 typedef struct
 {
-	uint16_t stateRGB_Counter;
-	led_RGBState stateRGB;
-}fsm_RGB_t;
+	transistor_state transState;
+}fsm_transistor_t;
 
 
 
@@ -39,15 +55,25 @@ typedef struct
 
 typedef enum
 {
-	ON_STATE,
-	OFF_STATE
-} led_blinkState;
+	ZERO,
+	ONE,
+	TWO,
+	THREE,
+	FOUR,
+	FIVE,
+	SIX,
+	SEVEN,
+	EIGHT,
+	NINE
+} segments_State;
 
 typedef struct
 {
-	uint16_t stateBlinkyCounter;
-	led_blinkState blinkState;
-}fsm_blink_t;
+	segments_State segmentState;
+}fsm_segments_t;
+
+
+
 
 
 
