@@ -12,8 +12,27 @@
 #include <stdint.h>
 #include <stm32f4xx.h>
 
+			/* ******************* */
 
-/* Enumeración de estados del led RGB para Finite State Machine */
+
+	/* Enumeración de los estados de la FSM*/
+typedef enum
+{
+	USER_LED_STATE,
+	LED_RGB_STATE,
+	DISPLAY_VALUE_STATE
+} fsm_State;
+
+	/* Estructura  que maneja de la fsm del loop principal */
+typedef struct
+{
+	fsm_State fsmState;
+}fsm_t;
+
+			/* ******************* */
+
+
+	/* Enumeración de estados del led RGB para Finite State Machine */
 typedef enum
 {
 	RED_STATE,
@@ -26,15 +45,17 @@ typedef enum
 	DISABLE_STATE
 }led_RGBState;
 
-/* Estructura con el uso de la finite state para led RGB */
+
+	/* Estructura que maneja el led RGB*/
 typedef struct
 {
 	led_RGBState stateRGB;
 }fsm_RGB_t;
 
+			/* ******************* */
 
 
-
+	/* Enumeración para los digitos del display*/
 typedef enum
 {
 	UNIT,
@@ -44,15 +65,16 @@ typedef enum
 	DISABLE_TRANSISTOR
 } transistor_state;
 
+	/* Estructura que maneja los transistores */
 typedef struct
 {
 	transistor_state transState;
 }fsm_transistor_t;
 
+			/* ******************* */
 
 
-
-
+	/* Enumeración de los estados de los segmentos*/
 typedef enum
 {
 	ZERO,
@@ -67,33 +89,29 @@ typedef enum
 	NINE
 } segments_State;
 
+	/* Estructura que maneja los segmentos */
 typedef struct
 {
 	segments_State segmentState;
 }fsm_segments_t;
 
+			/* ******************* */
 
 
-
-
-
-
-
-
-
+	/* Enumeración de los estados de rotación*/
 typedef enum
 {
 	CW_STATE,
 	CCW_STATE
 } rotation_State;
 
+ 	/* Estructura que maneja los estados de rotación */
 typedef struct
 {
-	uint16_t rotationStateCounter;
 	rotation_State rotationState;
 }fsm_rotation_t;
 
-
+			/* ******************* */
 
 
 
