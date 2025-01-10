@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include <stm32f4xx.h>
 
+#define MAX_12_BITS 0xFFF  //Numero máximo del display
+
 			/* ******************* */
 
 
