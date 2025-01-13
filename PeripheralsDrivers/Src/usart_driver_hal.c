@@ -1,8 +1,8 @@
 /*
  * usart_driver_hal.c
  *
- *  Created on: Oct 5, 2023
- *      Author: ingfisica
+ *  Created on: January, 2025
+ *      Author: Julián Pérez Carvajal (julperezca@unal.edu.co)
  */
 
 #include "stm32f4xx.h"
@@ -71,7 +71,6 @@ void usart_Config(USART_Handler_t *ptrUsartHandler){
 
 	// 2.8 Verificamos la configuración de las interrupciones
 	usart_config_interrupt(ptrUsartHandler);
-
 	// 2.7 Activamos el modulo serial.
 	usart_enable_peripheral(ptrUsartHandler);
 
@@ -292,41 +291,53 @@ static void usart_config_mode(USART_Handler_t *ptrUsartHandler){
 		ptrUsartHandler->ptrUSARTx->CR1 &= ~USART_CR1_UE;
 		break;
 	}
+	}
 }
-
 
 /**
  *
  */
 static void usart_config_interrupt(USART_Handler_t *ptrUsartHandler){
+
 	// 2.8a Interrupción por recepción
 	if(ptrUsartHandler->USART_Config.enableIntRX == USART_RX_INTERRUP_ENABLE){
 		// Como está activada, debemos configurar la interrupción por recepción
 		/* Debemos activar la interrupción RX en la configuración del USART */
 		ptrUsartHandler->ptrUSARTx->CR1 |= USART_CR1_RXNEIE;
 
-		/* Debemos matricular la interrupción en el NVIC */
-		/* Lo debemos hacer para cada uno de las posibles opciones que tengamos (USART1, USART2, USART6) */
-		if(ptrUsartHandler->ptrUSARTx == USART1){
-			__NVIC_EnableIRQ(USART1_IRQn);
-			__NVIC_SetPriority(USART1_IRQn, 2);
-		}
-
-		else if(ptrUsartHandler->ptrUSARTx == USART2){
-			__NVIC_EnableIRQ(USART2_IRQn);
-			__NVIC_SetPriority(USART2_IRQn, 2);
-		}
-
-		else if(ptrUsartHandler->ptrUSARTx == USART6){
-			__NVIC_EnableIRQ(USART6_IRQn);
-			__NVIC_SetPriority(USART6_IRQn, 2);
-		}
 	}
 	else{
 		// Desactivamos la interrupción
 		ptrUsartHandler->ptrUSARTx->CR1 &= ~USART_CR1_RXNEIE;
 	}
 
+
+	// Intrrupción por transmisión
+	/* TX Interupt no empty */
+	if (ptrUsartHandler->USART_Config.enableIntTX == USART_TX_INTERRUP_ENABLE){
+		ptrUsartHandler->ptrUSARTx->CR1 |= USART_CR1_TXEIE;
+	}
+	else{
+		ptrUsartHandler->ptrUSARTx->CR1 &= ~USART_CR1_TXEIE;
+
+	}
+
+
+	/* Debemos matricular la interrupción en el NVIC */
+	/* Lo debemos hacer para cada uno de las posibles opciones que tengamos (USART1, USART2, USART6) */
+	if(ptrUsartHandler->ptrUSARTx == USART1){
+		__NVIC_EnableIRQ(USART1_IRQn);
+		__NVIC_SetPriority(USART1_IRQn, 2);
+	}
+
+	else if(ptrUsartHandler->ptrUSARTx == USART2){
+		__NVIC_EnableIRQ(USART2_IRQn);
+		__NVIC_SetPriority(USART2_IRQn, 2);
+	}
+
+	else if(ptrUsartHandler->ptrUSARTx == USART6){
+		__NVIC_EnableIRQ(USART6_IRQn);
+		__NVIC_SetPriority(USART6_IRQn, 2);
 	}
 }
 
@@ -344,12 +355,13 @@ static void usart_enable_peripheral(USART_Handler_t *ptrUsartHandler){
  * función para escribir un solo char
  */
 int usart_WriteChar(USART_Handler_t *ptrUsartHandler, int dataToSend ){
-	while( !(ptrUsartHandler->ptrUSARTx->SR & USART_SR_TXE)){
-		__NOP();
-	}
-
-	// Escriba acá su código
-
+	// Loop hasta que el SR tenga el TX empty en 1
+	while( !(ptrUsartHandler->ptrUSARTx->SR & USART_SR_TXE)){  	// ! SR & USART_SR_TXE, SR debe estar con 1 en
+		__NOP();												// el bit 7, TXE == 1, cuando eso pase, el TDR
+	}															// estará vacío, y listo para escribir el caracter
+																// dado el caso donde sea llamada la función
+	ptrUsartHandler->ptrUSARTx->DR = dataToSend;				// y TXE = 0,  el while hará la espera para
+																// escribir el siguiente caracter
 	return dataToSend;
 }
 
@@ -357,6 +369,11 @@ int usart_WriteChar(USART_Handler_t *ptrUsartHandler, int dataToSend ){
  *
  */
 void usart_writeMsg(USART_Handler_t *ptrUsartHandler, char *msgToSend ){
+	int i = 0;
+	while(msgToSend[i] != '\0' ){  // mientras que sea diferente  del último elemento que indica la terminación
+		usart_WriteChar(ptrUsartHandler, msgToSend[i]);
+		i++;
+	}
 
 }
 
@@ -369,7 +386,9 @@ uint8_t usart_getRxData(void){
  */
 void USART2_IRQHandler(void){
 	// Evaluamos si la interrupción que se dio es por RX
-    // Escriba acá su código
+   	if (USART2->SR & USART_SR_RXNE){
+   		auxRxData = (uint8_t) USART2->DR;
+   	}
 }
 
 /* Handler de la interrupción del USART
@@ -377,15 +396,19 @@ void USART2_IRQHandler(void){
  */
 void USART6_IRQHandler(void){
 	// Evaluamos si la interrupción que se dio es por RX
-    // Escriba acá su código
-}
+   	if (USART6->SR & USART_SR_RXNE){
+   		auxRxData = (uint8_t) USART6->DR;
+   	}
+
 
 /* Handler de la interrupción del USART
  * Acá deben estar todas las interrupciones asociadas: TX, RX, PE...
  */
 void USART1_IRQHandler(void){
 	// Evaluamos si la interrupción que se dio es por RX
-    // Escriba acá su código
+   	if (USART2->SR & USART_SR_RXNE){
+   		auxRxData = (uint8_t) USART2->DR;
+   	}
 }
 
 
