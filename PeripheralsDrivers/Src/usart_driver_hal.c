@@ -50,9 +50,9 @@ void usart_Config(USART_Handler_t *ptrUsartHandler){
 	// 2.1 Comienzo por limpiar los registros, para cargar la configuración desde cero
 	ptrUsartHandler->ptrUSARTx->CR1 = 0;
 	ptrUsartHandler->ptrUSARTx->CR2 = 0;
-
 	// Limpiamos el registro DR
 	//ptrUsartHandler->ptrUSARTx->DR = 0;
+
 
 	// 2.2 Configuracion del Parity:
 	usart_config_parity(ptrUsartHandler);
@@ -76,6 +76,7 @@ void usart_Config(USART_Handler_t *ptrUsartHandler){
 
 	/* x. Volvemos a activar las interrupciones del sistema */
 	__enable_irq();
+
 }
 
 
@@ -109,7 +110,7 @@ static void usart_enable_clock_peripheral(USART_Handler_t *ptrUsartHandler){
 static void usart_config_parity(USART_Handler_t *ptrUsartHandler){
 	// Verificamos si el parity esta activado o no
     // Tenga cuidado, el parity hace parte del tamaño de los datos...
-
+	ptrUsartHandler->ptrUSARTx->CR1 &= ~(0b11<<9);
 	if(ptrUsartHandler->USART_Config.parity != USART_PARITY_NONE){
 		ptrUsartHandler->ptrUSARTx->CR1 |= USART_CR1_PCE;
 		// Verificamos si se ha seleccionado ODD or EVEN
@@ -156,17 +157,18 @@ static void usart_config_datasize(USART_Handler_t *ptrUsartHandler){
  *
  */
 static void usart_config_stopbits(USART_Handler_t *ptrUsartHandler){
+	ptrUsartHandler->ptrUSARTx->CR2 &= ~USART_CR2_STOP;
 	switch(ptrUsartHandler->USART_Config.stopbits){
 	case USART_STOPBIT_1: {
 		// Debemos cargar el valor 0b00 en los dos bits de STOP
-		ptrUsartHandler->ptrUSARTx->CR2 |= ~USART_CR2_STOP;
+		ptrUsartHandler->ptrUSARTx->CR2 &= ~USART_CR2_STOP;
 		break;
 	}
 	case USART_STOPBIT_0_5: {
 		// Debemoscargar el valor 0b01 en los dos bits de STOP
 
 		// limpio primero para poder agregar el 01
-		ptrUsartHandler->ptrUSARTx->CR2 &= ~USART_CR2_STOP;
+
 
 		// agrego el valor 01
 		ptrUsartHandler->ptrUSARTx->CR2 |= USART_CR2_STOP_0;
@@ -177,7 +179,7 @@ static void usart_config_stopbits(USART_Handler_t *ptrUsartHandler){
 		// Debemoscargar el valor 0b10 en los dos bits de STOP
 
 		// limpio primero para poder agregar el 10
-		ptrUsartHandler->ptrUSARTx->CR2 &= ~USART_CR2_STOP;
+
 
 		// agrego el valor 10
 		ptrUsartHandler->ptrUSARTx->CR2 |= USART_CR2_STOP_1;
@@ -190,7 +192,7 @@ static void usart_config_stopbits(USART_Handler_t *ptrUsartHandler){
 	}
 	default: {
 		// En el casopor defecto seleccionamos 1 bit de parada
-		ptrUsartHandler->ptrUSARTx->CR2 |= ~USART_CR2_STOP;
+		ptrUsartHandler->ptrUSARTx->CR2 &= ~USART_CR2_STOP;
 		break;
 	}
 	}
@@ -304,13 +306,27 @@ static void usart_config_interrupt(USART_Handler_t *ptrUsartHandler){
 		// Como está activada, debemos configurar la interrupción por recepción
 		/* Debemos activar la interrupción RX en la configuración del USART */
 		ptrUsartHandler->ptrUSARTx->CR1 |= USART_CR1_RXNEIE;
+		/* Debemos matricular la interrupción en el NVIC */
+		/* Lo debemos hacer para cada uno de las posibles opciones que tengamos (USART1, USART2, USART6) */
+		if(ptrUsartHandler->ptrUSARTx == USART1){
+			__NVIC_EnableIRQ(USART1_IRQn);
+			__NVIC_SetPriority(USART1_IRQn, 2);
+		}
 
+		else if(ptrUsartHandler->ptrUSARTx == USART2){
+			__NVIC_EnableIRQ(USART2_IRQn);
+			__NVIC_SetPriority(USART2_IRQn, 2);
+		}
+
+		else if(ptrUsartHandler->ptrUSARTx == USART6){
+			__NVIC_EnableIRQ(USART6_IRQn);
+			__NVIC_SetPriority(USART6_IRQn, 2);
+		}
 	}
 	else{
 		// Desactivamos la interrupción
 		ptrUsartHandler->ptrUSARTx->CR1 &= ~USART_CR1_RXNEIE;
 	}
-
 
 	// Intrrupción por transmisión
 	/* TX Interupt no empty */
@@ -320,24 +336,6 @@ static void usart_config_interrupt(USART_Handler_t *ptrUsartHandler){
 	else{
 		ptrUsartHandler->ptrUSARTx->CR1 &= ~USART_CR1_TXEIE;
 
-	}
-
-
-	/* Debemos matricular la interrupción en el NVIC */
-	/* Lo debemos hacer para cada uno de las posibles opciones que tengamos (USART1, USART2, USART6) */
-	if(ptrUsartHandler->ptrUSARTx == USART1){
-		__NVIC_EnableIRQ(USART1_IRQn);
-		__NVIC_SetPriority(USART1_IRQn, 2);
-	}
-
-	else if(ptrUsartHandler->ptrUSARTx == USART2){
-		__NVIC_EnableIRQ(USART2_IRQn);
-		__NVIC_SetPriority(USART2_IRQn, 2);
-	}
-
-	else if(ptrUsartHandler->ptrUSARTx == USART6){
-		__NVIC_EnableIRQ(USART6_IRQn);
-		__NVIC_SetPriority(USART6_IRQn, 2);
 	}
 }
 
@@ -355,6 +353,7 @@ static void usart_enable_peripheral(USART_Handler_t *ptrUsartHandler){
  * función para escribir un solo char
  */
 int usart_WriteChar(USART_Handler_t *ptrUsartHandler, int dataToSend ){
+
 	// Loop hasta que el SR tenga el TX empty en 1
 	while( !(ptrUsartHandler->ptrUSARTx->SR & USART_SR_TXE)){  	// ! SR & USART_SR_TXE, SR debe estar con 1 en
 		__NOP();												// el bit 7, TXE == 1, cuando eso pase, el TDR
@@ -370,7 +369,7 @@ int usart_WriteChar(USART_Handler_t *ptrUsartHandler, int dataToSend ){
  */
 void usart_writeMsg(USART_Handler_t *ptrUsartHandler, char *msgToSend ){
 	int i = 0;
-	while(msgToSend[i] != '\0' ){  // mientras que sea diferente  del último elemento que indica la terminación
+	while(msgToSend[i] !='\0'){  // mientras que sea diferente  del último elemento que indica la terminación
 		usart_WriteChar(ptrUsartHandler, msgToSend[i]);
 		i++;
 	}
@@ -388,6 +387,7 @@ void USART2_IRQHandler(void){
 	// Evaluamos si la interrupción que se dio es por RX
    	if (USART2->SR & USART_SR_RXNE){
    		auxRxData = (uint8_t) USART2->DR;
+   		usart2_RxCallback();
    	}
 }
 
@@ -398,8 +398,9 @@ void USART6_IRQHandler(void){
 	// Evaluamos si la interrupción que se dio es por RX
    	if (USART6->SR & USART_SR_RXNE){
    		auxRxData = (uint8_t) USART6->DR;
+   		usart6_RxCallback();
    	}
-
+}
 
 /* Handler de la interrupción del USART
  * Acá deben estar todas las interrupciones asociadas: TX, RX, PE...
@@ -408,6 +409,7 @@ void USART1_IRQHandler(void){
 	// Evaluamos si la interrupción que se dio es por RX
    	if (USART2->SR & USART_SR_RXNE){
    		auxRxData = (uint8_t) USART2->DR;
+   		usart1_RxCallback();
    	}
 }
 

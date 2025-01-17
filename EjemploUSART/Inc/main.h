@@ -20,7 +20,6 @@
 	/* Enumeración de los estados de la FSM*/
 typedef enum
 {
-	STANDBY_STATE,
 	SW_BUTTON_STATE,
 	DISPLAY_VALUE_STATE
 } fsm_State;

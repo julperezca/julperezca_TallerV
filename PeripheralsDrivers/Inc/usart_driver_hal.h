@@ -102,6 +102,9 @@ void usart1_RxCallback(void);
 void usart2_RxCallback(void);
 void usart6_RxCallback(void);
 
+void USART1_IRQHandler(void);
+void USART2_IRQHandler(void);
+void USART6_IRQHandler(void);
 
 #endif /* USART_DRIVER_HAL_H_ */
 
