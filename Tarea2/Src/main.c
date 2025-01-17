@@ -41,11 +41,11 @@ GPIO_Handler_t digitoCentena 		= {0}; 		// PinC6
 GPIO_Handler_t digitoUnMillar 		= {0}; 		// PinC5
 Timer_Handler_t transistorsTimer	= {0}; 		// TIM3 para los transistores
 
-	/* GPIO y EXTI para el CLK del encoder*/
+	/* GPIO handler y EXTI config para el CLK del encoder*/
 GPIO_Handler_t userClock 			= {0}; 		// PinB2
 EXTI_Config_t extiClock	 			= {0}; 		// EXTI2
 
-	/* GPIO handler y EXTI para el SW del encoder*/
+	/* GPIO handler y EXTI config para el SW del encoder*/
 GPIO_Handler_t userSwitch 			= {0}; 		// PinB15
 EXTI_Config_t extiSwitch 			= {0}; 		// EXTI15
 
@@ -76,10 +76,10 @@ enum {
 };
 
 /* Declaración o prototipo de funciones */
-extern void configMagic(void);  				// Config del Magic para comunicación serial-coolTerm
-void fsm_rgb_modeSelection(void);				// Función que selecciona el modo del led RGB
+extern void configMagic(void);  				// Config del Magic para comunicación serial
+void fsm_rgb_modeSelection(void);				// Función que selecciona el color del led RGB
 void init_config(void);							// Función que inicia la config. de los pines, timers y EXTI
-void numberSelection(uint8_t displayNumber);	// Función que selecciona los segmentos encendidos
+void numberSelection(uint8_t displayNumber);	// Función que selecciona los segmentos encendidos, ingresa el valor a mostrar
 void fsm_rotation_handler(void); 				// Función encargada del sentido de rotation y el valor de la misma
 void disableTransistors(void);					// Función encargada de apagar los transistores para evitar el "fantasma"
 void fsm_display_handler(void);					// Función encargada de manejar el los transistores y cada segmento
@@ -97,7 +97,7 @@ int main (void){
 		/* Condicional para el alza de la bandera del Led de estado */
 		if (blinkyFlag){
 			gpio_TooglePin(&ledState);		// Alterna estado del led
-			blinkyFlag = 0;					// Se limpia la bandera del led de estado
+			blinkyFlag = 0;					// Se limpia la bandera del parpadeo del led
 		}
 
 
@@ -121,6 +121,7 @@ int main (void){
 
 
 	}
+	return 0;
 }
 
 
@@ -389,7 +390,7 @@ void state_machine_action(void){
 
 	case SW_BUTTON_STATE:
 		currentTime = ticksNumber(); 						// Se guarda el valor de los ticks
-		printf("Current time: %lu ms\n", currentTime);		// Se imprime el tiempo cada vez que se oprime el boton
+		printf("Current time: %lu ms\n", currentTime);		// Se imprime el tiempo de ejecución del programa
 		fsm_rgb_modeSelection();							// Se cambia el estado del Led RGB
 		break;
 
@@ -399,7 +400,7 @@ void state_machine_action(void){
 
 		/* Condicional para el alza de la bandera dada por el extiCLK */
 		if (rotationFlag){
-			fsm_rotation_handler();	 		 	 // Cambia la variable global rotationCounter para mostrar en el display
+			fsm_rotation_handler();	 		 	 // Actualiza rotationCounter para mostrar en el display
 			rotationFlag = 0;				     // Se baja la bandera
 		}
 		fsm_display_handler(); 			    	 // Función que enciende los segmentos y el transistor
@@ -499,7 +500,8 @@ void fsm_rotation_handler(void){
 
 /* Funcion para  seleccionar los modos del Led RGB */
 void fsm_rgb_modeSelection(void){
-	// Cada que ingresa en un case se aumenta el valor del counter siguiendo la secuencia indicada
+
+	// Cada que ingresa en un case se selecciona el siguiente estado del led rgb
 	switch (fsm_RGB.stateRGB){
 		// Rojo
 		case RED_STATE:{
@@ -599,7 +601,7 @@ void fsm_rgb_modeSelection(void){
 			gpio_WritePin(&ledGreen,RESET);
 			gpio_WritePin(&ledBlue,RESET);
 
-			// Cambio al siguiente estado RGB
+			// Cambio al estado RGB inicial
 			fsm_RGB.stateRGB = RED_STATE;
 
 			// Imprimo para la fsm el color actual
