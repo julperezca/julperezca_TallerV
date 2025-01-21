@@ -45,9 +45,8 @@ int main (void){
 	while(1){
 		if (sendMsg > 4){
 
-			sprintf(bufferMsg, "Recibido Char : %d \n", 2);
-			usart_WriteChar(&usart2Comm, '5');
-			//usart_writeMsg(&usart2Comm, bufferMsg);
+//			sprintf(bufferMsg, "Recibido Char : \n");
+//			usart_writeMsg(&usart2Comm, bufferMsg);
 			sendMsg = 0;
 		}
     }
@@ -130,15 +129,12 @@ void Timer2_Callback(void){
 	sendMsg++;
 }
 
-
-
 /* Funcion que se ejecuta cada vez que un caracter es recibido
  * por el puerto USART2
  */
 void usart2_RxCallback(void){
 	usart2DataReceiver = usart_getRxData();
-	//usart_WriteChar(&usart2Comm, usart2DataReceiver);
-	//sprintf(bufferMsg,"Recibido char = %c \n",usart2DataReceiver);
-	//usart_writeMsg(&usart2Comm, bufferMsg);
+	sprintf(bufferMsg,"recibido %c \n", usart2DataReceiver);
+	usart_writeMsg(&usart2Comm, bufferMsg);
 }
 
