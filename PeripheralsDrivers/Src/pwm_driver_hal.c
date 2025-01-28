@@ -65,7 +65,7 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 		ptrPwmHandler->ptrTIMx->CCMR1 &= ~(TIM_CCMR1_CC2S);
 
 		// Configuramos el canal como PWM
-//		ptrPwmHandler->ptrTIMx->CCER |= (TIM_CCER_CC2E);
+
 		ptrPwmHandler->ptrTIMx->CCMR1 |= (0b110 << TIM_CCMR1_OC2M_Pos);
 
 		// Activamos la funcionalidad de pre-load
@@ -122,9 +122,10 @@ void pwm_Change_OutputPolarity(PWM_Handler_t *ptrPwmHandler) {
 	case PWM_CHANNEL_1: {
 		// Polaridad para la salida del canal 1
 		if(ptrPwmHandler->config.polarity == PWM_ACTIVE_HIGH){
+			ptrPwmHandler->ptrTIMx->CCER &= ~(TIM_CCER_CC1P);
         /* Agregue acá su código*/
 		}else{
-        /* Agregue acá su código*/
+			ptrPwmHandler->ptrTIMx->CCER |= (TIM_CCER_CC1P);
 		}
 
 		break;
@@ -133,9 +134,9 @@ void pwm_Change_OutputPolarity(PWM_Handler_t *ptrPwmHandler) {
 	case PWM_CHANNEL_2: {
 		// Polaridad para la salida del canal 2
 		if(ptrPwmHandler->config.polarity == PWM_ACTIVE_HIGH){
-        /* Agregue acá su código*/
+			ptrPwmHandler->ptrTIMx->CCER &= ~(TIM_CCER_CC2P);
 		}else{
-        /* Agregue acá su código*/
+			ptrPwmHandler->ptrTIMx->CCER |= (TIM_CCER_CC2P);
 		}
 		break;
 	}
@@ -143,9 +144,9 @@ void pwm_Change_OutputPolarity(PWM_Handler_t *ptrPwmHandler) {
 	case PWM_CHANNEL_3: {
 		// Polaridad para la salida del canal 3
 		if(ptrPwmHandler->config.polarity == PWM_ACTIVE_HIGH){
-			ptrPwmHandler->ptrTIMx->CCER |= TIM_CCER_CC3P;
+			ptrPwmHandler->ptrTIMx->CCER &= ~(TIM_CCER_CC3P);
 		}else{
-        /* Agregue acá su código*/
+			ptrPwmHandler->ptrTIMx->CCER |= (TIM_CCER_CC3P);
 		}
 
 		break;
@@ -154,9 +155,9 @@ void pwm_Change_OutputPolarity(PWM_Handler_t *ptrPwmHandler) {
 	case PWM_CHANNEL_4: {
 		// Polaridad para la salida del canal 2
 		if(ptrPwmHandler->config.polarity == PWM_ACTIVE_HIGH){
-        /* Agregue acá su código*/
-		}else{
 			ptrPwmHandler->ptrTIMx->CCER &= ~TIM_CCER_CC4P;
+		}else{
+			ptrPwmHandler->ptrTIMx->CCER |= (TIM_CCER_CC4P);
 		}
 
 		break;
@@ -208,26 +209,26 @@ void pwm_Disable_Output(PWM_Handler_t *ptrPwmHandler) {
 	switch (ptrPwmHandler->config.channel) {
 	case PWM_CHANNEL_1: {
 		// Desactivamos la salida del canal 1
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->CCER &= ~(TIM_CCER_CC1E) ;
 		break;
 	}
 
 	case PWM_CHANNEL_2: {
 		// Desactivamos la salida del canal 2
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->CCER &= ~(TIM_CCER_CC2E) ;
 		break;
 	}
 
 	case PWM_CHANNEL_3: {
 		// Desactivamos la salida del canal 2
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->CCER &= ~(TIM_CCER_CC3E) ;
 
 		break;
 	}
 
 	case PWM_CHANNEL_4: {
 		// Desactivamos la salida del canal 2
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->CCER &= ~(TIM_CCER_CC4E) ;
 
 		break;
 	}
@@ -244,26 +245,26 @@ void pwm_Enable_Event(PWM_Handler_t *ptrPwmHandler) {
 	switch (ptrPwmHandler->config.channel) {
 	case PWM_CHANNEL_1: {
 		// Activamos el evento en el canal 1
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->EGR |= (TIM_EGR_CC1G);
 		break;
 	}
 
 	case PWM_CHANNEL_2: {
 		// Activamos el evento en el canal 2
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->EGR |= (TIM_EGR_CC2G);
 		break;
 	}
 
 	case PWM_CHANNEL_3: {
 		// Activamos el evento en el canal 3
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->EGR |= (TIM_EGR_CC3G);
 
 		break;
 	}
 
 	case PWM_CHANNEL_4: {
 		// Activamos el evento en el canal 4
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->EGR |= (TIM_EGR_CC4G);
 
 		break;
 	}
@@ -279,26 +280,26 @@ void pwm_Disable_Event(PWM_Handler_t *ptrPwmHandler) {
 	switch (ptrPwmHandler->config.channel) {
 	case PWM_CHANNEL_1: {
 		// Desactivamos el evento en el canal 1
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->EGR &= ~(TIM_EGR_CC1G);
 		break;
 	}
 
 	case PWM_CHANNEL_2: {
 		// Desactivamos el evento en el canal 2
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->EGR &= ~(TIM_EGR_CC2G);
 		break;
 	}
 
 	case PWM_CHANNEL_3: {
 		// Desactivamos el evento en el canal 3
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->EGR &= ~(TIM_EGR_CC3G);
 
 		break;
 	}
 
 	case PWM_CHANNEL_4: {
 		// Desactivamos el evento en el canal 4
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->EGR &= ~(TIM_EGR_CC4G);
 
 		break;
 	}
