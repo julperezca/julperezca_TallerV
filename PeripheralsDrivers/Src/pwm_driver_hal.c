@@ -123,6 +123,7 @@ void pwm_Stop_Signal(PWM_Handler_t *ptrPwmHandler) {
         ptrPwmHandler->ptrTIMx->CR1 &= ~TIM_CR1_CEN;
 }
 
+/************************* REVISAR BIEN EL MANUAL A QUÉ CORRESPONDE HIGH Y LOW ************/
 void pwm_Change_OutputPolarity(PWM_Handler_t *ptrPwmHandler) {
 	switch (ptrPwmHandler->config.channel) {
 	case PWM_CHANNEL_1: {
