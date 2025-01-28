@@ -1,11 +1,9 @@
 /*
  * PwmDriver.c
  *
- *  Created on: May 14, 2022
- *      Author: namontoy
+ *  Created on: Jan 27-2025
+ *      Author: julperezca@unal.edu.co
  *
- * Modificado en 2024 para reflejar los cambios en los nombres de
- * las funciones y distribuir mejor las tareas.
  */
 #include "pwm_driver_hal.h"
 
@@ -110,7 +108,9 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 /**/
 void pwm_Start_Signal(PWM_Handler_t *ptrPwmHandler) {
         pwm_Enable_Output(ptrPwmHandler);		 	// habilitar  pwm signal
-        // habilitar en CR1
+
+        // habilitar en CR1 contador habilitado
+        ptrPwmHandler->ptrTIMx->CR1 |= TIM_CR1_CEN;
 
 
 }
@@ -118,7 +118,9 @@ void pwm_Start_Signal(PWM_Handler_t *ptrPwmHandler) {
 /**/
 void pwm_Stop_Signal(PWM_Handler_t *ptrPwmHandler) {
         pwm_Disable_Event(ptrPwmHandler);			// deshabilitar pwm signal
-        // deshabilitar el CR1
+
+        // deshabilitar el CR1 contador dehabilitado
+        ptrPwmHandler->ptrTIMx->CR1 &= ~TIM_CR1_CEN;
 }
 
 void pwm_Change_OutputPolarity(PWM_Handler_t *ptrPwmHandler) {
