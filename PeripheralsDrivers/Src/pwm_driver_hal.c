@@ -51,7 +51,7 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 		ptrPwmHandler->ptrTIMx->CCMR1 &= ~(TIM_CCMR1_CC1S);
 
 		// Configuramos el canal como PWM
-//		ptrPwmHandler->ptrTIMx->CCER |= (TIM_CCER_CC1E);
+
 		ptrPwmHandler->ptrTIMx->CCMR1 |= (0b110 << TIM_CCMR1_OC1M_Pos);
 
 		// Activamos la funcionalidad de pre-load
@@ -109,12 +109,16 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 
 /**/
 void pwm_Start_Signal(PWM_Handler_t *ptrPwmHandler) {
-        /* Agregue acá su código*/
+        pwm_Enable_Output(ptrPwmHandler);		 	// habilitar  pwm signal
+        // habilitar en CR1
+
+
 }
 
 /**/
 void pwm_Stop_Signal(PWM_Handler_t *ptrPwmHandler) {
-        /* Agregue acá su código*/
+        pwm_Disable_Event(ptrPwmHandler);			// deshabilitar pwm signal
+        // deshabilitar el CR1
 }
 
 void pwm_Change_OutputPolarity(PWM_Handler_t *ptrPwmHandler) {
@@ -123,7 +127,6 @@ void pwm_Change_OutputPolarity(PWM_Handler_t *ptrPwmHandler) {
 		// Polaridad para la salida del canal 1
 		if(ptrPwmHandler->config.polarity == PWM_ACTIVE_HIGH){
 			ptrPwmHandler->ptrTIMx->CCER &= ~(TIM_CCER_CC1P);
-        /* Agregue acá su código*/
 		}else{
 			ptrPwmHandler->ptrTIMx->CCER |= (TIM_CCER_CC1P);
 		}
@@ -318,12 +321,15 @@ void pwm_Set_Frequency(PWM_Handler_t *ptrPwmHandler){
 
 	// Cargamos el valor del prescaler, nos define la velocidad (en ns) a la cual
 	// se incrementa el Timer
-	ptrPwmHandler->ptrTIMx->PSC = ptrPwmHandler->config->prescaler -1;
+	ptrPwmHandler->ptrTIMx->PSC = ptrPwmHandler->config.prescaler -1;
+
 
 	// Cargamos el valor del ARR, el cual es el límite de incrementos del Timer
 	// antes de hacer un update y reload.
-	ptrPwmHandler->ptrTIMx->ARR = ptrPwmHandler->config->periodo -1;
+	ptrPwmHandler->ptrTIMx->ARR = ptrPwmHandler->config.periodo -1;
 
+	// mención del video sobre autoreload preload enable
+	ptrPwmHandler->ptrTIMx->CR1 |= (TIM_CR1_ARPE);
 }
 
 
@@ -339,13 +345,13 @@ void pwm_Set_DuttyCycle(PWM_Handler_t *ptrPwmHandler){
 
 //	uint32_t auxDutty = 0;
 //
-//	// Verificamos que los valores estan en los limites adecuados.
-//	if(ptrPwmHandler->config.duttyCicle > PWM_DUTTY_100_PERCENT){
-//		ptrPwmHandler->config.duttyCicle = PWM_DUTTY_100_PERCENT;
-//	}
-//	else if(ptrPwmHandler->config.duttyCicle < PWM_DUTTY_0_PERCENT){
-//		ptrPwmHandler->config.duttyCicle = PWM_DUTTY_0_PERCENT;
-//	}
+	// Verificamos que los valores estan en los limites adecuados.
+	if(ptrPwmHandler->config.duttyCicle > PWM_DUTTY_100_PERCENT){
+		ptrPwmHandler->config.duttyCicle = PWM_DUTTY_100_PERCENT;
+	}
+	else if(ptrPwmHandler->config.duttyCicle < PWM_DUTTY_0_PERCENT){
+		ptrPwmHandler->config.duttyCicle = PWM_DUTTY_0_PERCENT;
+	}
 
 	//auxDutty = (ptrPwmHandler->config.periodo * ptrPwmHandler->config.duttyCicle) / PWM_DUTTY_100_PERCENT;
 
