@@ -5,35 +5,47 @@
  * @brief          : Tarea 2. Drivers GPIO, EXTI, TIMERS, magicProject.
  ******************************************************************************
  */
-#include <stdio.h>
 #include <stdint.h>
-#include <stdbool.h>
-#include <math.h>
-#include "stm32f4xx.h"
-#include "exti_driver_hal.h"
+#include <string.h>
+#include <stm32f4xx.h>
+#include "gpio_driver_hal.h"
 #include "timer_driver_hal.h"
-#include "systick_driver.h"
+#include "exti_driver_hal.h"
 #include "usart_driver_hal.h"
 
-
-GPIO_Handler_t handlerBlinky = {0};
-GPIO_Handler_t handlerUserButton = {0};
-EXTI_Config_t handlerUserButtonExti = {0};
-Timer_Handler_t handlerBlinkyTimer = {0};
+Timer_Handler_t blinkTimer = { 0 };
+Timer_Handler_t usartRefresh = { 0 };
 
 
-GPIO_Handler_t handlerPinTX 	= {0};
-GPIO_Handler_t handlerPinRX 	= {0};
-USART_Handler_t usart2Comm		= {0};
+GPIO_Handler_t userLed = { 0 };
+GPIO_Handler_t userLed1 = { 0 };
+GPIO_Handler_t userLed2 = { 0 };
+GPIO_Handler_t userLed3 = { 0 };
 
+
+EXTI_Config_t imprimir = {0};
+GPIO_Handler_t user13 = {0};
+
+USART_Handler_t usart2 = { 0 };
+GPIO_Handler_t usart2T = { 0 };
+GPIO_Handler_t usart2R = {0};
+
+char bufferMsg[128] = {0};
+char bufferMsgVar[128] = {0};
+
+
+uint8_t bandera = 0;
 uint8_t sendMsg = 0;
+uint8_t receivedChar = 0;
+uint8_t posicionSafe = 0;
+uint8_t msglisto = 0;
+uint8_t conteo = 0;
 
 
-uint8_t usart2DataReceiver = 0;
 
-char bufferMsg[64] = {0};
 
 void init_Config(void);
+void analyzeCommand(char *buffer);
 /*
  * The main function, where everything happens.
  */
@@ -43,98 +55,139 @@ int main (void){
 	/* Loop infinito */
 
 	while(1){
-		if (sendMsg > 4){
 
-//			sprintf(bufferMsg, "Recibido Char : \n");
-//			usart_writeMsg(&usart2Comm, bufferMsg);
-			sendMsg = 0;
-		}
+
+
+
+
     }
+
+
+
+
 	return 0;
 }
 
 /* Funcion encargada de la configuración del GPIO, TIMERS y EXTIs */
 void init_Config(void){
+	/* Configuramos el timer del blink (TIM2) */
+	blinkTimer.pTIMx = TIM2;
+	blinkTimer.TIMx_Config.TIMx_Prescaler = 16000;
+	blinkTimer.TIMx_Config.TIMx_Period = 250;
+	blinkTimer.TIMx_Config.TIMx_mode = TIMER_UP_COUNTER;
+	blinkTimer.TIMx_Config.TIMx_InterruptEnable = TIMER_INT_ENABLE;
 
-			/* Configuración de LED de estado y su respectivo timer */
+	timer_Config(&blinkTimer);
+	timer_SetState(&blinkTimer, SET);
 
-	// GPIO config para Led de estado
-	handlerBlinky.pGPIOx							= GPIOA;
-	handlerBlinky.pinConfig.GPIO_PinNumber			= PIN_5;
-	handlerBlinky.pinConfig.GPIO_PinMode			= GPIO_MODE_OUT;
-	handlerBlinky.pinConfig.GPIO_PinOutputType		= GPIO_OTYPE_PUSHPULL;
-	handlerBlinky.pinConfig.GPIO_PinOutputSpeed		= GPIO_OSPEED_FAST;
-	handlerBlinky.pinConfig.GPIO_PinPuPdControl		= GPIO_PUPDR_NOTHING;
-	gpio_Config(&handlerBlinky);
+	/* Configuramos el timer del blink (TIM2) */
+	usartRefresh.pTIMx = TIM3;
+	usartRefresh.TIMx_Config.TIMx_Prescaler = 16000;
+	usartRefresh.TIMx_Config.TIMx_Period = 1000;
+	usartRefresh.TIMx_Config.TIMx_mode = TIMER_UP_COUNTER;
+	usartRefresh.TIMx_Config.TIMx_InterruptEnable = TIMER_INT_ENABLE;
 
-	// Config para el timer del led de estado
-	handlerBlinkyTimer.pTIMx								= TIM2;
-	handlerBlinkyTimer.TIMx_Config.TIMx_Prescaler  			= 16000; //1ms conversion
-	handlerBlinkyTimer.TIMx_Config.TIMx_Period				= 500;
-	handlerBlinkyTimer.TIMx_Config.TIMx_mode				= TIMER_UP_COUNTER;
-	handlerBlinkyTimer.TIMx_Config.TIMx_InterruptEnable 	= TIMER_INT_ENABLE;
-	timer_Config(&handlerBlinkyTimer);
-	timer_SetState(&handlerBlinkyTimer, TIMER_ON);
+	timer_Config(&usartRefresh);
+	timer_SetState(&usartRefresh, SET);
 
-		/* FIN de configuración de Led de estado y su timer */
+	//Configuramos los pines que se van a utilizar
 
+	/* Configuramos el PinA5 */
+	userLed.pGPIOx = GPIOA;
+	userLed.pinConfig.GPIO_PinNumber = PIN_5;
+	userLed.pinConfig.GPIO_PinMode = GPIO_MODE_OUT;
+	userLed.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
+	userLed.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_MEDIUM;
+	userLed.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
 
-			/* Se configuran los pines para el led RGB */
+	gpio_Config(&userLed);
 
-	//Led rojo
-	handlerUserButton.pGPIOx						= GPIOC;
-	handlerUserButton.pinConfig.GPIO_PinNumber		= PIN_13;
-	handlerUserButton.pinConfig.GPIO_PinMode		= GPIO_MODE_IN;
-	handlerUserButton.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
-	gpio_Config(&handlerUserButton);
+	/* Configuramos el PinA9 */
+	userLed3.pGPIOx = GPIOA;
+	userLed3.pinConfig.GPIO_PinNumber = PIN_9;
+	userLed3.pinConfig.GPIO_PinMode = GPIO_MODE_OUT;
+	userLed3.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
+	userLed3.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_MEDIUM;
+	userLed3.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
 
+	gpio_Config(&userLed3);
 
-	// Configuración EXTI para el CLK
-	handlerUserButtonExti.pGPIOHandler				= &handlerUserButton;
-	handlerUserButtonExti.edgeType					= EXTERNAL_INTERRUPT_RISING_EDGE;
-	exti_Config(&handlerUserButtonExti);
+	/* Configuramos el PinA8 */
+	userLed2.pGPIOx = GPIOA;
+	userLed2.pinConfig.GPIO_PinNumber = PIN_8;
+	userLed2.pinConfig.GPIO_PinMode = GPIO_MODE_OUT;
+	userLed2.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
+	userLed2.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_MEDIUM;
+	userLed2.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
 
-	handlerPinTX.pGPIOx								= GPIOA;
-	handlerPinTX.pinConfig.GPIO_PinNumber			= PIN_2;
-	handlerPinTX.pinConfig.GPIO_PinMode				= GPIO_MODE_ALTFN;
-	handlerPinTX.pinConfig.GPIO_PinAltFunMode		= AF7;
-	gpio_Config(&handlerPinTX);
+	gpio_Config(&userLed2);
 
+	/* Configuramos el PinA9 */
+	userLed1.pGPIOx = GPIOA;
+	userLed1.pinConfig.GPIO_PinNumber = PIN_7;
+	userLed1.pinConfig.GPIO_PinMode = GPIO_MODE_OUT;
+	userLed1.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
+	userLed1.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_MEDIUM;
+	userLed1.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
 
-	handlerPinRX.pGPIOx								= GPIOA;
-	handlerPinRX.pinConfig.GPIO_PinNumber			= PIN_3;
-	handlerPinRX.pinConfig.GPIO_PinMode				= GPIO_MODE_ALTFN;
-	handlerPinRX.pinConfig.GPIO_PinAltFunMode		= AF7;
-	gpio_Config(&handlerPinRX);
+	gpio_Config(&userLed1);
 
-	usart2Comm.ptrUSARTx 							= USART2;
-	usart2Comm.USART_Config.baudrate 				= USART_BAUDRATE_19200;
-	usart2Comm.USART_Config.datasize 				= USART_DATASIZE_8BIT;
-	usart2Comm.USART_Config.parity 					= USART_PARITY_NONE;
-	usart2Comm.USART_Config.stopbits 				= USART_STOPBIT_1;
-	usart2Comm.USART_Config.mode 					= USART_MODE_RXTX;
-	usart2Comm.USART_Config.enableIntRX 			= USART_RX_INTERRUP_ENABLE;
-	usart2Comm.USART_Config.enableIntTX 			= USART_TX_INTERRUP_DISABLE;
+	usart2.ptrUSARTx = USART2;
+	usart2.USART_Config.baudrate = USART_BAUDRATE_230400;
+	usart2.USART_Config.datasize = USART_DATASIZE_8BIT;
+	usart2.USART_Config.mode = USART_MODE_RXTX;
+	usart2.USART_Config.parity = USART_PARITY_NONE;
+	usart2.USART_Config.stopbits = USART_STOPBIT_1;
+	usart2.USART_Config.enableIntTX = USART_TX_INTERRUP_DISABLE;
+	usart2.USART_Config.enableIntRX = USART_RX_INTERRUP_ENABLE;
 
-	usart_Config(&usart2Comm);
+	usart_Config(&usart2);
+
+	usart2T.pGPIOx = GPIOA;
+	usart2T.pinConfig.GPIO_PinNumber = PIN_2;
+	usart2T.pinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
+	usart2T.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
+	usart2T.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_MEDIUM;
+	usart2T.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	usart2T.pinConfig.GPIO_PinAltFunMode = AF7;
+
+	gpio_Config(&usart2T);
+
+	usart2R.pGPIOx = GPIOA;
+	usart2R.pinConfig.GPIO_PinNumber = PIN_3;
+	usart2R.pinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
+	usart2R.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
+	usart2R.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_MEDIUM;
+	usart2R.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	usart2R.pinConfig.GPIO_PinAltFunMode = AF7;
+
+	gpio_Config(&usart2R);
+
+	user13.pGPIOx = GPIOB;
+	user13.pinConfig.GPIO_PinNumber = PIN_15;
+	user13.pinConfig.GPIO_PinMode = GPIO_MODE_IN;
+
+	gpio_Config(&user13);
+
+	imprimir.pGPIOHandler = &user13;
+	imprimir.edgeType = EXTERNAL_INTERRUPT_RISING_EDGE;
+
+	exti_Config(&imprimir);
 }
 
+
+void Timer2_Callback(void) {
+	gpio_TooglePin(&userLed);
+	conteo++;
+}
+void Timer3_Callback(void) {
+	sendMsg = 1;
+}
 
 void callback_ExtInt13(void){
-	__NOP();
+	bandera = 1;
 }
-
-void Timer2_Callback(void){
-	gpio_TooglePin(&handlerBlinky);
-	sendMsg++;
-}
-
-/* Funcion que se ejecuta cada vez que un caracter es recibido
- * por el puerto USART2
- */
 void usart2_RxCallback(void){
-	usart2DataReceiver = usart_getRxData();
-	sprintf(bufferMsg,"recibido %c \n", usart2DataReceiver);
-	usart_writeMsg(&usart2Comm, bufferMsg);
+	receivedChar = usart_getRxData();
 }
 
