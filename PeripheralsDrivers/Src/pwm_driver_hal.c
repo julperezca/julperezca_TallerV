@@ -48,23 +48,25 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 	switch(ptrPwmHandler->config.channel){
 	case PWM_CHANNEL_1:{
 		// Seleccionamos como salida el canal
-		ptrPwmHandler->ptrTIMx->CCMR1 &= ~(TIM_C CMR1_CC1S);
+		ptrPwmHandler->ptrTIMx->CCMR1 &= ~(TIM_CCMR1_CC1S);
 
 		// Configuramos el canal como PWM
-        /* Agregue acá su código*/
+//		ptrPwmHandler->ptrTIMx->CCER |= (TIM_CCER_CC1E);
+		ptrPwmHandler->ptrTIMx->CCMR1 |= (0b110 << TIM_CCMR1_OC1M_Pos);
 
 		// Activamos la funcionalidad de pre-load
-        /* Agregue acá su código*/
+        ptrPwmHandler->ptrTIMx->CCMR1 |= (TIM_CCMR1_OC1PE);
 
 		break;
 	}
 
 	case PWM_CHANNEL_2:{
 		// Seleccionamos como salida el canal
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->CCMR1 &= ~(TIM_CCMR1_CC2S);
 
 		// Configuramos el canal como PWM
-        /* Agregue acá su código*/
+//		ptrPwmHandler->ptrTIMx->CCER |= (TIM_CCER_CC2E);
+		ptrPwmHandler->ptrTIMx->CCMR1 |= (0b110 << TIM_CCMR1_OC2M_Pos);
 
 		// Activamos la funcionalidad de pre-load
 		ptrPwmHandler->ptrTIMx->CCMR1 |= TIM_CCMR1_OC2PE;
@@ -73,25 +75,25 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 
 	case PWM_CHANNEL_3:{
 		// Seleccionamos como salida el canal
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->CCMR2 &= ~(TIM_CCMR2_CC3S);
 
 		// Configuramos el canal como PWM
 		ptrPwmHandler->ptrTIMx->CCMR2 |= (0b110 << TIM_CCMR2_OC3M_Pos);
 
 		// Activamos la funcionalidad de pre-load
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->CCMR2 |= TIM_CCMR2_OC3PE;
 		break;
 	}
 
 	case PWM_CHANNEL_4:{
 		// Seleccionamos como salida el canal
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->CCMR2 &= ~(TIM_CCMR2_CC4S);
 
 		// Configuramos el canal como PWM
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->CCMR2 |= (0b110 << TIM_CCMR2_OC4M_Pos);
 
 		// Activamos la funcionalidad de pre-load
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->CCMR2 |= TIM_CCMR2_OC4PE;
 		break;
 	}
 
@@ -171,26 +173,26 @@ void pwm_Enable_Output(PWM_Handler_t *ptrPwmHandler) {
 	switch (ptrPwmHandler->config.channel) {
 	case PWM_CHANNEL_1: {
 		// Activamos la salida del canal 1
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->CCER |= (TIM_CCER_CC1E);
 		break;
 	}
 
 	case PWM_CHANNEL_2: {
 		// Activamos la salida del canal 2
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->CCER |= (TIM_CCER_CC2E);
 		break;
 	}
 
 	case PWM_CHANNEL_3: {
 		// Activamos la salida del canal 2
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->CCER |= (TIM_CCER_CC3E);
 
 		break;
 	}
 
 	case PWM_CHANNEL_4: {
 		// Activamos la salida del canal 2
-        /* Agregue acá su código*/
+		ptrPwmHandler->ptrTIMx->CCER |= (TIM_CCER_CC4E);
 
 		break;
 	}
