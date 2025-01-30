@@ -8,8 +8,9 @@
 #include "stm32f4xx.h"
 #include "usart_driver_hal.h"
 
-uint8_t auxRxData = 0;
-
+uint8_t auxRxData_Usart1 = 0;
+uint8_t auxRxData_Usart2 = 0;
+uint8_t auxRxData_Usart6 = 0;
 /* === Headers for private functions === */
 static void usart_enable_clock_peripheral(USART_Handler_t *ptrUsartHandler);
 static void usart_config_parity(USART_Handler_t *ptrUsartHandler);
@@ -376,8 +377,18 @@ void usart_writeMsg(USART_Handler_t *ptrUsartHandler, char *msgToSend ){
 
 }
 
-uint8_t usart_getRxData(void){
-	return auxRxData;
+uint8_t usart_getRxData(USART_Handler_t *ptrUsartHandler){
+	if(ptrUsartHandler->ptrUSARTx == USART1){
+		ptrUsartHandler->receivedChar = auxRxData_Usart1;
+	}
+	else if(ptrUsartHandler->ptrUSARTx == USART2){
+		ptrUsartHandler->receivedChar = auxRxData_Usart2;
+	}
+	else if(ptrUsartHandler->ptrUSARTx == USART6){
+		ptrUsartHandler->receivedChar = auxRxData_Usart6;
+	}
+
+	return (uint8_t)ptrUsartHandler->receivedChar;
 }
 
 /* Handler de la interrupción del USART
@@ -386,7 +397,7 @@ uint8_t usart_getRxData(void){
 void USART2_IRQHandler(void){
 	// Evaluamos si la interrupción que se dio es por RX
    	if (USART2->SR & USART_SR_RXNE){
-   		auxRxData = (uint8_t) USART2->DR;
+   		auxRxData_Usart2 = (uint8_t) USART2->DR;
    		usart2_RxCallback();
    	}
 }
@@ -397,7 +408,7 @@ void USART2_IRQHandler(void){
 void USART6_IRQHandler(void){
 	// Evaluamos si la interrupción que se dio es por RX
    	if (USART6->SR & USART_SR_RXNE){
-   		auxRxData = (uint8_t) USART6->DR;
+   		auxRxData_Usart6 = (uint8_t) USART6->DR;
    		usart6_RxCallback();
    	}
 }
@@ -408,7 +419,7 @@ void USART6_IRQHandler(void){
 void USART1_IRQHandler(void){
 	// Evaluamos si la interrupción que se dio es por RX
    	if (USART2->SR & USART_SR_RXNE){
-   		auxRxData = (uint8_t) USART2->DR;
+   		auxRxData_Usart1 = (uint8_t) USART2->DR;
    		usart1_RxCallback();
    	}
 }

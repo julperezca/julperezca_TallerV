@@ -346,7 +346,7 @@ void pwm_Update_Frequency(PWM_Handler_t *ptrPwmHandler, uint16_t newFreq){
 /* El valor del dutty debe estar dado en valores de %, entre 0% y 100%*/
 void pwm_Set_DuttyCycle(PWM_Handler_t *ptrPwmHandler){
 
-//	uint32_t auxDutty = 0;
+	uint32_t auxDutty = 0;
 //
 	// Verificamos que los valores estan en los limites adecuados.
 	if(ptrPwmHandler->config.duttyCicle > PWM_DUTTY_100_PERCENT){
@@ -355,29 +355,33 @@ void pwm_Set_DuttyCycle(PWM_Handler_t *ptrPwmHandler){
 	else if(ptrPwmHandler->config.duttyCicle < PWM_DUTTY_0_PERCENT){
 		ptrPwmHandler->config.duttyCicle = PWM_DUTTY_0_PERCENT;
 	}
-
-	//auxDutty = (ptrPwmHandler->config.periodo * ptrPwmHandler->config.duttyCicle) / PWM_DUTTY_100_PERCENT;
+	 /* Se le asignará un valor de 0 a 100  al dutty para que sea compatible con el porcentaje*/
+	auxDutty = (ptrPwmHandler->config.periodo) * (ptrPwmHandler->config.duttyCicle) / PWM_DUTTY_100_PERCENT;
 
 	// Seleccionamos el canal para configurar su dutty
 	switch(ptrPwmHandler->config.channel){
 	case PWM_CHANNEL_1:{
-		ptrPwmHandler->ptrTIMx->CCR1 = ptrPwmHandler->config.duttyCicle;
+//		ptrPwmHandler->ptrTIMx->CCR1 = ptrPwmHandler->config.duttyCicle;
+		ptrPwmHandler->ptrTIMx->CCR1 = auxDutty;
 
 		break;
 	}
 
 	case PWM_CHANNEL_2:{
-        ptrPwmHandler->ptrTIMx->CCR2 = ptrPwmHandler->config.duttyCicle;
+//        ptrPwmHandler->ptrTIMx->CCR2 = ptrPwmHandler->config.duttyCicle;
+		ptrPwmHandler->ptrTIMx->CCR2 = auxDutty;
 		break;
 	}
 
 	case PWM_CHANNEL_3:{
-        ptrPwmHandler->ptrTIMx->CCR3 = ptrPwmHandler->config.duttyCicle;
+//        ptrPwmHandler->ptrTIMx->CCR3 = ptrPwmHandler->config.duttyCicle;
+		ptrPwmHandler->ptrTIMx->CCR3 = auxDutty;
 		break;
 	}
 
 	case PWM_CHANNEL_4:{
-        ptrPwmHandler->ptrTIMx->CCR4 = ptrPwmHandler->config.duttyCicle;
+//        ptrPwmHandler->ptrTIMx->CCR4 = ptrPwmHandler->config.duttyCicle;
+		ptrPwmHandler->ptrTIMx->CCR4 = auxDutty;
 		break;
 	}
 

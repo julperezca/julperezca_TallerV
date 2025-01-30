@@ -34,7 +34,7 @@ uint8_t usart2DataReceived = 0;
 GPIO_Handler_t handlerPinPwmChannel  = {0};
 PWM_Handler_t handlerSignalPWM  = {0};
 
-uint16_t duttyValue = 1500;
+uint16_t duttyValue = 10;
 
 char bufferMsg[64] = {0};
 
@@ -47,10 +47,10 @@ int main (void){
 	init_Config();	// Se inicia la configuracion del sistema
 //	SCB->CPACR |= (0xF << 20);
 //
-//	bufferMsg[0] = 0x1B;
-//	bufferMsg[1] = 0x5B;
-//	bufferMsg[2] = 0x32;
-//	bufferMsg[3] = 0x4A;
+	bufferMsg[0] = 0x1B;
+	bufferMsg[1] = 0x5B;
+	bufferMsg[2] = 0x32;
+	bufferMsg[3] = 0x4A;
 
 
 	while(1){
@@ -58,11 +58,17 @@ int main (void){
 
 		if (usart2DataReceived != '\0'){
 			if(usart2DataReceived == 'D'){
-				duttyValue -=10;
+				if(duttyValue == 0){
+					duttyValue = 110;
+				}
+				duttyValue -= 10;
 				pwm_Update_DuttyCycle(&handlerSignalPWM, duttyValue);
 			}
 
 			if (usart2DataReceived == 'U'){
+				if(duttyValue == 100){
+					duttyValue = -10;
+				}
 				duttyValue +=10;
 				pwm_Update_DuttyCycle(&handlerSignalPWM, duttyValue);
 
@@ -104,9 +110,6 @@ void init_Config(void){
 		timer_Config(&handlerBlinkyTimer);
 		timer_SetState(&handlerBlinkyTimer, SET);
 
-
-
-
 		handlerUserButton.pGPIOx = GPIOC;
 		handlerUserButton.pinConfig.GPIO_PinNumber = PIN_13;
 		handlerUserButton.pinConfig.GPIO_PinMode = GPIO_MODE_IN;
@@ -117,10 +120,21 @@ void init_Config(void){
 		handlerUserButtonExti.edgeType = EXTERNAL_INTERRUPT_RISING_EDGE;
 		exti_Config(&handlerUserButtonExti);
 
+
+		handlerPinTX.pGPIOx = GPIOA;
+		handlerPinTX.pinConfig.GPIO_PinNumber = PIN_2;
+		handlerPinTX.pinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
+		handlerPinTX.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
+		handlerPinTX.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_MEDIUM;
+		handlerPinTX.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+		handlerPinTX.pinConfig.GPIO_PinAltFunMode = AF7;
+		gpio_Config(&handlerPinTX);
+
 		handlerPinRX.pGPIOx = GPIOA;
-		handlerPinRX.pinConfig.GPIO_PinNumber = PIN_13;
+		handlerPinRX.pinConfig.GPIO_PinNumber = PIN_3;
 		handlerPinRX.pinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
 		handlerPinRX.pinConfig.GPIO_PinAltFunMode = AF7;
+		gpio_Config(&handlerPinRX);
 
 		usart2Comm.ptrUSARTx = USART2;
 		usart2Comm.USART_Config.baudrate = USART_BAUDRATE_19200;
@@ -131,6 +145,10 @@ void init_Config(void){
 		usart2Comm.USART_Config.enableIntRX = USART_RX_INTERRUP_ENABLE;
 		usart2Comm.USART_Config.enableIntTX = USART_TX_INTERRUP_DISABLE;
 		usart_Config(&usart2Comm);
+
+
+
+
 
 		/*PWM config */
 		handlerPinPwmChannel.pGPIOx = GPIOC;
@@ -145,8 +163,8 @@ void init_Config(void){
 		handlerSignalPWM.ptrTIMx = TIM3;
 		handlerSignalPWM.config.channel = PWM_CHANNEL_2;
 		handlerSignalPWM.config.duttyCicle = duttyValue;
-		handlerSignalPWM.config.periodo = 20000;
-		handlerSignalPWM.config.prescaler = 16;
+		handlerSignalPWM.config.periodo = 100;
+		handlerSignalPWM.config.prescaler = 16000;
 		pwm_Config(&handlerSignalPWM);
 
 		pwm_Enable_Output(&handlerSignalPWM);

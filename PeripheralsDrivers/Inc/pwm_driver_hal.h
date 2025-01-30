@@ -22,7 +22,7 @@ enum{
 
 enum{
 	PWM_DUTTY_0_PERCENT = 0,
-	PWM_DUTTY_100_PERCENT
+	PWM_DUTTY_100_PERCENT = 100
 };
 
 enum{

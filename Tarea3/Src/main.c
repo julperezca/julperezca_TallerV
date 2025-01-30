@@ -2,9 +2,11 @@
  ******************************************************************************
  * @file           : main.c
  * @author         : Julián Pérez Carvajal (julperezca@unal.edu.co)
- * @brief          : Tarea 2. Drivers GPIO, EXTI, TIMERS, magicProject.
+ * @brief          : Tarea 3. Drivers GPIO, EXTI, TIMERS, PWM, USART, magicProject.
  ******************************************************************************
  */
+
+#include <string.h>
 #include <main.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -13,8 +15,10 @@
 #include "exti_driver_hal.h"
 #include "timer_driver_hal.h"
 #include "systick_driver.h"
+#include "pwm_driver_hal.h"
+#include "usart_driver_hal.h"
 
-
+#define BUFFER_SIZE 64
 
 	/* GPIO handler y TIMER para el led de estado */
 GPIO_Handler_t  ledState    	= {0}; 		// PinH1
@@ -52,6 +56,17 @@ EXTI_Config_t extiSwitch 			= {0}; 		// EXTI15
 	/* GPIO handler para el DT del encoder*/
 GPIO_Handler_t userData 			= {0}; 		// PinB1
 
+/* Elementos para el PWM*/
+GPIO_Handler_t handlerPinPwmChannel  = {0};
+PWM_Handler_t handlerSignalPWM  = {0};
+
+USART_Handler_t hCmdTerminal = {0};
+
+
+
+
+
+
 /* Finite State Machine + subestados del led RGB, de los transistores y de los segmentos */
 fsm_t fsm = {0};
 fsm_RGB_t fsm_RGB 					= {0};
@@ -68,12 +83,29 @@ uint8_t transistorFlag	 = 0;		// Flag para switching de transistores
 uint8_t blinkyFlag 		 = 0;		// Flag para el parpadeo del led
 uint8_t rotationFlag 	 = 0;		// Flag de rotación del encoder
 uint8_t swFlag 			 = 0;		// Flag para el SW del encoder
+uint16_t duttyValue = 0;			// valor de 0 a 100
 
 /* Estado de los transistores y segmentos */
 enum {
 	ON = 0,
 	OFF
 };
+
+
+
+uint8_t rxData = 0;
+char bufferReception[BUFFER_SIZE];
+uint8_t counterReception;
+//bool stringComplete = false;
+char cmd[16];
+char userMsg[BUFFER_SIZE] = {0};
+char bufferData[BUFFER_SIZE] = {0};
+unsigned int  firstParameter;
+unsigned int  secondParameter;
+
+
+
+
 
 /* Declaración o prototipo de funciones */
 extern void configMagic(void);  				// Config del Magic para comunicación serial
@@ -92,11 +124,26 @@ int main (void){
 	init_config();	// Se inicia la configuracion del sistema
 
 	/* Loop infinito */
+
 	while(1){
+
+
+
+//		pwm_Update_DuttyCycle(&handlerSignalPWM, duttyValue);
 
 		/* Condicional para el alza de la bandera del Led de estado */
 		if (blinkyFlag){
 			gpio_TooglePin(&ledState);		// Alterna estado del led
+			duttyValue +=1;
+			if (duttyValue<100){
+				pwm_Update_DuttyCycle(&handlerSignalPWM, duttyValue);
+				printf("Duttyvalue : %u\n",duttyValue);
+			}
+			else if(duttyValue == 100){
+				printf("dutty = 0\n");
+				duttyValue = 0;
+			}
+
 			blinkyFlag = 0;					// Se limpia la bandera del parpadeo del led
 		}
 
@@ -222,7 +269,7 @@ void init_config(void){
 	gpio_Config(&digitoUnMillar);
 
 	/*Se configura el timer de los digitos */
-	transistorsTimer.pTIMx								= TIM3;
+	transistorsTimer.pTIMx								= TIM5;
 	transistorsTimer.TIMx_Config.TIMx_Prescaler  		= 16000; //1ms conversion
 	transistorsTimer.TIMx_Config.TIMx_Period			= 2;
 	transistorsTimer.TIMx_Config.TIMx_mode				= TIMER_UP_COUNTER;
@@ -335,11 +382,45 @@ void init_config(void){
 
 			/* FIN de GPIO and EXTI config */
 
+	/* config del PWM */
+	handlerPinPwmChannel.pGPIOx = GPIOC;
+	handlerPinPwmChannel.pinConfig.GPIO_PinNumber = PIN_8;
+	handlerPinPwmChannel.pinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
+	handlerPinPwmChannel.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
+	handlerPinPwmChannel.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerPinPwmChannel.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_FAST;
+	handlerPinPwmChannel.pinConfig.GPIO_PinAltFunMode = AF2;
+	gpio_Config(&handlerPinPwmChannel);
+
+	handlerSignalPWM.ptrTIMx = TIM3;
+	handlerSignalPWM.config.channel = PWM_CHANNEL_3;
+	handlerSignalPWM.config.duttyCicle = duttyValue;
+	handlerSignalPWM.config.periodo = 20;
+	handlerSignalPWM.config.prescaler = 16000;
+	pwm_Config(&handlerSignalPWM);
+
+	pwm_Enable_Output(&handlerSignalPWM);
+	pwm_Start_Signal(&handlerSignalPWM);
+
+		/*FIN del config del PWM*/
+
+
+				/* Configuración para USART6 */
+	hCmdTerminal.ptrUSARTx = USART6;
+	hCmdTerminal.USART_Config.baudrate = USART_BAUDRATE_115200;
+	hCmdTerminal.USART_Config.datasize = USART_DATASIZE_8BIT;
+	hCmdTerminal.USART_Config.parity = USART_PARITY_NONE;
+	hCmdTerminal.USART_Config.stopbits = USART_STOPBIT_1;
+	hCmdTerminal.USART_Config.mode = USART_MODE_RXTX;
+	hCmdTerminal.USART_Config.enableIntRX = USART_RX_INTERRUP_ENABLE;
+	hCmdTerminal.USART_Config.enableIntTX = USART_TX_INTERRUP_DISABLE;
+	usart_Config(&hCmdTerminal);
+
+	 	 	 /* Fin de la config del USART6 */
+
 
 			/* Se configura el SysTick con la señal de reloj de 16 MHz	*/
-
 	systickConfig();
-
 			/* FIN del SysTick config*/
 
 
@@ -360,7 +441,7 @@ void Timer2_Callback(void){
 }
 
 /* Callback del timer que enciende y apaga los transistores */
-void Timer3_Callback(void){
+void Timer5_Callback(void){
 	transistorFlag = 1;				// Se sube la bandera del switcheo de transistores
 }
 
@@ -377,6 +458,61 @@ void callback_ExtInt2(void){
 void callback_ExtInt15(void){
 	swFlag = 1;				// Se sube la bandera correspondiente al bit pos 4
 }
+
+void usart6_RxCallback(void){
+	usart_getRxData(&hCmdTerminal);
+	// MODIFICAR ALGÚN ESTADO PARA EVIDENCIAR CAMBIO DE CHAR
+}
+
+void ReceivedChar(void){
+	if (hCmdTerminal.receivedChar != '\0'){
+		bufferReception[counterReception] = hCmdTerminal.receivedChar;
+		counterReception++;
+
+		if (hCmdTerminal.receivedChar =='@'){
+			bufferReception[counterReception] = '\0';
+			counterReception = 0;
+
+			//fsm.... Comand completed /* agregar a maquina de estados*/
+		}
+	}
+}
+
+
+void parseCommands(char *ptrBufferReception){
+
+
+	sscanf(ptrBufferReception,"%s %u %u %s",cmd,&firstParameter,&secondParameter, userMsg);
+
+
+	if ((strcmp(cmd,"help")) == 0){
+		usart_writeMsg(&hCmdTerminal,"Help Menu CMDs:\n");
+		usart_writeMsg(&hCmdTerminal,"1) help --Print this menu\n");
+		usart_writeMsg(&hCmdTerminal,"2) dummy #A #B --dummy cmd, #A and #B are uint32_t\n");
+		usart_writeMsg(&hCmdTerminal,"3) userm # -- msg is a string comming from outside\n");
+		usart_writeMsg(&hCmdTerminal,"4) setPeriod # -- Change the led_state period (ms)\n");
+		usart_writeMsg(&hCmdTerminal,"5) setDuty # -- Change the dutty cycle (%)\n");
+		usart_writeMsg(&hCmdTerminal,"6) setDisplay # -- Change the display number\n");
+		usart_writeMsg(&hCmdTerminal,"7) setVolt # -- PWM-DAC output in mV\n");
+	}
+	else if(strcmp(cmd,"dummy")==0){
+		usart_writeMsg(&hCmdTerminal,"CMD: dummy\n");
+		sprintf(bufferData,"number A = %u \n",firstParameter);
+		usart_writeMsg(&hCmdTerminal,bufferData);
+
+		sprintf(bufferData,"number B = %u \n", secondParameter);
+		usart_writeMsg(&hCmdTerminal, bufferData);
+	}
+	else if(strcmp(cmd,"usermsg")==0){
+		usart_writeMsg(&hCmdTerminal,"CMD: usermsg\n");
+		usart_writeMsg(&hCmdTerminal,userMsg);
+		usart_writeMsg(&hCmdTerminal,"\n");
+	}
+	else{
+		usart_writeMsg(&hCmdTerminal,"Wrong CMD\n");
+	}
+}
+
 
 
 
@@ -747,6 +883,8 @@ void numberSelection(uint8_t displayNumber){
 			}
 	}
 }
+
+
 
 /*
  * Esta función sirve para detectar problemas de parametros
