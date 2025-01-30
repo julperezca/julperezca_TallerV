@@ -36,7 +36,7 @@ GPIO_Handler_t segmentC 	 	= {0}; 		// PinC13 segmento c
 GPIO_Handler_t segmentD  		= {0}; 		// PinD2  segmento d
 GPIO_Handler_t segmentE 		= {0}; 		// PinC11 segmento e
 GPIO_Handler_t segmentF 	 	= {0}; 		// PinA11 segmento f
-GPIO_Handler_t segmentG 	 	= {0}; 		// PinB7  segmento g
+GPIO_Handler_t segmentG 	 	= {0}; 		// PinC12  segmento g
 
 	/* GPIO handler y TIMER para los transistores  */
 GPIO_Handler_t digitoUnidad 	 	= {0}; 		// PinC10
@@ -56,13 +56,16 @@ EXTI_Config_t extiSwitch 			= {0}; 		// EXTI15
 	/* GPIO handler para el DT del encoder*/
 GPIO_Handler_t userData 			= {0}; 		// PinB1
 
-/* Elementos para el PWM*/
-GPIO_Handler_t handlerPinPwmRgbLed  = {0};
-GPIO_Handler_t handlerPinPwmRCfilter  = {0};
-PWM_Handler_t handlerSignalPWMrgb  = {0};
-PWM_Handler_t handlerSignalPWMfilter  = {0};
+	/* GPIO handler para PWM del led RGB y filtro RC*/
+GPIO_Handler_t handlerPinPwmRgbLed 		= {0};	// Pin C8
+GPIO_Handler_t handlerPinPwmRCfilter  	= {0};	// Pin B7
 
-USART_Handler_t hCmdTerminal = {0};
+	/* PWM Handler para la señal PWM: timer y canal*/
+PWM_Handler_t handlerSignalPWMrgb  		= {0};	// Timer 3, canal 3
+PWM_Handler_t handlerSignalPWMfilter  	= {0};	// Timer 4, canal 2
+
+	/* Handler para usart6*/
+USART_Handler_t hCmdTerminal 			= {0}; 		// USART6
 
 
 
@@ -126,7 +129,7 @@ int main (void){
 	init_config();	// Se inicia la configuracion del sistema
 
 	/* Loop infinito */
-
+	pwm_Update_DuttyCycle(&handlerSignalPWMfilter, 100);
 	while(1){
 
 
@@ -139,6 +142,7 @@ int main (void){
 			duttyValue +=1;
 			if (duttyValue<100){
 				pwm_Update_DuttyCycle(&handlerSignalPWMrgb, duttyValue);
+//				pwm_Update_DuttyCycle(&handlerSignalPWMfilter, duttyValue);
 				printf("Duttyvalue : %u\n",duttyValue);
 			}
 			else if(duttyValue == 100){
@@ -339,8 +343,8 @@ void init_config(void){
 	gpio_Config(&segmentF);
 
 	//Segmento g
-	segmentG.pGPIOx							= GPIOB;
-	segmentG.pinConfig.GPIO_PinNumber		= PIN_7;
+	segmentG.pGPIOx							= GPIOC;
+	segmentG.pinConfig.GPIO_PinNumber		= PIN_12;
 	segmentG.pinConfig.GPIO_PinMode			= GPIO_MODE_OUT;
 	segmentG.pinConfig.GPIO_PinOutputType	= GPIO_OTYPE_PUSHPULL;
 	segmentG.pinConfig.GPIO_PinOutputSpeed	= GPIO_OSPEED_MEDIUM;
@@ -410,7 +414,7 @@ void init_config(void){
 
 	/* config del PWM para la salida del filtro RC*/
 
-	handlerPinPwmRCfilter.pGPIOx = GPIOC;
+	handlerPinPwmRCfilter.pGPIOx = GPIOB;
 	handlerPinPwmRCfilter.pinConfig.GPIO_PinNumber = PIN_7;
 	handlerPinPwmRCfilter.pinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
 	handlerPinPwmRCfilter.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
@@ -419,7 +423,7 @@ void init_config(void){
 	handlerPinPwmRCfilter.pinConfig.GPIO_PinAltFunMode = AF2;
 	gpio_Config(&handlerPinPwmRCfilter);
 
-	handlerSignalPWMfilter.ptrTIMx = TIM3;
+	handlerSignalPWMfilter.ptrTIMx = TIM4;
 	handlerSignalPWMfilter.config.channel = PWM_CHANNEL_2;
 	handlerSignalPWMfilter.config.duttyCicle = duttyValue;
 	handlerSignalPWMfilter.config.periodo = 100;		// 1kHz de freq para la señal de reloj 16MHz
