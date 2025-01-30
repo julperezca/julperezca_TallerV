@@ -57,8 +57,10 @@ EXTI_Config_t extiSwitch 			= {0}; 		// EXTI15
 GPIO_Handler_t userData 			= {0}; 		// PinB1
 
 /* Elementos para el PWM*/
-GPIO_Handler_t handlerPinPwmChannel  = {0};
-PWM_Handler_t handlerSignalPWM  = {0};
+GPIO_Handler_t handlerPinPwmRgbLed  = {0};
+GPIO_Handler_t handlerPinPwmRCfilter  = {0};
+PWM_Handler_t handlerSignalPWMrgb  = {0};
+PWM_Handler_t handlerSignalPWMfilter  = {0};
 
 USART_Handler_t hCmdTerminal = {0};
 
@@ -136,7 +138,7 @@ int main (void){
 			gpio_TooglePin(&ledState);		// Alterna estado del led
 			duttyValue +=1;
 			if (duttyValue<100){
-				pwm_Update_DuttyCycle(&handlerSignalPWM, duttyValue);
+				pwm_Update_DuttyCycle(&handlerSignalPWMrgb, duttyValue);
 				printf("Duttyvalue : %u\n",duttyValue);
 			}
 			else if(duttyValue == 100){
@@ -382,27 +384,52 @@ void init_config(void){
 
 			/* FIN de GPIO and EXTI config */
 
-	/* config del PWM */
-	handlerPinPwmChannel.pGPIOx = GPIOC;
-	handlerPinPwmChannel.pinConfig.GPIO_PinNumber = PIN_8;
-	handlerPinPwmChannel.pinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
-	handlerPinPwmChannel.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
-	handlerPinPwmChannel.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	handlerPinPwmChannel.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_FAST;
-	handlerPinPwmChannel.pinConfig.GPIO_PinAltFunMode = AF2;
-	gpio_Config(&handlerPinPwmChannel);
+	/* config del PWM para el led RGB*/
+	handlerPinPwmRgbLed.pGPIOx = GPIOC;
+	handlerPinPwmRgbLed.pinConfig.GPIO_PinNumber = PIN_8;
+	handlerPinPwmRgbLed.pinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
+	handlerPinPwmRgbLed.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
+	handlerPinPwmRgbLed.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerPinPwmRgbLed.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_FAST;
+	handlerPinPwmRgbLed.pinConfig.GPIO_PinAltFunMode = AF2;
+	gpio_Config(&handlerPinPwmRgbLed);
 
-	handlerSignalPWM.ptrTIMx = TIM3;
-	handlerSignalPWM.config.channel = PWM_CHANNEL_3;
-	handlerSignalPWM.config.duttyCicle = duttyValue;
-	handlerSignalPWM.config.periodo = 20;
-	handlerSignalPWM.config.prescaler = 16000;
-	pwm_Config(&handlerSignalPWM);
 
-	pwm_Enable_Output(&handlerSignalPWM);
-	pwm_Start_Signal(&handlerSignalPWM);
+	handlerSignalPWMrgb.ptrTIMx = TIM3;
+	handlerSignalPWMrgb.config.channel = PWM_CHANNEL_3;
+	handlerSignalPWMrgb.config.duttyCicle = duttyValue;
+	handlerSignalPWMrgb.config.periodo = 20;
+	handlerSignalPWMrgb.config.prescaler = 16000;
+	pwm_Config(&handlerSignalPWMrgb);
 
-		/*FIN del config del PWM*/
+	pwm_Enable_Output(&handlerSignalPWMrgb);
+	pwm_Start_Signal(&handlerSignalPWMrgb);
+
+		/*FIN del config del PWM para led RGB*/
+
+
+	/* config del PWM para la salida del filtro RC*/
+
+	handlerPinPwmRCfilter.pGPIOx = GPIOC;
+	handlerPinPwmRCfilter.pinConfig.GPIO_PinNumber = PIN_7;
+	handlerPinPwmRCfilter.pinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
+	handlerPinPwmRCfilter.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
+	handlerPinPwmRCfilter.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerPinPwmRCfilter.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_FAST;
+	handlerPinPwmRCfilter.pinConfig.GPIO_PinAltFunMode = AF2;
+	gpio_Config(&handlerPinPwmRCfilter);
+
+	handlerSignalPWMfilter.ptrTIMx = TIM3;
+	handlerSignalPWMfilter.config.channel = PWM_CHANNEL_2;
+	handlerSignalPWMfilter.config.duttyCicle = duttyValue;
+	handlerSignalPWMfilter.config.periodo = 100;		// 1kHz de freq para la señal de reloj 16MHz
+	handlerSignalPWMfilter.config.prescaler = 16000;
+	pwm_Config(&handlerSignalPWMfilter);
+
+	pwm_Enable_Output(&handlerSignalPWMfilter);
+	pwm_Start_Signal(&handlerSignalPWMfilter);
+
+		/*FIN del config del PWM para salida del filtro RC*/
 
 
 				/* Configuración para USART6 */

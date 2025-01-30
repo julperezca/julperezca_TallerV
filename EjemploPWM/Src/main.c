@@ -2,7 +2,7 @@
  ******************************************************************************
  * @file           : main.c
  * @author         : Julián Pérez Carvajal (julperezca@unal.edu.co)
- * @brief          : Tarea 2. Drivers GPIO, EXTI, TIMERS, magicProject.
+ * @brief          : Ejemplo PWM.
  ******************************************************************************
  */
 #include <stdio.h>
@@ -46,7 +46,7 @@ void analizeCommand(char *buffer);
 int main (void){
 	init_Config();	// Se inicia la configuracion del sistema
 //	SCB->CPACR |= (0xF << 20);
-//
+
 	bufferMsg[0] = 0x1B;
 	bufferMsg[1] = 0x5B;
 	bufferMsg[2] = 0x32;
@@ -169,6 +169,18 @@ void init_Config(void){
 
 		pwm_Enable_Output(&handlerSignalPWM);
 		pwm_Start_Signal(&handlerSignalPWM);
+
+
+
+		GPIO_Handler_t PINC12 = {0};
+		PINC12.pGPIOx = GPIOC;
+		PINC12.pinConfig.GPIO_PinNumber = PIN_12;
+		PINC12.pinConfig.GPIO_PinMode = GPIO_MODE_OUT;
+		PINC12.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
+		PINC12.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_FAST;
+		PINC12.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+		gpio_Config(&PINC12);
+		gpio_WritePin(&PINC12, SET);
 }
 
 
@@ -182,7 +194,7 @@ void Timer2_Callback(void) {
 void callback_ExtInt13(void){
 	__NOP();
 }
-void usart2_RxCallback(void){
-	usart2DataReceived = usart_getRxData();
-}
+//void usart2_RxCallback(void){
+//	usart2DataReceived = usart_getRxData();
+//}
 
