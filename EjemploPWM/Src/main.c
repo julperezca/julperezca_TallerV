@@ -45,7 +45,7 @@ void analizeCommand(char *buffer);
  */
 int main (void){
 	init_Config();	// Se inicia la configuracion del sistema
-//	SCB->CPACR |= (0xF << 20);
+
 
 	bufferMsg[0] = 0x1B;
 	bufferMsg[1] = 0x5B;
@@ -194,7 +194,7 @@ void Timer2_Callback(void) {
 void callback_ExtInt13(void){
 	__NOP();
 }
-//void usart2_RxCallback(void){
-//	usart2DataReceived = usart_getRxData();
-//}
+void usart2_RxCallback(void){
+	usart2DataReceived = usart_getRxData();
+}
 

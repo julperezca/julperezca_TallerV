@@ -2,7 +2,7 @@
  ******************************************************************************
  * @file           : main.c
  * @author         : Julián Pérez Carvajal (julperezca@unal.edu.co)
- * @brief          : Tarea 2. Drivers GPIO, EXTI, TIMERS, magicProject.
+ * @brief          : Taller USART.
  ******************************************************************************
  */
 #include <stdio.h>
@@ -265,6 +265,6 @@ void callback_ExtInt13(void){
 	bandera = 1;
 }
 void usart2_RxCallback(void){
-	receivedChar = usart_getRxData();
+	receivedChar = usart_getRxData(&usart2);
 }
 

@@ -77,17 +77,14 @@ fsm_t fsm = {0};
 fsm_RGB_t fsm_RGB 					= {0};
 fsm_transistor_t fsm_transistor 	= {0};
 fsm_segments_t fsm_segments 		= {0};
-
+fsm_rotation_t fsm_rotation 		= {0};
 
 /* Variables globales */
 uint8_t data 			 = 0;		// Variable que almacena el estado del DT del encoder
 uint8_t clock			 = 0;		// Variable que almacena el estado el CLK del encoder
 uint16_t rotationCounter = 0;		// Variable que es mostrada en el display (giros del encoder)
 
-uint8_t transistorFlag	 = 0;		// Flag para switching de transistores
 uint8_t blinkyFlag 		 = 0;		// Flag para el parpadeo del led
-uint8_t rotationFlag 	 = 0;		// Flag de rotación del encoder
-uint8_t swFlag 			 = 0;		// Flag para el SW del encoder
 uint16_t duttyValue = 0;			// valor de 0 a 100
 
 /* Estado de los transistores y segmentos */
@@ -101,7 +98,6 @@ enum {
 uint8_t rxData = 0;
 char bufferReception[BUFFER_SIZE];
 uint8_t counterReception;
-//bool stringComplete = false;
 char cmd[16];
 char userMsg[BUFFER_SIZE] = {0};
 char bufferData[BUFFER_SIZE] = {0};
@@ -128,51 +124,36 @@ int main (void){
 	configMagic();  // Se inicia la configuracion de Magic
 	init_config();	// Se inicia la configuracion del sistema
 
+	/*Clear data*/
+	bufferMsg[0] = 0x1B;
+	bufferMsg[1] = 0x5B;
+	bufferMsg[2] = 0x32;
+	bufferMsg[3] = 0x4A;
+	usart_writeMsg(&usart2, bufferMsg);
+
 	/* Loop infinito */
 	pwm_Update_DuttyCycle(&handlerSignalPWMfilter, 100);
 	while(1){
 
-
-
-//		pwm_Update_DuttyCycle(&handlerSignalPWM, duttyValue);
-
 		/* Condicional para el alza de la bandera del Led de estado */
 		if (blinkyFlag){
 			gpio_TooglePin(&ledState);		// Alterna estado del led
-			duttyValue +=1;
-			if (duttyValue<100){
-				pwm_Update_DuttyCycle(&handlerSignalPWMrgb, duttyValue);
-//				pwm_Update_DuttyCycle(&handlerSignalPWMfilter, duttyValue);
-				printf("Duttyvalue : %u\n",duttyValue);
-			}
-			else if(duttyValue == 100){
-				printf("dutty = 0\n");
-				duttyValue = 0;
-			}
-
 			blinkyFlag = 0;					// Se limpia la bandera del parpadeo del led
+
+//			duttyValue +=1;
+//			if (duttyValue<100){
+//				pwm_Update_DuttyCycle(&handlerSignalPWMrgb, duttyValue);
+//
+//				printf("%u\n",duttyValue);
+//			}
+//			else if(duttyValue == 100){
+//				duttyValue = 0;
+//			}
 		}
 
-
-		/* Condicional para el Switching de los transistores */
-		if(transistorFlag){
-			fsm.fsmState = DISPLAY_VALUE_STATE;					// Se define el estado para la fsm
-			transistorFlag = 0;					     			// Se limpia la bandera
+		if(fsm.fsmState != STANDBY_STATE){
+			state_machine_action();
 		}
-
-		/* Condicional para el alza de la bandera debido al SW del encoder */
-		else if (swFlag){
-			fsm.fsmState = SW_BUTTON_STATE;						// Se define el estado para la fsm
-			swFlag = 0;											// Se baja la bandera
-		}
-		else{
-			fsm.fsmState = STANDBY_STATE;						// Estado de espera
-		}
-
-		/* Se aplica el estado actual a la fsm*/
-		state_machine_action();
-
-
 	}
 	return 0;
 }
@@ -473,13 +454,12 @@ void Timer2_Callback(void){
 
 /* Callback del timer que enciende y apaga los transistores */
 void Timer5_Callback(void){
-	transistorFlag = 1;				// Se sube la bandera del switcheo de transistores
+	fsm.fsmState = DISPLAY_VALUE_STATE;				// Se actualiza el estado para la fsm
 }
 
 /* Callback de la interrupcion del pin B2 que corresponde al Clk */
 void callback_ExtInt2(void){
-	rotationFlag = 1;				// Se sube la bandera de rotación
-
+	fsm_rotation.rotationState = ROTATION_STATE;	// Se actualiza el estado para la fsm
 	// Se lee el valor del data y clock para determinar el giro en sentido CW o CCW
 	data = gpio_ReadPin(&userData);
 	clock = gpio_ReadPin(&userClock);
@@ -487,12 +467,12 @@ void callback_ExtInt2(void){
 
 /* Callback de la interrupcion del Switch SW del encoder que controla el Led RGB */
 void callback_ExtInt15(void){
-	swFlag = 1;				// Se sube la bandera correspondiente al bit pos 4
+	fsm.fsmState = SW_BUTTON_STATE;				 // Se define el estado para la fsm
 }
 
 void usart6_RxCallback(void){
 	usart_getRxData(&hCmdTerminal);
-	// MODIFICAR ALGÚN ESTADO PARA EVIDENCIAR CAMBIO DE CHAR
+
 }
 
 void ReceivedChar(void){
@@ -520,9 +500,9 @@ void parseCommands(char *ptrBufferReception){
 		usart_writeMsg(&hCmdTerminal,"Help Menu CMDs:\n");
 		usart_writeMsg(&hCmdTerminal,"1) help --Print this menu\n");
 		usart_writeMsg(&hCmdTerminal,"2) dummy #A #B --dummy cmd, #A and #B are uint32_t\n");
-		usart_writeMsg(&hCmdTerminal,"3) userm # -- msg is a string comming from outside\n");
+		usart_writeMsg(&hCmdTerminal,"3) usermsg # -- msg is a string comming from outside\n");
 		usart_writeMsg(&hCmdTerminal,"4) setPeriod # -- Change the led_state period (ms)\n");
-		usart_writeMsg(&hCmdTerminal,"5) setDuty # -- Change the dutty cycle (%)\n");
+		usart_writeMsg(&hCmdTerminal,"5) setDutty # -- Change the dutty cycle (%)\n");
 		usart_writeMsg(&hCmdTerminal,"6) setDisplay # -- Change the display number\n");
 		usart_writeMsg(&hCmdTerminal,"7) setVolt # -- PWM-DAC output in mV\n");
 	}
@@ -539,6 +519,27 @@ void parseCommands(char *ptrBufferReception){
 		usart_writeMsg(&hCmdTerminal,userMsg);
 		usart_writeMsg(&hCmdTerminal,"\n");
 	}
+	else if(strcmp(cmd,"setPeriod")==0){
+		// Modificar el periodo del led de estado con
+		// valor de 100ms hasta 1500ms
+		}
+	else if(strcmp(cmd,"setDisplay")==0){
+		// modificar el valor del display "variable global rotationCOunter"
+		}
+	else if(strcmp(cmd,"setFreq")==0){
+			// Modificar la frecuencia de los PWM- se selecciona con el
+			// primer parámetro cual de los dos PWM, el segundo
+			// parámetro será periodo de la freq en microsegundos
+			}
+	else if(strcmp(cmd,"setDutty")==0){
+			// Modificar dutty cycle- se selecciona con el
+			// primer parámetro cual de los dos PWM, el segundo
+			// parámetro será el ancho de pulso en porcentaje
+			}
+	else if(strcmp(cmd,"setVolt")==0){
+		// modificar el Voltaje con el PWM del filtro RC
+		// dado en mV, rango de 1mV a 3300mV
+		}
 	else{
 		usart_writeMsg(&hCmdTerminal,"Wrong CMD\n");
 	}
@@ -566,9 +567,10 @@ void state_machine_action(void){
 		disableTransistors();		         	 // Se apagan los transistores
 
 		/* Condicional para el alza de la bandera dada por el extiCLK */
-		if (rotationFlag){
-			fsm_rotation_handler();	 		 	 // Actualiza rotationCounter para mostrar en el display
-			rotationFlag = 0;				     // Se baja la bandera
+		if (fsm_rotation.rotationState == ROTATION_STATE){
+			// Actualiza rotationCounter para mostrar en el display
+			fsm_rotation_handler();
+			fsm_rotation.rotationState = NO_ROTATION;	// Se actualiza la fsmRotation
 		}
 		fsm_display_handler(); 			    	 // Función que enciende los segmentos y el transistor
 
@@ -578,6 +580,7 @@ void state_machine_action(void){
 		fsm.fsmState = STANDBY_STATE;			// Estado de espera
 		break;
 	}
+	fsm.fsmState = STANDBY_STATE;
 }
 
 

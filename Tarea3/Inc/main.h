@@ -103,8 +103,8 @@ typedef struct
 	/* Enumeración de los estados de rotación*/
 typedef enum
 {
-	CW_STATE,
-	CCW_STATE
+	NO_ROTATION,
+	ROTATION_STATE,
 } rotation_State;
 
  	/* Estructura que maneja los estados de rotación */
