@@ -46,26 +46,28 @@ GPIO_Handler_t digitoUnMillar 		= {0}; 		// PinC5
 Timer_Handler_t transistorsTimer	= {0}; 		// TIM3 para los transistores
 
 	/* GPIO handler y EXTI config para el CLK del encoder*/
-GPIO_Handler_t userClock 			= {0}; 		// PinB2
-EXTI_Config_t extiClock	 			= {0}; 		// EXTI2
+GPIO_Handler_t userClock 			 = {0}; 		// PinB2
+EXTI_Config_t extiClock	 			 = {0}; 		// EXTI2
 
 	/* GPIO handler y EXTI config para el SW del encoder*/
-GPIO_Handler_t userSwitch 			= {0}; 		// PinB15
-EXTI_Config_t extiSwitch 			= {0}; 		// EXTI15
+GPIO_Handler_t userSwitch 			 = {0}; 		// PinB15
+EXTI_Config_t extiSwitch 			 = {0}; 		// EXTI15
 
 	/* GPIO handler para el DT del encoder*/
-GPIO_Handler_t userData 			= {0}; 		// PinB1
+GPIO_Handler_t userData 			 = {0}; 		// PinB1
 
 	/* GPIO handler para PWM del led RGB y filtro RC*/
-GPIO_Handler_t handlerPinPwmRgbLed 		= {0};	// Pin C8
-GPIO_Handler_t handlerPinPwmRCfilter  	= {0};	// Pin B7
+GPIO_Handler_t handlerPinPwmRgbLed   = {0};	// Pin C8
+GPIO_Handler_t handlerPinPwmRCfilter = {0};	// Pin B7
 
 	/* PWM Handler para la señal PWM: timer y canal*/
-PWM_Handler_t handlerSignalPWMrgb  		= {0};	// Timer 3, canal 3
-PWM_Handler_t handlerSignalPWMfilter  	= {0};	// Timer 4, canal 2
+PWM_Handler_t handlerSignalPWMrgb  	 = {0};	// Timer 3, canal 3
+PWM_Handler_t handlerSignalPWMfilter = {0};	// Timer 4, canal 2
 
 	/* Handler para usart6*/
-USART_Handler_t hCmdTerminal 			= {0}; 		// USART6
+USART_Handler_t hCmdTerminal 		 = {0}; 		// USART6
+GPIO_Handler_t usart6Tx 			 = {0};
+GPIO_Handler_t usart6Rx				 = {0};
 
 
 
@@ -125,11 +127,11 @@ int main (void){
 	init_config();	// Se inicia la configuracion del sistema
 
 	/*Clear data*/
-	bufferMsg[0] = 0x1B;
-	bufferMsg[1] = 0x5B;
-	bufferMsg[2] = 0x32;
-	bufferMsg[3] = 0x4A;
-	usart_writeMsg(&usart2, bufferMsg);
+//	bufferMsg[0] = 0x1B;
+//	bufferMsg[1] = 0x5B;
+//	bufferMsg[2] = 0x32;
+//	bufferMsg[3] = 0x4A;
+//	usart_writeMsg(&hCmdTerminal, bufferMsg);
 
 	/* Loop infinito */
 	pwm_Update_DuttyCycle(&handlerSignalPWMfilter, 100);
@@ -229,8 +231,8 @@ void init_config(void){
 	gpio_Config(&digitoUnidad);
 
 	// Transistor que maneja el digito de las decenas
-	digitoDecena.pGPIOx								= GPIOB;
-	digitoDecena.pinConfig.GPIO_PinNumber			= PIN_9;
+	digitoDecena.pGPIOx								= GPIOA;
+	digitoDecena.pinConfig.GPIO_PinNumber			= PIN_5;
 	digitoDecena.pinConfig.GPIO_PinMode				= GPIO_MODE_OUT;
 	digitoDecena.pinConfig.GPIO_PinOutputType		= GPIO_OTYPE_PUSHPULL;
 	digitoDecena.pinConfig.GPIO_PinOutputSpeed		= GPIO_OSPEED_MEDIUM;
@@ -238,8 +240,8 @@ void init_config(void){
 	gpio_Config(&digitoDecena);
 
 	// Transistor que maneja el digito de las centenas
-	digitoCentena.pGPIOx							= GPIOC;
-	digitoCentena.pinConfig.GPIO_PinNumber			= PIN_6;
+	digitoCentena.pGPIOx							= GPIOB;
+	digitoCentena.pinConfig.GPIO_PinNumber			= PIN_9;
 	digitoCentena.pinConfig.GPIO_PinMode			= GPIO_MODE_OUT;
 	digitoCentena.pinConfig.GPIO_PinOutputType		= GPIO_OTYPE_PUSHPULL;
 	digitoCentena.pinConfig.GPIO_PinOutputSpeed		= GPIO_OSPEED_MEDIUM;
@@ -370,13 +372,13 @@ void init_config(void){
 			/* FIN de GPIO and EXTI config */
 
 	/* config del PWM para el led RGB*/
-	handlerPinPwmRgbLed.pGPIOx = GPIOC;
-	handlerPinPwmRgbLed.pinConfig.GPIO_PinNumber = PIN_8;
-	handlerPinPwmRgbLed.pinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
+	handlerPinPwmRgbLed.pGPIOx 						= GPIOC;
+	handlerPinPwmRgbLed.pinConfig.GPIO_PinNumber 	= PIN_8;
+	handlerPinPwmRgbLed.pinConfig.GPIO_PinMode 		= GPIO_MODE_ALTFN;
 	handlerPinPwmRgbLed.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
 	handlerPinPwmRgbLed.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
 	handlerPinPwmRgbLed.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_FAST;
-	handlerPinPwmRgbLed.pinConfig.GPIO_PinAltFunMode = AF2;
+	handlerPinPwmRgbLed.pinConfig.GPIO_PinAltFunMode 	= AF2;
 	gpio_Config(&handlerPinPwmRgbLed);
 
 
@@ -418,6 +420,26 @@ void init_config(void){
 
 
 				/* Configuración para USART6 */
+	//  GPIO Rx, Tx config
+	usart6Tx.pGPIOx = GPIOC;
+	usart6Tx.pinConfig.GPIO_PinNumber = PIN_6;
+	usart6Tx.pinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
+	usart6Tx.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
+	usart6Tx.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_MEDIUM;
+	usart6Tx.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	usart6Tx.pinConfig.GPIO_PinAltFunMode = AF8;
+	gpio_Config(&usart6Tx);
+
+	usart6Rx.pGPIOx = GPIOC;
+	usart6Rx.pinConfig.GPIO_PinNumber = PIN_7;
+	usart6Rx.pinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
+	usart6Rx.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
+	usart6Rx.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_MEDIUM;
+	usart6Rx.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	usart6Rx.pinConfig.GPIO_PinAltFunMode = AF8;
+	gpio_Config(&usart6Rx);
+
+	// USART 6 CONFIG
 	hCmdTerminal.ptrUSARTx = USART6;
 	hCmdTerminal.USART_Config.baudrate = USART_BAUDRATE_115200;
 	hCmdTerminal.USART_Config.datasize = USART_DATASIZE_8BIT;
@@ -471,7 +493,8 @@ void callback_ExtInt15(void){
 }
 
 void usart6_RxCallback(void){
-	usart_getRxData(&hCmdTerminal);
+	rxData = usart_getRxData(&hCmdTerminal);
+	fsm.fsmState = CHAR_RECEIVED_STATE;
 
 }
 
@@ -484,7 +507,7 @@ void ReceivedChar(void){
 			bufferReception[counterReception] = '\0';
 			counterReception = 0;
 
-			//fsm.... Comand completed /* agregar a maquina de estados*/
+			fsm.fsmState = CMD_COMPLETE;
 		}
 	}
 }
@@ -501,10 +524,12 @@ void parseCommands(char *ptrBufferReception){
 		usart_writeMsg(&hCmdTerminal,"1) help --Print this menu\n");
 		usart_writeMsg(&hCmdTerminal,"2) dummy #A #B --dummy cmd, #A and #B are uint32_t\n");
 		usart_writeMsg(&hCmdTerminal,"3) usermsg # -- msg is a string comming from outside\n");
-		usart_writeMsg(&hCmdTerminal,"4) setPeriod # -- Change the led_state period (ms)\n");
-		usart_writeMsg(&hCmdTerminal,"5) setDutty # -- Change the dutty cycle (%)\n");
-		usart_writeMsg(&hCmdTerminal,"6) setDisplay # -- Change the display number\n");
-		usart_writeMsg(&hCmdTerminal,"7) setVolt # -- PWM-DAC output in mV\n");
+		usart_writeMsg(&hCmdTerminal,"4) setDisplay # -- Change the display number\n");
+		usart_writeMsg(&hCmdTerminal,"5) setPeriod # -- Change the led_state period (ms)\n");
+		usart_writeMsg(&hCmdTerminal,"6) setFreq # -- Pone freq en los timers de PWM\n");
+		usart_writeMsg(&hCmdTerminal,"7) setDutty # -- PWM- change dutty\n");
+		usart_writeMsg(&hCmdTerminal,"8) setVolt # -- PWM-DAC output in mV\n");
+
 	}
 	else if(strcmp(cmd,"dummy")==0){
 		usart_writeMsg(&hCmdTerminal,"CMD: dummy\n");
@@ -514,29 +539,29 @@ void parseCommands(char *ptrBufferReception){
 		sprintf(bufferData,"number B = %u \n", secondParameter);
 		usart_writeMsg(&hCmdTerminal, bufferData);
 	}
-	else if(strcmp(cmd,"usermsg")==0){
+	else if(strcmp(cmd,"usermsg") == 0){
 		usart_writeMsg(&hCmdTerminal,"CMD: usermsg\n");
 		usart_writeMsg(&hCmdTerminal,userMsg);
 		usart_writeMsg(&hCmdTerminal,"\n");
 	}
-	else if(strcmp(cmd,"setPeriod")==0){
+	else if(strcmp(cmd,"setDisplay") == 0){
+		// modificar el valor del display "variable global rotationCOunter"
+		}
+	else if(strcmp(cmd,"setPeriod") == 0){
 		// Modificar el periodo del led de estado con
 		// valor de 100ms hasta 1500ms
 		}
-	else if(strcmp(cmd,"setDisplay")==0){
-		// modificar el valor del display "variable global rotationCOunter"
-		}
-	else if(strcmp(cmd,"setFreq")==0){
+	else if(strcmp(cmd,"setFreq") == 0){
 			// Modificar la frecuencia de los PWM- se selecciona con el
 			// primer parámetro cual de los dos PWM, el segundo
 			// parámetro será periodo de la freq en microsegundos
 			}
-	else if(strcmp(cmd,"setDutty")==0){
+	else if(strcmp(cmd,"setDutty") == 0){
 			// Modificar dutty cycle- se selecciona con el
 			// primer parámetro cual de los dos PWM, el segundo
 			// parámetro será el ancho de pulso en porcentaje
 			}
-	else if(strcmp(cmd,"setVolt")==0){
+	else if(strcmp(cmd,"setVolt") == 0){
 		// modificar el Voltaje con el PWM del filtro RC
 		// dado en mV, rango de 1mV a 3300mV
 		}
@@ -544,9 +569,6 @@ void parseCommands(char *ptrBufferReception){
 		usart_writeMsg(&hCmdTerminal,"Wrong CMD\n");
 	}
 }
-
-
-
 
 /* Función de la Finite State Machine  */
 void state_machine_action(void){
@@ -573,7 +595,17 @@ void state_machine_action(void){
 			fsm_rotation.rotationState = NO_ROTATION;	// Se actualiza la fsmRotation
 		}
 		fsm_display_handler(); 			    	 // Función que enciende los segmentos y el transistor
+		break;
 
+	case CHAR_RECEIVED_STATE:
+		ReceivedChar();
+		if(fsm.fsmState == CMD_COMPLETE){
+			printf("Hola\n");
+			parseCommands(bufferReception);
+			for (uint8_t i = 0; i < sizeof(bufferReception); i++){
+				bufferReception[i] = 0;
+			}
+		}
 		break;
 
 	default:
@@ -582,8 +614,6 @@ void state_machine_action(void){
 	}
 	fsm.fsmState = STANDBY_STATE;
 }
-
-
 
 /* Función que maneja los estados de cadad digito y segmento */
 void fsm_display_handler(void){
@@ -639,8 +669,6 @@ void fsm_display_handler(void){
     }
 }
 
-
-
 /* Funcion que determina el sentido de giro y aumenta o disminuye el valor rotationCounter*/
 void fsm_rotation_handler(void){
 	// MAX_12_BITS  en operación bitwise & con rotationCounter.
@@ -665,8 +693,6 @@ void fsm_rotation_handler(void){
 		break;
 	}
 }
-
-
 
 /* Funcion para  seleccionar los modos del Led RGB */
 void fsm_rgb_modeSelection(void){
@@ -784,8 +810,6 @@ void fsm_rgb_modeSelection(void){
 		}
 }
 
-
-
 /* Función que apaga los transistores para evitar el ghosting */
 void disableTransistors(void){
 	gpio_WritePin(&digitoUnidad, OFF);
@@ -793,8 +817,6 @@ void disableTransistors(void){
 	gpio_WritePin(&digitoCentena, OFF);
 	gpio_WritePin(&digitoUnMillar, OFF);
 }
-
-
 
 /* Funcion que selecciona los segmentos para asignar un numero en el display */
 void numberSelection(uint8_t displayNumber){
@@ -917,8 +939,6 @@ void numberSelection(uint8_t displayNumber){
 			}
 	}
 }
-
-
 
 /*
  * Esta función sirve para detectar problemas de parametros

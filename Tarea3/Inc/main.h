@@ -22,7 +22,9 @@ typedef enum
 {
 	STANDBY_STATE,
 	SW_BUTTON_STATE,
-	DISPLAY_VALUE_STATE
+	DISPLAY_VALUE_STATE,
+	CHAR_RECEIVED_STATE,
+	CMD_COMPLETE
 } fsm_State;
 
 	/* Estructura  que maneja de la fsm del loop principal */
