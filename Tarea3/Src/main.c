@@ -40,10 +40,10 @@ GPIO_Handler_t segmentG 	 	= {0}; 		// PinC12  segmento g
 
 	/* GPIO handler y TIMER para los transistores  */
 GPIO_Handler_t digitoUnidad 	 	= {0}; 		// PinC10
-GPIO_Handler_t digitoDecena			= {0}; 		// PinB9
-GPIO_Handler_t digitoCentena 		= {0}; 		// PinC6
+GPIO_Handler_t digitoDecena			= {0}; 		// PinA5
+GPIO_Handler_t digitoCentena 		= {0}; 		// PinB9
 GPIO_Handler_t digitoUnMillar 		= {0}; 		// PinC5
-Timer_Handler_t transistorsTimer	= {0}; 		// TIM3 para los transistores
+Timer_Handler_t transistorsTimer	= {0}; 		// TIM5 para los transistores
 
 	/* GPIO handler y EXTI config para el CLK del encoder*/
 GPIO_Handler_t userClock 			 = {0}; 		// PinB2
@@ -57,17 +57,17 @@ EXTI_Config_t extiSwitch 			 = {0}; 		// EXTI15
 GPIO_Handler_t userData 			 = {0}; 		// PinB1
 
 	/* GPIO handler para PWM del led RGB y filtro RC*/
-GPIO_Handler_t handlerPinPwmRgbLed   = {0};	// Pin C8
-GPIO_Handler_t handlerPinPwmRCfilter = {0};	// Pin B7
+GPIO_Handler_t handlerPinPwmRgbLed   = {0};			// Pin C8
+GPIO_Handler_t handlerPinPwmRCfilter = {0};			// Pin B7
 
 	/* PWM Handler para la señal PWM: timer y canal*/
-PWM_Handler_t handlerSignalPWMrgb  	 = {0};	// Timer 3, canal 3
-PWM_Handler_t handlerSignalPWMfilter = {0};	// Timer 4, canal 2
+PWM_Handler_t handlerSignalPWMrgb  	 = {0};			// Timer 3, canal 3
+PWM_Handler_t handlerSignalPWMfilter = {0};			// Timer 4, canal 2
 
 	/* Handler para usart6*/
 USART_Handler_t hCmdTerminal 		 = {0}; 		// USART6
-GPIO_Handler_t usart6Tx 			 = {0};
-GPIO_Handler_t usart6Rx				 = {0};
+GPIO_Handler_t usart6Tx 			 = {0};			// Tx  pin C6
+GPIO_Handler_t usart6Rx				 = {0};			// Rx  pin C7
 
 /* Finite State Machine + subestados del led RGB, de los transistores y de los segmentos */
 fsm_t fsm = {0};
@@ -99,6 +99,7 @@ uint8_t counterReception;
 char cmd[16];
 char userMsg[BUFFER_SIZE] = {0};
 char bufferData[BUFFER_SIZE] = {0};
+char clearBuffer[16] = {0};
 unsigned int  firstParameter;
 unsigned int  secondParameter;
 
@@ -118,6 +119,15 @@ int main (void){
 	configMagic();  // Se inicia la configuracion de Magic
 	init_config();	// Se inicia la configuracion del sistema
 
+
+	clearBuffer[0] = 0x1B;
+	clearBuffer[1] = 0x5B;
+	clearBuffer[2] = 0x32;
+	clearBuffer[3] = 0x4A;
+	/* Se limpia la terminal*/
+	usart_writeMsg(&hCmdTerminal,clearBuffer);
+
+	usart_writeMsg(&hCmdTerminal,"Escriba help @ para desplegar el manual de comandos a utilizar\n");
 	/* Loop infinito */
 
 	while(1){
@@ -361,11 +371,9 @@ void init_config(void){
 	handlerSignalPWMrgb.config.channel = PWM_CHANNEL_3;
 	handlerSignalPWMrgb.config.duttyCicle = 50;
 	handlerSignalPWMrgb.config.periodo = 20;
-	handlerSignalPWMrgb.config.prescaler = 16000;
+	handlerSignalPWMrgb.config.prescaler = 16;
 	pwm_Config(&handlerSignalPWMrgb);
 
-	pwm_Enable_Output(&handlerSignalPWMrgb);
-	pwm_Start_Signal(&handlerSignalPWMrgb);
 
 		/*FIN del config del PWM para led RGB*/
 
@@ -384,7 +392,7 @@ void init_config(void){
 	handlerSignalPWMfilter.config.channel = PWM_CHANNEL_2;
 	handlerSignalPWMfilter.config.duttyCicle = 50;
 	handlerSignalPWMfilter.config.periodo = 100;		// 1kHz de freq para la señal de reloj 16MHz
-	handlerSignalPWMfilter.config.prescaler = 16000;
+	handlerSignalPWMfilter.config.prescaler = 16;
 	pwm_Config(&handlerSignalPWMfilter);
 
 	pwm_Enable_Output(&handlerSignalPWMfilter);
@@ -415,7 +423,7 @@ void init_config(void){
 
 	// USART 6 CONFIG
 	hCmdTerminal.ptrUSARTx = USART6;
-	hCmdTerminal.USART_Config.baudrate = USART_BAUDRATE_19200;
+	hCmdTerminal.USART_Config.baudrate = USART_BAUDRATE_115200;
 	hCmdTerminal.USART_Config.datasize = USART_DATASIZE_8BIT;
 	hCmdTerminal.USART_Config.parity = USART_PARITY_NONE;
 	hCmdTerminal.USART_Config.stopbits = USART_STOPBIT_1;
@@ -493,19 +501,18 @@ void parseCommands(char *ptrBufferReception){
 
 	/* */
 	if ((strcmp(cmd,"help")) == 0){
-		usart_writeMsg(&hCmdTerminal,"Help Menu CMDs:\n");
-		usart_writeMsg(&hCmdTerminal,"1) help --Print this menu\n");
-		usart_writeMsg(&hCmdTerminal,"2) dummy #A #B --dummy cmd, #A and #B are uint32_t\n");
-		usart_writeMsg(&hCmdTerminal,"3) usermsg # -- msg is a string comming from outside\n");
-		usart_writeMsg(&hCmdTerminal,"4) setDisplay # -- Change the display number\n");
-		usart_writeMsg(&hCmdTerminal,"5) setPeriod # -- Change the led_state period (ms)\n");
-		usart_writeMsg(&hCmdTerminal,"6) setFreq #A #B -- A=1, PWMrgb, A=0 PWMRC, B=freq del PWM\n");
-		usart_writeMsg(&hCmdTerminal,"7) setDutty # -- PWM- change dutty\n");
-		usart_writeMsg(&hCmdTerminal,"8) setVolt # -- PWM-DAC output in mV\n");
+		usart_writeMsg(&hCmdTerminal,"Help Menu CMDs. CMD_Structure: cmd # # @\n");
+		usart_writeMsg(&hCmdTerminal,"1) help          -- Print this menu\n");
+		usart_writeMsg(&hCmdTerminal,"2) dummy #A #B   -- Dummy cmd, #A and #B are uint32_t\n");
+		usart_writeMsg(&hCmdTerminal,"3) setDisplay #  -- Change the display value. The max value is 12 bit \n");
+		usart_writeMsg(&hCmdTerminal,"4) setPeriod #   -- Change the led_state period (ms)\n");
+		usart_writeMsg(&hCmdTerminal,"5) setFreq #A #B -- Select PWM: A=0 -> PWMrgb, A=1 -> PWMrcFilter. Select period: B=pwm period in \n");
+		usart_writeMsg(&hCmdTerminal,"6) setDutty #    -- Select PWM: A=0 -> PWMrgb, A=1 -> PWMrcFilter. Select dutty B=dutty cycle from 0 to 100\n");
+		usart_writeMsg(&hCmdTerminal,"7) setVolt #     -- PWM-DAC output in mV from 100 mV to 3300 mV. Set period from 20 us in PWMFilter to\n");
 
 	}
 
-	/* */
+	/* Command dummy*/
 	else if(strcmp(cmd,"dummy") == 0){
 		usart_writeMsg(&hCmdTerminal,"CMD: dummy\n");
 		sprintf(bufferData,"number A = %u \n",firstParameter);
@@ -515,33 +522,34 @@ void parseCommands(char *ptrBufferReception){
 		usart_writeMsg(&hCmdTerminal, bufferData);
 	}
 
-	/* */
-	else if(strcmp(cmd,"usermsg") == 0){
-		usart_writeMsg(&hCmdTerminal,"CMD: usermsg\n");
-		usart_writeMsg(&hCmdTerminal,userMsg);
-		usart_writeMsg(&hCmdTerminal,"\n");
-	}
 
-	/* */
+
+	/* setDisplay command to change the display valuu*/
 	else if(strcmp(cmd,"setDisplay") == 0){
 		usart_writeMsg(&hCmdTerminal,"CMD: setDisplay\n");
+
+		// Se garantiza que el valor ingresado sea menor a 12 bits
 		if ((firstParameter<= MAX_12_BITS) & (firstParameter>=0)){
-			sprintf(bufferData,"Display updated: %u \n",firstParameter);
-			rotationCounter = firstParameter;
+			sprintf(bufferData,"Display updated to: %u \n",firstParameter);
+			rotationCounter = firstParameter; 			// se actualiza el valor global para mostrar en display
 			usart_writeMsg(&hCmdTerminal,bufferData);
 		}
+		// se imprime una instrucción para el usuario
 		else{
 			sprintf(bufferData,"Insert a 12 bits value\n");
 			usart_writeMsg(&hCmdTerminal,bufferData);
 		}
 	}
 
-	/* */
+	/*This elseif modifies the period of the blinky led */
 	else if(strcmp(cmd,"setPeriod") == 0){
 
 		usart_writeMsg(&hCmdTerminal,"CMD: setPeriod\n");
+
+		// se garantiza que el valor de ms ingresado este entre 100 y 1500
 		if((firstParameter>=100) & (firstParameter<=1500) ){
 
+			// se apaga el timer y se reconfigura
 			timer_SetState(&blinkyTimer, TIMER_OFF);
 			blinkyTimer.TIMx_Config.TIMx_Period	= firstParameter;
 			timer_Config(&blinkyTimer);
@@ -549,52 +557,89 @@ void parseCommands(char *ptrBufferReception){
 			sprintf(bufferData,"Blinky period updated: %u \n",firstParameter);
 			usart_writeMsg(&hCmdTerminal,bufferData);
 		}
+		// se da una instruccion al usuario
 		else{
 			sprintf(bufferData,"Insert a value between 100 and 1500 ms\n");
 			usart_writeMsg(&hCmdTerminal,bufferData);
 		}
 	}
 
-	/* */
+	/* this elseif modifies the frequency of the PWMs*/
 	else if(strcmp(cmd,"setFreq") == 0){
 		usart_writeMsg(&hCmdTerminal,"CMD: setFreq\n");
-		if (firstParameter == 1){
-			handlerSignalPWMrgb.config.periodo = secondParameter;
+
+		// A = 0 corresponde al PWM del led RGB, led azul
+		if (firstParameter == 0){
+			// se ponen los otros pines en bajo por si se tiene un estado del led RGB
+			gpio_WritePin(&ledRed, RESET);
+			gpio_WritePin(&ledGreen, RESET);
+
+			// se cambia la config para modo PWM del pin
+			gpio_Config(&handlerPinPwmRgbLed);
+
+			// se enciende y configura el PWM  para los led RGB
+			pwm_Enable_Output(&handlerSignalPWMrgb);
+			pwm_Start_Signal(&handlerSignalPWMrgb);
+			pwm_Update_Frequency(&handlerSignalPWMrgb, secondParameter);
 			pwm_Config(&handlerSignalPWMrgb);
+
+
 			sprintf(bufferData,"Periodo (um) PWM led rgb: %u\n",secondParameter);
 			usart_writeMsg(&hCmdTerminal,bufferData);
 
 		}
-		else{
-			handlerSignalPWMfilter.config.periodo = (secondParameter);
+		 // A = 1 corresponde al PWM del ledRGB, led azul
+		else if(firstParameter == 1){
+			pwm_Update_Frequency(&handlerSignalPWMfilter, secondParameter);
 			pwm_Config(&handlerSignalPWMfilter);
 			sprintf(bufferData,"Periodo (um) del PWM filtro RC: %u\n",secondParameter);
 			usart_writeMsg(&hCmdTerminal,bufferData);
 		}
 	}
 
-	/* */
+	/* This elseif modifies the dutty cycle of the PWMs*/
 	else if(strcmp(cmd,"setDutty") == 0){
 		usart_writeMsg(&hCmdTerminal,"CMD: setDutty\n");
-		if (firstParameter == 1){
+
+		// A = 0 corresponde al PWM del led RGB, led azul
+		if (firstParameter == 0){
+
+			// se ponen los otros pines en bajo por si se tiene un estado del led RGB
+			gpio_WritePin(&ledRed, RESET);
+			gpio_WritePin(&ledGreen, RESET);
+			gpio_Config(&handlerPinPwmRgbLed);
+			pwm_Enable_Output(&handlerSignalPWMrgb);
+			pwm_Start_Signal(&handlerSignalPWMrgb);
 			pwm_Update_DuttyCycle(&handlerSignalPWMrgb, secondParameter);
 			sprintf(bufferData,"Modificación de dutty cycle del led rgb percentage: %u\n",secondParameter);
 			usart_writeMsg(&hCmdTerminal,bufferData);
 		}
-		else{
+
+		 // A = 1 corresponde al PWM del ledRGB, led azul
+		else if(firstParameter == 1){
+
+			gpio_Config(&handlerPinPwmRgbLed);
+			pwm_Enable_Output(&handlerSignalPWMrgb);
+			pwm_Start_Signal(&handlerSignalPWMrgb);
 			pwm_Update_DuttyCycle(&handlerSignalPWMfilter, secondParameter);
 			sprintf(bufferData,"Modificación de dutty cycle del filtro RC percentage: %u\n",secondParameter);
 			usart_writeMsg(&hCmdTerminal,bufferData);
 
 		}
 	}
+	/*This modifies the voltaje of the output in the RC filter */
 	else if(strcmp(cmd,"setVolt") == 0){
-		// modificar el Voltaje con el PWM del filtro RC
-		// dado en mV, rango de 1mV a 3300mV
+		if ((firstParameter>=1) & (firstParameter<=3300)){
 		pwm_Update_DuttyCycle(&handlerSignalPWMfilter, (uint16_t)firstParameter*100/3300);
-		sprintf(bufferData,"Voltaje: %u \n",firstParameter);
+		sprintf(bufferData,"Voltaje actual: %u mV \n",firstParameter);
 		usart_writeMsg(&hCmdTerminal,bufferData);
+		}
+		else{
+		sprintf(bufferData,"Inserte un valor de voltaje entre 1 mV y 3300 mV");
+		usart_writeMsg(&hCmdTerminal,bufferData);
+		}
 	}
+	/*The inserted msg is not in the list*/
 	else{
 		usart_writeMsg(&hCmdTerminal,"Wrong CMD\n");
 	}
@@ -603,14 +648,18 @@ void parseCommands(char *ptrBufferReception){
 /* Función de la Finite State Machine  */
 void state_machine_action(void){
 
-	uint32_t currentTime = 0; 		// variable local que almacena el tiempo desde que inicia el código
+	uint32_t currentTime = 1; 		// variable local que almacena el tiempo desde que inicia el código
 
 	/* Switch case que evalua cada uno los estados de la FSM */
 	switch (fsm.fsmState){
 
 	case SW_BUTTON_STATE:
-		currentTime = ticksNumber(); 						// Se guarda el valor de los ticks
-		printf("Current time: %lu ms\n", currentTime);		// Se imprime el tiempo de ejecución del programa
+		pwm_Disable_Output(&handlerSignalPWMrgb);
+		pwm_Stop_Signal(&handlerSignalPWMrgb);
+		gpio_Config(&ledBlue);
+		currentTime = ticksNumber();
+		printf("Current time: %lu \n",currentTime);
+		// Se guarda el valor de los ticks
 		fsm_rgb_modeSelection();							// Se cambia el estado del Led RGB
 		break;
 
@@ -630,7 +679,6 @@ void state_machine_action(void){
 	case CHAR_RECEIVED_STATE:
 		ReceivedChar();
 		if(fsm.fsmState == CMD_COMPLETE){
-			printf("Hola\n");
 			parseCommands(bufferReception);
 			for (uint8_t i = 0; i < sizeof(bufferReception); i++){
 				bufferReception[i] = 0;
