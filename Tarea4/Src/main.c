@@ -17,6 +17,7 @@
 #include "systick_driver.h"
 #include "pwm_driver_hal.h"
 #include "usart_driver_hal.h"
+#include "AdcDriver.h"
 
 #define BUFFER_SIZE 64
 
@@ -69,6 +70,10 @@ USART_Handler_t hCmdTerminal 		 = {0}; 		// USART6
 GPIO_Handler_t usart6Tx 			 = {0};			// Tx  pin C6
 GPIO_Handler_t usart6Rx				 = {0};			// Rx  pin C7
 
+
+/* ADC Handler*/
+ADC_Config_t ADC_Handler = {0};
+
 /* Finite State Machine + subestados del led RGB, de los transistores y de los segmentos */
 fsm_t fsm = {0};
 fsm_RGB_t fsm_RGB 					= {0};
@@ -80,7 +85,7 @@ fsm_rotation_t fsm_rotation 		= {0};
 uint8_t data 			 = 0;		// Variable que almacena el estado del DT del encoder
 uint8_t clock			 = 0;		// Variable que almacena el estado el CLK del encoder
 uint16_t rotationCounter = 0;		// Variable que es mostrada en el display (giros del encoder)
-
+uint16_t voltaje = 0;
 uint8_t blinkyFlag 		 = 0;		// Flag para el parpadeo del led
 uint16_t duttyValueRgb = 0;			// valor de 0 a 100
 uint16_t duttyValueRC = 0;			// valor de 0 a 100
@@ -96,6 +101,7 @@ enum {
 uint8_t rxData = 0;
 char bufferReception[BUFFER_SIZE];
 uint8_t counterReception;
+
 char cmd[16];
 char userMsg[BUFFER_SIZE] = {0};
 char bufferData[BUFFER_SIZE] = {0};
@@ -136,6 +142,9 @@ int main (void){
 		if (blinkyFlag){
 			gpio_TooglePin(&ledState);		// Alterna estado del led
 			blinkyFlag = 0;					// Se limpia la bandera del parpadeo del led
+			startSingleADC();
+			voltaje = ADC_Handler.adcData;
+			printf("Voltaje %u \n",(uint16_t)voltaje*3300/4095);
 		}
 
 		if(fsm.fsmState != STANDBY_STATE){
@@ -432,6 +441,13 @@ void init_config(void){
 	hCmdTerminal.USART_Config.enableIntTX = USART_TX_INTERRUP_DISABLE;
 	usart_Config(&hCmdTerminal);
 
+
+	ADC_Handler.channel = ADC_CHANNEL_10; // corresponde al pin PC0
+	ADC_Handler.resolution = ADC_RESOLUTION_12_BIT;
+	ADC_Handler.samplingPeriod = ADC_SAMPLING_PERIOD_84_CYCLES;
+	ADC_Handler.dataAlignment = ADC_ALIGNMENT_RIGHT;
+	adc_Config(&ADC_Handler);
+
 	 	 	 /* Fin de la config del USART6 */
 
 			/* Se configura el SysTick con la señal de reloj de 16 MHz	*/
@@ -476,8 +492,12 @@ void callback_ExtInt15(void){
 void usart6_RxCallback(void){
 	rxData = usart_getRxData(&hCmdTerminal);
 	fsm.fsmState = CHAR_RECEIVED_STATE;
-
 }
+
+void adcComplete_Callback(void){
+	ADC_Handler.adcData = getADC();
+}
+
 
 void ReceivedChar(void){
 	if (hCmdTerminal.receivedChar != '\0'){

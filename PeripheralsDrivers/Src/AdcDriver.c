@@ -9,7 +9,6 @@
 
 GPIO_Handler_t handlerAdcPin = {0};
 uint16_t	adcRawData = 0;
-void sampling_funct(void);
 
 void adc_Config(ADC_Config_t *adcConfig){
 	/* 1. Configuramos el PinX para que cumpla la función de canal análogo deseado. */
@@ -83,14 +82,898 @@ void adc_Config(ADC_Config_t *adcConfig){
 	/**************************************************/
 
 	/* 7. Acá se debería configurar el sampling...*/
-	void sampling_funct(void);
+	if(adcConfig->channel <= ADC_CHANNEL_9){
+		if(adcConfig->channel == ADC_CHANNEL_9){
 
+		switch (adcConfig->samplingPeriod) {
+			case 0:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP9;
+				break;
+				}
+			case 1:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP9;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP9_0;
+				break;
+				}
+			case 2:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP9;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP9_1;
+				break;
+				}
+			case 3:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP9;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP9_0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP9_1;
+				break;
+				}
+			case 4:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP9;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP9_2;
+
+				break;
+				}
+			case 5:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP9;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP9_0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP9_2;
+				break;
+				}
+			case 6:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP9;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP9_1;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP9_2;
+				break;
+				}
+			case 7:{
+				ADC1->SMPR2 |= ADC_SMPR2_SMP9;
+				break;
+				}
+			default:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP9;
+				break;
+				}
+			}
+		}
+
+
+		if(adcConfig->channel == ADC_CHANNEL_8){
+
+		switch (adcConfig->samplingPeriod) {
+			case 0:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP8;
+				break;
+				}
+			case 1:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP8;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP8_0;
+				break;
+				}
+			case 2:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP8;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP8_1;
+				break;
+				}
+			case 3:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP8;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP8_0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP8_1;
+				break;
+				}
+			case 4:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP8;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP8_2;
+
+				break;
+				}
+			case 5:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP8;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP8_0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP8_2;
+				break;
+				}
+			case 6:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP8;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP8_1;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP8_2;
+				break;
+				}
+			case 7:{
+				ADC1->SMPR2 |= ADC_SMPR2_SMP8;
+				break;
+				}
+			default:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP8;
+				break;
+				}
+			}
+		}
+		if(adcConfig->channel == ADC_CHANNEL_7){
+
+		switch (adcConfig->samplingPeriod) {
+			case 0:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP7;
+				break;
+				}
+			case 1:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP7;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP7_0;
+				break;
+				}
+			case 2:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP7;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP7_1;
+				break;
+				}
+			case 3:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP7;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP7_0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP7_1;
+				break;
+				}
+			case 4:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP7;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP7_2;
+
+				break;
+				}
+			case 5:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP7;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP7_0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP7_2;
+				break;
+				}
+			case 6:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP7;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP7_1;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP7_2;
+				break;
+				}
+			case 7:{
+				ADC1->SMPR2 |= ADC_SMPR2_SMP7;
+				break;
+				}
+			default:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP7;
+				break;
+				}
+			}
+		}
+		if(adcConfig->channel == ADC_CHANNEL_6){
+
+		switch (adcConfig->samplingPeriod) {
+			case 0:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP6;
+				break;
+				}
+			case 1:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP6;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP6_0;
+				break;
+				}
+			case 2:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP6;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP6_1;
+				break;
+				}
+			case 3:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP6;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP6_0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP6_1;
+				break;
+				}
+			case 4:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP6;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP6_2;
+
+				break;
+				}
+			case 5:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP6;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP6_0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP6_2;
+				break;
+				}
+			case 6:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP6;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP6_1;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP6_2;
+				break;
+				}
+			case 7:{
+				ADC1->SMPR2 |= ADC_SMPR2_SMP6;
+				break;
+				}
+			default:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP6;
+				break;
+				}
+			}
+		}
+		if(adcConfig->channel == ADC_CHANNEL_5){
+
+		switch (adcConfig->samplingPeriod) {
+			case 0:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP5;
+				break;
+				}
+			case 1:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP5;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP5_0;
+				break;
+				}
+			case 2:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP5;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP5_1;
+				break;
+				}
+			case 3:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP5;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP5_0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP5_1;
+				break;
+				}
+			case 4:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP5;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP5_2;
+
+				break;
+				}
+			case 5:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP5;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP5_0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP5_2;
+				break;
+				}
+			case 6:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP5;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP5_1;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP5_2;
+				break;
+				}
+			case 7:{
+				ADC1->SMPR2 |= ADC_SMPR2_SMP5;
+				break;
+				}
+			default:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP5;
+				break;
+				}
+			}
+		}
+		if(adcConfig->channel == ADC_CHANNEL_4){
+
+		switch (adcConfig->samplingPeriod) {
+			case 0:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP4;
+				break;
+				}
+			case 1:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP4;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP4_0;
+				break;
+				}
+			case 2:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP4;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP4_1;
+				break;
+				}
+			case 3:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP4;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP4_0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP4_1;
+				break;
+				}
+			case 4:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP4;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP4_2;
+
+				break;
+				}
+			case 5:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP4;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP4_0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP4_2;
+				break;
+				}
+			case 6:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP4;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP4_1;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP4_2;
+				break;
+				}
+			case 7:{
+				ADC1->SMPR2 |= ADC_SMPR2_SMP4;
+				break;
+				}
+			default:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP4;
+				break;
+				}
+			}
+		}
+		if(adcConfig->channel == ADC_CHANNEL_3){
+
+		switch (adcConfig->samplingPeriod) {
+			case 0:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP3;
+				break;
+				}
+			case 1:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP3;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP3_0;
+				break;
+				}
+			case 2:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP3;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP3_1;
+				break;
+				}
+			case 3:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP3;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP3_0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP3_1;
+				break;
+				}
+			case 4:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP3;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP3_2;
+
+				break;
+				}
+			case 5:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP3;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP3_0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP3_2;
+				break;
+				}
+			case 6:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP3;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP3_1;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP3_2;
+				break;
+				}
+			case 7:{
+				ADC1->SMPR2 |= ADC_SMPR2_SMP3;
+				break;
+				}
+			default:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP3;
+				break;
+				}
+			}
+		}
+
+		if(adcConfig->channel == ADC_CHANNEL_2){
+
+		switch (adcConfig->samplingPeriod) {
+			case 0:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP2;
+				break;
+				}
+			case 1:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP2;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP2_0;
+				break;
+				}
+			case 2:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP2;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP2_1;
+				break;
+				}
+			case 3:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP2;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP2_0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP2_1;
+				break;
+				}
+			case 4:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP9;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP2_2;
+
+				break;
+				}
+			case 5:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP2;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP2_0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP2_2;
+				break;
+				}
+			case 6:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP2;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP2_1;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP2_2;
+				break;
+				}
+			case 7:{
+				ADC1->SMPR2 |= ADC_SMPR2_SMP2;
+				break;
+				}
+			default:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP2;
+				break;
+				}
+			}
+		}
+
+
+		if(adcConfig->channel == ADC_CHANNEL_1){
+
+		switch (adcConfig->samplingPeriod) {
+			case 0:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP1;
+				break;
+				}
+			case 1:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP1;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP1_0;
+				break;
+				}
+			case 2:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP1;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP1_1;
+				break;
+				}
+			case 3:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP1;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP1_0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP1_1;
+				break;
+				}
+			case 4:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP1;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP1_2;
+
+				break;
+				}
+			case 5:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP1;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP1_0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP1_2;
+				break;
+				}
+			case 6:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP1;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP1_1;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP1_2;
+				break;
+				}
+			case 7:{
+				ADC1->SMPR2 |= ADC_SMPR2_SMP1;
+				break;
+				}
+			default:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP1;
+				break;
+				}
+			}
+		}
+
+
+		if(adcConfig->channel == ADC_CHANNEL_0){
+
+		switch (adcConfig->samplingPeriod) {
+			case 0:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP0;
+				break;
+				}
+			case 1:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP0_0;
+				break;
+				}
+			case 2:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP0_1;
+				break;
+				}
+			case 3:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP0_0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP0_1;
+				break;
+				}
+			case 4:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP0_2;
+
+				break;
+				}
+			case 5:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP0_0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP0_2;
+				break;
+				}
+			case 6:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP0;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP0_1;
+				ADC1->SMPR2 |= ADC_SMPR2_SMP0_2;
+				break;
+				}
+			case 7:{
+				ADC1->SMPR2 |= ADC_SMPR2_SMP0;
+				break;
+				}
+			default:{
+				ADC1->SMPR2 &= ~ADC_SMPR2_SMP0;
+				break;
+				}
+			}
+		}
+
+	}
+
+
+
+	else if(adcConfig->channel >= ADC_CHANNEL_9){
+
+		if(adcConfig->channel == ADC_CHANNEL_16){
+
+		switch (adcConfig->samplingPeriod) {
+			case 0:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP16;
+				break;
+				}
+			case 1:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP16;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP16_0;
+				break;
+				}
+			case 2:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP16;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP16_1;
+				break;
+				}
+			case 3:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP16;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP16_0;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP16_1;
+				break;
+				}
+			case 4:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP16;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP16_2;
+
+				break;
+				}
+			case 5:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP16;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP16_0;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP16_2;
+				break;
+				}
+			case 6:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP16;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP16_1;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP16_2;
+				break;
+				}
+			case 7:{
+				ADC1->SMPR1 |= ADC_SMPR1_SMP16;
+				break;
+				}
+			default:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP16;
+				break;
+				}
+			}
+		}
+
+
+		if(adcConfig->channel == ADC_CHANNEL_15){
+
+		switch (adcConfig->samplingPeriod) {
+			case 0:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP15;
+				break;
+				}
+			case 1:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP15;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP15_0;
+				break;
+				}
+			case 2:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP15;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP15_1;
+				break;
+				}
+			case 3:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP15;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP15_0;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP15_1;
+				break;
+				}
+			case 4:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP15;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP15_2;
+
+				break;
+				}
+			case 5:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP15;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP15_0;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP15_2;
+				break;
+				}
+			case 6:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP15;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP15_1;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP15_2;
+				break;
+				}
+			case 7:{
+				ADC1->SMPR1 |= ADC_SMPR1_SMP15;
+				break;
+				}
+			default:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP15;
+				break;
+				}
+			}
+		}
+
+		if(adcConfig->channel == ADC_CHANNEL_14){
+
+		switch (adcConfig->samplingPeriod) {
+			case 0:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP14;
+				break;
+				}
+			case 1:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP14;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP14_0;
+				break;
+				}
+			case 2:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP14;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP14_1;
+				break;
+				}
+			case 3:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP14;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP14_0;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP14_1;
+				break;
+				}
+			case 4:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP14;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP14_2;
+
+				break;
+				}
+			case 5:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP14;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP14_0;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP14_2;
+				break;
+				}
+			case 6:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP14;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP14_1;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP14_2;
+				break;
+				}
+			case 7:{
+				ADC1->SMPR1 |= ADC_SMPR1_SMP14;
+				break;
+				}
+			default:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP14;
+				break;
+				}
+			}
+		}
+		if(adcConfig->channel == ADC_CHANNEL_13){
+
+		switch (adcConfig->samplingPeriod) {
+			case 0:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP13;
+				break;
+				}
+			case 1:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP13;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP13_0;
+				break;
+				}
+			case 2:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP13;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP13_1;
+				break;
+				}
+			case 3:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP13;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP13_0;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP13_1;
+				break;
+				}
+			case 4:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP13;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP13_2;
+
+				break;
+				}
+			case 5:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP13;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP13_0;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP13_2;
+				break;
+				}
+			case 6:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP13;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP13_1;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP13_2;
+				break;
+				}
+			case 7:{
+				ADC1->SMPR1 |= ADC_SMPR1_SMP13;
+				break;
+				}
+			default:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP13;
+				break;
+				}
+			}
+		}
+		if(adcConfig->channel == ADC_CHANNEL_12){
+
+		switch (adcConfig->samplingPeriod) {
+			case 0:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP12;
+				break;
+				}
+			case 1:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP12;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP12_0;
+				break;
+				}
+			case 2:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP12;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP12_1;
+				break;
+				}
+			case 3:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP12;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP12_0;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP12_1;
+				break;
+				}
+			case 4:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP12;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP12_2;
+
+				break;
+				}
+			case 5:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP12;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP12_0;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP12_2;
+				break;
+				}
+			case 6:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP12;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP12_1;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP12_2;
+				break;
+				}
+			case 7:{
+				ADC1->SMPR1 |= ADC_SMPR1_SMP12;
+				break;
+				}
+			default:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP12;
+				break;
+				}
+			}
+		}
+		if(adcConfig->channel == ADC_CHANNEL_11){
+
+		switch (adcConfig->samplingPeriod) {
+			case 0:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP11;
+				break;
+				}
+			case 1:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP11;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP11_0;
+				break;
+				}
+			case 2:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP11;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP11_1;
+				break;
+				}
+			case 3:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP11;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP11_0;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP11_1;
+				break;
+				}
+			case 4:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP11;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP11_2;
+
+				break;
+				}
+			case 5:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP11;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP11_0;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP11_2;
+				break;
+				}
+			case 6:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP11;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP11_1;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP11_2;
+				break;
+				}
+			case 7:{
+				ADC1->SMPR1 |= ADC_SMPR1_SMP11;
+				break;
+				}
+			default:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP11;
+				break;
+				}
+			}
+		}
+		if(adcConfig->channel == ADC_CHANNEL_10){
+
+		switch (adcConfig->samplingPeriod) {
+			case 0:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP10;
+				break;
+				}
+			case 1:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP10;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP10_0;
+				break;
+				}
+			case 2:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP10;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP10_1;
+				break;
+				}
+			case 3:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP10;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP10_0;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP10_1;
+				break;
+				}
+			case 4:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP10;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP10_2;
+
+				break;
+				}
+			case 5:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP10;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP10_0;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP10_2;
+				break;
+				}
+			case 6:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP10;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP10_1;
+				ADC1->SMPR1 |= ADC_SMPR1_SMP10_2;
+				break;
+				}
+			case 7:{
+				ADC1->SMPR1 |= ADC_SMPR1_SMP10;
+				break;
+				}
+			default:{
+				ADC1->SMPR1 &= ~ADC_SMPR1_SMP10;
+				break;
+				}
+			}
+		}
+	}
 
 
 	/* 8. Configuramos la secuencia y cuantos elementos hay en la secuencia */
 	// Al hacerlo todo 0, estamos seleccionando solo 1 elemento en el conteo de la secuencia
 	ADC1->SQR1 = 0;
-
+	ADC1->SQR3 = 0;
 	// Asignamos el canal de la conversión a la primera posición en la secuencia
 	ADC1->SQR3 |= (adcConfig->channel << 0);
 
@@ -316,1005 +1199,5 @@ void configAnalogPin(uint8_t adcChannel) {
 
 
 
-void sampling_funct(void){
-	if(adcConfig->channel <= ADC_CHANNEL_9){
-		if(adcConfig->channel = ADC_CHANNEL_9){
-
-		switch (adcConfig->samplingPeriod) {
-			case 0:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP9;
-				break;
-				}
-			case 1:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP9;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP9_0;
-				break;
-				}
-			case 2:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP9;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP9_1;
-				break;
-				}
-			case 3:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP9;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP9_0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP9_1;
-				break;
-				}
-			case 4:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP9;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP9_2;
-
-				break;
-				}
-			case 5:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP9;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP9_0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP9_2;
-				break;
-				}
-			case 6:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP9;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP9_1;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP9_2;
-				break;
-				}
-			case 0:{
-				ADC1->SMPR2 |= ADC_SMPR2_SMP9;
-				break;
-				}
-			default:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP9;
-				break;
-				}
-			}
-		}
-
-
-		if(adcConfig->channel = ADC_CHANNEL_8){
-
-		switch (adcConfig->samplingPeriod) {
-			case 0:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP8;
-				break;
-				}
-			case 1:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP8;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP8_0;
-				break;
-				}
-			case 2:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP8;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP8_1;
-				break;
-				}
-			case 3:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP8;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP8_0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP8_1;
-				break;
-				}
-			case 4:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP8;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP8_2;
-
-				break;
-				}
-			case 5:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP8;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP8_0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP8_2;
-				break;
-				}
-			case 6:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP8;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP8_1;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP8_2;
-				break;
-				}
-			case 0:{
-				ADC1->SMPR2 |= ADC_SMPR2_SMP8;
-				break;
-				}
-			default:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP8;
-				break;
-				}
-			}
-		}
-		if(adcConfig->channel = ADC_CHANNEL_7){
-
-		switch (adcConfig->samplingPeriod) {
-			case 0:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP7;
-				break;
-				}
-			case 1:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP7;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP7_0;
-				break;
-				}
-			case 2:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP7;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP7_1;
-				break;
-				}
-			case 3:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP7;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP7_0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP7_1;
-				break;
-				}
-			case 4:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP7;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP7_2;
-
-				break;
-				}
-			case 5:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP7;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP7_0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP7_2;
-				break;
-				}
-			case 6:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP7;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP7_1;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP7_2;
-				break;
-				}
-			case 0:{
-				ADC1->SMPR2 |= ADC_SMPR2_SMP7;
-				break;
-				}
-			default:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP7;
-				break;
-				}
-			}
-		}
-		if(adcConfig->channel = ADC_CHANNEL_6){
-
-		switch (adcConfig->samplingPeriod) {
-			case 0:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP6;
-				break;
-				}
-			case 1:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP6;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP6_0;
-				break;
-				}
-			case 2:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP6;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP6_1;
-				break;
-				}
-			case 3:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP6;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP6_0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP6_1;
-				break;
-				}
-			case 4:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP6;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP6_2;
-
-				break;
-				}
-			case 5:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP6;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP6_0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP6_2;
-				break;
-				}
-			case 6:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP6;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP6_1;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP6_2;
-				break;
-				}
-			case 0:{
-				ADC1->SMPR2 |= ADC_SMPR2_SMP6;
-				break;
-				}
-			default:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP6;
-				break;
-				}
-			}
-		}
-		if(adcConfig->channel = ADC_CHANNEL_5){
-
-		switch (adcConfig->samplingPeriod) {
-			case 0:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP5;
-				break;
-				}
-			case 1:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP5;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP5_0;
-				break;
-				}
-			case 2:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP5;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP5_1;
-				break;
-				}
-			case 3:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP5;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP5_0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP5_1;
-				break;
-				}
-			case 4:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP5;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP5_2;
-
-				break;
-				}
-			case 5:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP5;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP5_0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP5_2;
-				break;
-				}
-			case 6:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP5;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP5_1;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP5_2;
-				break;
-				}
-			case 0:{
-				ADC1->SMPR2 |= ADC_SMPR2_SMP5;
-				break;
-				}
-			default:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP5;
-				break;
-				}
-			}
-		}
-		if(adcConfig->channel = ADC_CHANNEL_4){
-
-		switch (adcConfig->samplingPeriod) {
-			case 0:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP4;
-				break;
-				}
-			case 1:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP4;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP4_0;
-				break;
-				}
-			case 2:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP4;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP4_1;
-				break;
-				}
-			case 3:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP4;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP4_0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP4_1;
-				break;
-				}
-			case 4:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP4;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP4_2;
-
-				break;
-				}
-			case 5:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP4;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP4_0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP4_2;
-				break;
-				}
-			case 6:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP4;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP4_1;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP4_2;
-				break;
-				}
-			case 0:{
-				ADC1->SMPR2 |= ADC_SMPR2_SMP4;
-				break;
-				}
-			default:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP4;
-				break;
-				}
-			}
-		}
-		if(adcConfig->channel = ADC_CHANNEL_3){
-
-		switch (adcConfig->samplingPeriod) {
-			case 0:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP3;
-				break;
-				}
-			case 1:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP3;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP3_0;
-				break;
-				}
-			case 2:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP3;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP3_1;
-				break;
-				}
-			case 3:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP3;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP3_0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP3_1;
-				break;
-				}
-			case 4:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP3;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP3_2;
-
-				break;
-				}
-			case 5:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP3;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP3_0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP3_2;
-				break;
-				}
-			case 6:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP3;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP3_1;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP3_2;
-				break;
-				}
-			case 0:{
-				ADC1->SMPR2 |= ADC_SMPR2_SMP3;
-				break;
-				}
-			default:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP3;
-				break;
-				}
-			}
-		}
-
-		if(adcConfig->channel = ADC_CHANNEL_2){
-
-		switch (adcConfig->samplingPeriod) {
-			case 0:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP2;
-				break;
-				}
-			case 1:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP2;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP2_0;
-				break;
-				}
-			case 2:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP2;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP2_1;
-				break;
-				}
-			case 3:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP2;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP2_0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP2_1;
-				break;
-				}
-			case 4:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP9;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP2_2;
-
-				break;
-				}
-			case 5:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP2;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP2_0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP2_2;
-				break;
-				}
-			case 6:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP2;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP2_1;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP2_2;
-				break;
-				}
-			case 0:{
-				ADC1->SMPR2 |= ADC_SMPR2_SMP2;
-				break;
-				}
-			default:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP2;
-				break;
-				}
-			}
-		}
-
-
-		if(adcConfig->channel = ADC_CHANNEL_1){
-
-		switch (adcConfig->samplingPeriod) {
-			case 0:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP1;
-				break;
-				}
-			case 1:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP1;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP1_0;
-				break;
-				}
-			case 2:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP1;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP1_1;
-				break;
-				}
-			case 3:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP1;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP1_0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP1_1;
-				break;
-				}
-			case 4:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP1;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP1_2;
-
-				break;
-				}
-			case 5:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP1;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP1_0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP1_2;
-				break;
-				}
-			case 6:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP1;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP1_1;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP1_2;
-				break;
-				}
-			case 0:{
-				ADC1->SMPR2 |= ADC_SMPR2_SMP1;
-				break;
-				}
-			default:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP1;
-				break;
-				}
-			}
-		}
-
-
-		if(adcConfig->channel = ADC_CHANNEL_0){
-
-		switch (adcConfig->samplingPeriod) {
-			case 0:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP0;
-				break;
-				}
-			case 1:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP0_0;
-				break;
-				}
-			case 2:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP0_1;
-				break;
-				}
-			case 3:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP0_0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP0_1;
-				break;
-				}
-			case 4:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP0_2;
-
-				break;
-				}
-			case 5:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP0_0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP0_2;
-				break;
-				}
-			case 6:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP0;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP0_1;
-				ADC1->SMPR2 |= ADC_SMPR2_SMP0_2;
-				break;
-				}
-			case 0:{
-				ADC1->SMPR2 |= ADC_SMPR2_SMP0;
-				break;
-				}
-			default:{
-				ADC1->SMPR2 &= ~ADC_SMPR2_SMP0;
-				break;
-				}
-			}
-		}
-
-	}
-
-
-
-	else if(adcConfig->channel >= ADC_CHANNEL_9){
-
-
-		if(adcConfig->channel == ADC_CHANNEL_18){
-
-		switch (adcConfig->samplingPeriod) {
-			case 0:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP18;
-				break;
-				}
-			case 1:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP18;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP18_0;
-				break;
-				}
-			case 2:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP18;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP18_1;
-				break;
-				}
-			case 3:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP18;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP18_0;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP18_1;
-				break;
-				}
-			case 4:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP18;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP18_2;
-
-				break;
-				}
-			case 5:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP18;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP18_0;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP18_2;
-				break;
-				}
-			case 6:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP18;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP18_1;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP18_2;
-				break;
-				}
-			case 0:{
-				ADC1->SMPR1 |= ADC_SMPR1_SMP18;
-				break;
-				}
-			default:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP18;
-				break;
-				}
-			}
-		}
-
-
-		if(adcConfig->channel == ADC_CHANNEL_17){
-
-		switch (adcConfig->samplingPeriod) {
-			case 0:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP17;
-				break;
-				}
-			case 1:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP17;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP17_0;
-				break;
-				}
-			case 2:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP17;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP17_1;
-				break;
-				}
-			case 3:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP17;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP17_0;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP17_1;
-				break;
-				}
-			case 4:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP17;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP17_2;
-
-				break;
-				}
-			case 5:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP17;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP17_0;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP17_2;
-				break;
-				}
-			case 6:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP17;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP17_1;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP17_2;
-				break;
-				}
-			case 0:{
-				ADC1->SMPR1 |= ADC_SMPR1_SMP17;
-				break;
-				}
-			default:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP17;
-				break;
-				}
-			}
-
-
-		if(adcConfig->channel == ADC_CHANNEL_16){
-
-		switch (adcConfig->samplingPeriod) {
-			case 0:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP16;
-				break;
-				}
-			case 1:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP16;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP16_0;
-				break;
-				}
-			case 2:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP16;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP16_1;
-				break;
-				}
-			case 3:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP16;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP16_0;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP16_1;
-				break;
-				}
-			case 4:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP16;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP16_2;
-
-				break;
-				}
-			case 5:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP16;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP16_0;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP16_2;
-				break;
-				}
-			case 6:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP16;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP16_1;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP16_2;
-				break;
-				}
-			case 0:{
-				ADC1->SMPR1 |= ADC_SMPR1_SMP16;
-				break;
-				}
-			default:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP16;
-				break;
-				}
-			}
-		}
-
-
-		if(adcConfig->channel == ADC_CHANNEL_15){
-
-		switch (adcConfig->samplingPeriod) {
-			case 0:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP15;
-				break;
-				}
-			case 1:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP15;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP15_0;
-				break;
-				}
-			case 2:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP15;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP15_1;
-				break;
-				}
-			case 3:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP15;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP15_0;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP15_1;
-				break;
-				}
-			case 4:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP15;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP15_2;
-
-				break;
-				}
-			case 5:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP15;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP15_0;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP15_2;
-				break;
-				}
-			case 6:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP15;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP15_1;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP15_2;
-				break;
-				}
-			case 0:{
-				ADC1->SMPR1 |= ADC_SMPR1_SMP15;
-				break;
-				}
-			default:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP15;
-				break;
-				}
-			}
-		}
-
-		if(adcConfig->channel == ADC_CHANNEL_14){
-
-		switch (adcConfig->samplingPeriod) {
-			case 0:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP14;
-				break;
-				}
-			case 1:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP14;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP14_0;
-				break;
-				}
-			case 2:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP14;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP14_1;
-				break;
-				}
-			case 3:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP14;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP14_0;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP14_1;
-				break;
-				}
-			case 4:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP14;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP14_2;
-
-				break;
-				}
-			case 5:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP14;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP14_0;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP14_2;
-				break;
-				}
-			case 6:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP14;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP14_1;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP14_2;
-				break;
-				}
-			case 0:{
-				ADC1->SMPR1 |= ADC_SMPR1_SMP14;
-				break;
-				}
-			default:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP14;
-				break;
-				}
-			}
-		}
-		if(adcConfig->channel == ADC_CHANNEL_13){
-
-		switch (adcConfig->samplingPeriod) {
-			case 0:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP13;
-				break;
-				}
-			case 1:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP13;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP13_0;
-				break;
-				}
-			case 2:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP13;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP13_1;
-				break;
-				}
-			case 3:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP13;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP13_0;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP13_1;
-				break;
-				}
-			case 4:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP13;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP13_2;
-
-				break;
-				}
-			case 5:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP13;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP13_0;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP13_2;
-				break;
-				}
-			case 6:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP13;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP13_1;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP13_2;
-				break;
-				}
-			case 0:{
-				ADC1->SMPR1 |= ADC_SMPR1_SMP13;
-				break;
-				}
-			default:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP13;
-				break;
-				}
-			}
-		}
-		if(adcConfig->channel == ADC_CHANNEL_12){
-
-		switch (adcConfig->samplingPeriod) {
-			case 0:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP12;
-				break;
-				}
-			case 1:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP12;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP12_0;
-				break;
-				}
-			case 2:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP12;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP12_1;
-				break;
-				}
-			case 3:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP12;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP12_0;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP12_1;
-				break;
-				}
-			case 4:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP12;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP12_2;
-
-				break;
-				}
-			case 5:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP12;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP12_0;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP12_2;
-				break;
-				}
-			case 6:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP12;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP12_1;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP12_2;
-				break;
-				}
-			case 0:{
-				ADC1->SMPR1 |= ADC_SMPR1_SMP12;
-				break;
-				}
-			default:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP12;
-				break;
-				}
-			}
-		}
-		if(adcConfig->channel == ADC_CHANNEL_11){
-
-		switch (adcConfig->samplingPeriod) {
-			case 0:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP11;
-				break;
-				}
-			case 1:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP11;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP11_0;
-				break;
-				}
-			case 2:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP11;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP11_1;
-				break;
-				}
-			case 3:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP11;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP11_0;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP11_1;
-				break;
-				}
-			case 4:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP11;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP11_2;
-
-				break;
-				}
-			case 5:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP11;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP11_0;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP11_2;
-				break;
-				}
-			case 6:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP11;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP11_1;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP11_2;
-				break;
-				}
-			case 0:{
-				ADC1->SMPR1 |= ADC_SMPR1_SMP11;
-				break;
-				}
-			default:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP11;
-				break;
-				}
-			}
-		}
-		if(adcConfig->channel == ADC_CHANNEL_10){
-
-		switch (adcConfig->samplingPeriod) {
-			case 0:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP10;
-				break;
-				}
-			case 1:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP10;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP10_0;
-				break;
-				}
-			case 2:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP10;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP10_1;
-				break;
-				}
-			case 3:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP10;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP10_0;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP10_1;
-				break;
-				}
-			case 4:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP10;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP10_2;
-
-				break;
-				}
-			case 5:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP10;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP10_0;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP10_2;
-				break;
-				}
-			case 6:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP10;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP10_1;
-				ADC1->SMPR1 |= ADC_SMPR1_SMP10_2;
-				break;
-				}
-			case 0:{
-				ADC1->SMPR1 |= ADC_SMPR1_SMP10;
-				break;
-				}
-			default:{
-				ADC1->SMPR1 &= ~ADC_SMPR1_SMP10;
-				break;
-				}
-			}
-		}
-
-		}
-	}
-
-	else{
-	__NOP();
-	}
-}
 
 
