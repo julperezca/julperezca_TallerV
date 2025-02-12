@@ -2,7 +2,7 @@
  ******************************************************************************
  * @file           : main.c
  * @author         : Julián Pérez Carvajal (julperezca@unal.edu.co)
- * @brief          : Tarea 3. Drivers GPIO, EXTI, TIMERS, PWM, USART, magicProject.
+ * @brief          : Tarea 4. Drivers GPIO, EXTI, TIMERS, PWM, USART,ADC, magicProject. +curvas transistor.
  ******************************************************************************
  */
 
@@ -44,7 +44,7 @@ GPIO_Handler_t digitoUnidad 	 	= {0}; 		// PinC10
 GPIO_Handler_t digitoDecena			= {0}; 		// PinA5
 GPIO_Handler_t digitoCentena 		= {0}; 		// PinB9
 GPIO_Handler_t digitoUnMillar 		= {0}; 		// PinC5
-Timer_Handler_t transistorsTimer	= {0}; 		// TIM5 para los transistores
+Timer_Handler_t transistorsTimer	= {0}; 		// TIM4 para los transistores
 
 	/* GPIO handler y EXTI config para el CLK del encoder*/
 GPIO_Handler_t userClock 			 = {0}; 		// PinB2
@@ -58,12 +58,14 @@ EXTI_Config_t extiSwitch 			 = {0}; 		// EXTI15
 GPIO_Handler_t userData 			 = {0}; 		// PinB1
 
 	/* GPIO handler para PWM del led RGB y filtro RC*/
-GPIO_Handler_t handlerPinPwmRgbLed   = {0};			// Pin C8
-GPIO_Handler_t handlerPinPwmRCfilter = {0};			// Pin B7
+GPIO_Handler_t handlerPinPwmRgbLed  	 = {0};			// Pin C8
+GPIO_Handler_t handlerPinPwmBase 		 = {0};			// Pin A0
+GPIO_Handler_t handlerPinPwmCollector 	 = {0};			// Pin A1
 
 	/* PWM Handler para la señal PWM: timer y canal*/
-PWM_Handler_t handlerSignalPWMrgb  	 = {0};			// Timer 3, canal 3
-PWM_Handler_t handlerSignalPWMfilter = {0};			// Timer 4, canal 2
+PWM_Handler_t handlerSignalPWMrgb  		 = {0};				// Timer 3, canal 3
+PWM_Handler_t handlerSignalPWMBase 	 	 = {0};				// Timer 5, canal 1
+PWM_Handler_t handlerSignalPWMCollector  = {0};				// Timer 5, canal 2
 
 	/* Handler para usart6*/
 USART_Handler_t hCmdTerminal 		 = {0}; 		// USART6
@@ -72,7 +74,7 @@ GPIO_Handler_t usart6Rx				 = {0};			// Rx  pin C7
 
 
 /* ADC Handler*/
-ADC_Config_t ADC_Handler = {0};
+ADC_Config_t ADC_handler = {0};
 
 /* Finite State Machine + subestados del led RGB, de los transistores y de los segmentos */
 fsm_t fsm = {0};
@@ -85,11 +87,24 @@ fsm_rotation_t fsm_rotation 		= {0};
 uint8_t data 			 = 0;		// Variable que almacena el estado del DT del encoder
 uint8_t clock			 = 0;		// Variable que almacena el estado el CLK del encoder
 uint16_t rotationCounter = 0;		// Variable que es mostrada en el display (giros del encoder)
-uint16_t voltaje = 0;
+uint16_t ADC_value = 0;
 uint8_t blinkyFlag 		 = 0;		// Flag para el parpadeo del led
 uint16_t duttyValueRgb = 0;			// valor de 0 a 100
 uint16_t duttyValueRC = 0;			// valor de 0 a 100
 uint16_t blinkyPeriod = 0;
+
+
+
+uint16_t data_base[100];		// A7 channel 7
+uint16_t data_collector[100];	// C4 channel 14
+uint16_t counterproof = 0;
+uint16_t baseVoltaje = 0;
+uint16_t collectorVoltaje = 0;
+uint16_t collectorCurrent = 0;
+uint16_t baseCurrente = 0;
+uint8_t R_emisor = 5;
+uint16_t R_base = 10000;
+uint8_t R_colector = 220;
 /* Estado de los transistores y segmentos */
 enum {
 	ON = 0,
@@ -118,6 +133,8 @@ void fsm_rotation_handler(void); 				// Función encargada del sentido de rotati
 void disableTransistors(void);					// Función encargada de apagar los transistores para evitar el "fantasma"
 void fsm_display_handler(void);					// Función encargada de manejar el los transistores y cada segmento
 void state_machine_action(void);
+void voltage_base_collector_sampling(void);
+uint16_t average(uint16_t *databuffer);
 /*
  * The main function, where everything happens.
  */
@@ -142,10 +159,56 @@ int main (void){
 		if (blinkyFlag){
 			gpio_TooglePin(&ledState);		// Alterna estado del led
 			blinkyFlag = 0;					// Se limpia la bandera del parpadeo del led
-			startSingleADC();
-			voltaje = ADC_Handler.adcData;
-			printf("Voltaje %u \n",(uint16_t)voltaje*3300/4095);
+
+
+//			configAnalogPin(&ADC_colector);
+//			startSingleADC();
+//			voltaje = ADC_colector.adcData;
+//			printf("Voltaje %u \n",(uint16_t)voltaje*3300/4095);
+//			configAnalogPin(&ADC_colector);
+
+
+
+
+
+//			if (counterproof >5){
+//				ADC_handler.channel = ADC_CHANNEL_14; // PARA COLECTOR
+//				adc_Config(&ADC_handler);
+//				startSingleADC();
+//				ADC_value = ADC_handler.adcData;
+//
+//				printf("%d\n",ADC_handler.channel);
+//				printf("Voltaje %u \n",(uint16_t)ADC_value*3300/4095);
+//				if (counterproof >11){
+//					counterproof = 0;
+//				}
+//			}
+//			else{
+//				ADC_handler.channel = ADC_CHANNEL_7; // PARA COLECTOR
+//				adc_Config(&ADC_handler);
+//				startSingleADC();
+//				ADC_value = ADC_handler.adcData;
+//				printf("Voltaje %u \n",(uint16_t)ADC_value*3300/4095);
+//			}
+
+
+
+
+//			int jdajdaj[10]
+
+
+			// modifico los voltajes con el duty cycle
+			// de la base con A0, correspondiente al canal 1 del
+			// timer 5
+
+			// modifico los voltajes con el duty cycle
+			// del colector con A1, correspondiente al canal 2 del
+			// timer 5
+
+
+
 		}
+
 
 		if(fsm.fsmState != STANDBY_STATE){
 			state_machine_action();
@@ -252,7 +315,7 @@ void init_config(void){
 	gpio_Config(&digitoUnMillar);
 
 	/*Se configura el timer de los digitos */
-	transistorsTimer.pTIMx								= TIM5;
+	transistorsTimer.pTIMx								= TIM4;
 	transistorsTimer.TIMx_Config.TIMx_Prescaler  		= 16000; //1ms conversion
 	transistorsTimer.TIMx_Config.TIMx_Period			= 2;
 	transistorsTimer.TIMx_Config.TIMx_mode				= TIMER_UP_COUNTER;
@@ -384,28 +447,53 @@ void init_config(void){
 	pwm_Config(&handlerSignalPWMrgb);
 
 
+
+
 		/*FIN del config del PWM para led RGB*/
+
+
 
 	/* config del PWM para la salida del filtro RC*/
 
-	handlerPinPwmRCfilter.pGPIOx = GPIOB;
-	handlerPinPwmRCfilter.pinConfig.GPIO_PinNumber = PIN_7;
-	handlerPinPwmRCfilter.pinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
-	handlerPinPwmRCfilter.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
-	handlerPinPwmRCfilter.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	handlerPinPwmRCfilter.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_FAST;
-	handlerPinPwmRCfilter.pinConfig.GPIO_PinAltFunMode = AF2;
-	gpio_Config(&handlerPinPwmRCfilter);
+	handlerPinPwmBase.pGPIOx = GPIOA;
+	handlerPinPwmBase.pinConfig.GPIO_PinNumber = PIN_0;
+	handlerPinPwmBase.pinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
+	handlerPinPwmBase.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
+	handlerPinPwmBase.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerPinPwmBase.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_FAST;
+	handlerPinPwmBase.pinConfig.GPIO_PinAltFunMode = AF2;
+	gpio_Config(&handlerPinPwmBase);
 
-	handlerSignalPWMfilter.ptrTIMx = TIM4;
-	handlerSignalPWMfilter.config.channel = PWM_CHANNEL_2;
-	handlerSignalPWMfilter.config.duttyCicle = 50;
-	handlerSignalPWMfilter.config.periodo = 100;		// 1kHz de freq para la señal de reloj 16MHz
-	handlerSignalPWMfilter.config.prescaler = 16;
-	pwm_Config(&handlerSignalPWMfilter);
+	handlerSignalPWMBase.ptrTIMx = TIM5;
+	handlerSignalPWMBase.config.channel = PWM_CHANNEL_1;
+	handlerSignalPWMBase.config.duttyCicle = 50;
+	handlerSignalPWMBase.config.periodo = 100;		// 1kHz de freq para la señal de reloj 16MHz
+	handlerSignalPWMBase.config.prescaler = 16;
+	pwm_Config(&handlerSignalPWMBase);
 
-	pwm_Enable_Output(&handlerSignalPWMfilter);
-	pwm_Start_Signal(&handlerSignalPWMfilter);
+	pwm_Enable_Output(&handlerSignalPWMBase);
+	pwm_Start_Signal(&handlerSignalPWMBase);
+
+
+
+	handlerPinPwmCollector.pGPIOx = GPIOA;
+	handlerPinPwmCollector.pinConfig.GPIO_PinNumber = PIN_1;
+	handlerPinPwmCollector.pinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
+	handlerPinPwmCollector.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
+	handlerPinPwmCollector.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerPinPwmCollector.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_FAST;
+	handlerPinPwmCollector.pinConfig.GPIO_PinAltFunMode = AF2;
+	gpio_Config(&handlerPinPwmCollector);
+
+	handlerSignalPWMCollector.ptrTIMx = TIM5;
+	handlerSignalPWMCollector.config.channel = PWM_CHANNEL_2;
+	handlerSignalPWMCollector.config.duttyCicle = 50;
+	handlerSignalPWMCollector.config.periodo = 100;		// 1kHz de freq para la señal de reloj 16MHz
+	handlerSignalPWMCollector.config.prescaler = 16;
+	pwm_Config(&handlerSignalPWMCollector);
+
+	pwm_Enable_Output(&handlerSignalPWMCollector);
+	pwm_Start_Signal(&handlerSignalPWMCollector);
 
 		/*FIN del config del PWM para salida del filtro RC*/
 
@@ -442,11 +530,15 @@ void init_config(void){
 	usart_Config(&hCmdTerminal);
 
 
-	ADC_Handler.channel = ADC_CHANNEL_10; // corresponde al pin PC0
-	ADC_Handler.resolution = ADC_RESOLUTION_12_BIT;
-	ADC_Handler.samplingPeriod = ADC_SAMPLING_PERIOD_84_CYCLES;
-	ADC_Handler.dataAlignment = ADC_ALIGNMENT_RIGHT;
-	adc_Config(&ADC_Handler);
+
+
+
+	ADC_handler.channel = ADC_CHANNEL_7;
+	ADC_handler.resolution = ADC_RESOLUTION_12_BIT;
+	ADC_handler.samplingPeriod = ADC_SAMPLING_PERIOD_84_CYCLES;
+	ADC_handler.dataAlignment = ADC_ALIGNMENT_RIGHT;
+	adc_Config(&ADC_handler);
+
 
 	 	 	 /* Fin de la config del USART6 */
 
@@ -466,39 +558,6 @@ void init_config(void){
 
 }
 
-/* Callback del blinkytimer alterna el estado del ledState */
-void Timer2_Callback(void){
-	blinkyFlag = 1;				// Se sube la bandera al led de estado
-}
-
-/* Callback del timer que enciende y apaga los transistores */
-void Timer5_Callback(void){
-	fsm.fsmState = DISPLAY_VALUE_STATE;				// Se actualiza el estado para la fsm
-}
-
-/* Callback de la interrupcion del pin B2 que corresponde al Clk */
-void callback_ExtInt2(void){
-	fsm_rotation.rotationState = ROTATION_STATE;	// Se actualiza el estado para la fsm
-	// Se lee el valor del data y clock para determinar el giro en sentido CW o CCW
-	data = gpio_ReadPin(&userData);
-	clock = gpio_ReadPin(&userClock);
-}
-
-/* Callback de la interrupcion del Switch SW del encoder que controla el Led RGB */
-void callback_ExtInt15(void){
-	fsm.fsmState = SW_BUTTON_STATE;				 // Se define el estado para la fsm
-}
-
-void usart6_RxCallback(void){
-	rxData = usart_getRxData(&hCmdTerminal);
-	fsm.fsmState = CHAR_RECEIVED_STATE;
-}
-
-void adcComplete_Callback(void){
-	ADC_Handler.adcData = getADC();
-}
-
-
 void ReceivedChar(void){
 	if (hCmdTerminal.receivedChar != '\0'){
 		bufferReception[counterReception] = hCmdTerminal.receivedChar;
@@ -512,7 +571,6 @@ void ReceivedChar(void){
 		}
 	}
 }
-
 
 void parseCommands(char *ptrBufferReception){
 
@@ -610,8 +668,8 @@ void parseCommands(char *ptrBufferReception){
 		}
 		 // A = 1 corresponde al PWM del ledRGB, led azul
 		else if(firstParameter == 1){
-			pwm_Update_Frequency(&handlerSignalPWMfilter, secondParameter);
-			pwm_Config(&handlerSignalPWMfilter);
+			pwm_Update_Frequency(&handlerSignalPWMBase, secondParameter);
+			pwm_Config(&handlerSignalPWMBase);
 			sprintf(bufferData,"Periodo (um) del PWM filtro RC: %u\n",secondParameter);
 			usart_writeMsg(&hCmdTerminal,bufferData);
 		}
@@ -641,16 +699,16 @@ void parseCommands(char *ptrBufferReception){
 			gpio_Config(&handlerPinPwmRgbLed);
 			pwm_Enable_Output(&handlerSignalPWMrgb);
 			pwm_Start_Signal(&handlerSignalPWMrgb);
-			pwm_Update_DuttyCycle(&handlerSignalPWMfilter, secondParameter);
+			pwm_Update_DuttyCycle(&handlerSignalPWMBase, secondParameter);
 			sprintf(bufferData,"Modificación de dutty cycle del filtro RC percentage: %u\n",secondParameter);
 			usart_writeMsg(&hCmdTerminal,bufferData);
 
 		}
 	}
 	/*This modifies the voltaje of the output in the RC filter */
-	else if(strcmp(cmd,"setVolt") == 0){
+	else if(strcmp(cmd,"setVoltB") == 0){
 		if ((firstParameter>=1) & (firstParameter<=3300)){
-		pwm_Update_DuttyCycle(&handlerSignalPWMfilter, (uint16_t)firstParameter*100/3300);
+		pwm_Update_DuttyCycle(&handlerSignalPWMBase, firstParameter*100/3300);
 		sprintf(bufferData,"Voltaje actual: %u mV \n",firstParameter);
 		usart_writeMsg(&hCmdTerminal,bufferData);
 		}
@@ -659,16 +717,143 @@ void parseCommands(char *ptrBufferReception){
 		usart_writeMsg(&hCmdTerminal,bufferData);
 		}
 	}
+
+	/*This modifies the voltaje of the output in the RC filter */
+	else if(strcmp(cmd,"setVoltC") == 0){
+		if ((firstParameter>=1) & (firstParameter<=3300)){
+		pwm_Update_DuttyCycle(&handlerSignalPWMCollector, firstParameter*100/3300);
+		sprintf(bufferData,"Voltaje actual: %u mV \n",firstParameter);
+		usart_writeMsg(&hCmdTerminal,bufferData);
+		}
+		else{
+		sprintf(bufferData,"Inserte un valor de voltaje entre 1 mV y 3300 mV");
+		usart_writeMsg(&hCmdTerminal,bufferData);
+		}
+	}
+
+
+	/*This read the voltaje on the transistor base */
+	else if(strcmp(cmd,"readVoltB") == 0){
+//(handlerSignalPWMBase.config.duttyCicle)*3300/100
+		collectorCurrent = (average(data_collector)-(handlerSignalPWMCollector.config.duttyCicle)*3300/100)/R_colector;
+		baseVoltaje = (average(data_base) - collectorCurrent*R_emisor); // hace falta el valor del ADC que debe estar disponible
+		sprintf(bufferData,"Voltaje leido: %u mV \n",baseVoltaje);
+		usart_writeMsg(&hCmdTerminal,bufferData);
+
+	}
+
+	/*This read the voltaje on the transistor base */
+	else if(strcmp(cmd,"readVoltC") == 0){
+		//collectorVoltaje = ((handlerSignalPWMBase.config->duttyCicle)*3300/100 - ADC2_voltaje); // hace falta el valor del ADC que debe estar disponible
+		collectorCurrent = (average(data_collector)-(handlerSignalPWMCollector.config.duttyCicle)*3300/100)/R_colector;
+		collectorVoltaje = (average(data_collector) - collectorCurrent*R_emisor); // hace falta el valor del ADC que debe estar disponible
+		sprintf(bufferData,"Voltaje leído: %u mV \n",baseVoltaje);
+		usart_writeMsg(&hCmdTerminal,bufferData);
+
+	}
+
+
+
+
+
+
+
+
+
+
+
 	/*The inserted msg is not in the list*/
 	else{
 		usart_writeMsg(&hCmdTerminal,"Wrong CMD\n");
 	}
 }
 
+uint16_t average(uint16_t *databuffer){
+	uint32_t Average = 0;
+	uint8_t counter = 0;
+	for (uint16_t i = 5; i<100; i++){
+		Average += databuffer[i];
+		counter++;
+	}
+	Average = Average/counter;
+	return Average;
+}
+//void voltage_base_collector_sampling(void){
+//	if (ADC_handler.channel == ADC_CHANNEL_14){
+//
+//		ADC_handler.channel = ADC_CHANNEL_7; // PARA COLECTOR
+//		adc_Config(&ADC_handler);
+//		startContinousADC();
+//
+//		for (uint16_t i = 0; i< 100; i++){
+//			ADC_value = (ADC1->DR) * 3300 / 4095;  // Leer el valor convertido
+//			data_collector[i] = ADC_value;
+//
+//		}
+//
+//		ADC1->CR2 &= ~ADC_CR2_CONT;
+//		ADC_value = 0;
+//	}
+//
+//
+//	else if(ADC_handler.channel == ADC_CHANNEL_7){
+//		ADC_handler.channel = ADC_CHANNEL_14; // PARA COLECTOR
+//		adc_Config(&ADC_handler);
+//		startContinousADC();
+//
+//		for (uint16_t i = 0; i< 100; i++){
+//				ADC_value = (ADC1->DR) * 3300 / 4095;  // Leer el valor convertido
+//				data_base[i] = ADC_value;
+//		}
+//
+//		ADC1->CR2 &= ~ADC_CR2_CONT;
+//		ADC_value = 0;
+//	}
+////	while (!(ADC1->SR & ADC_SR_EOC)){  // Esperar hasta que la conversión termine
+////		__NOP();
+////	}
+//
+//
+//}
+void voltage_base_collector_sampling(void){
+
+	if (ADC_handler.channel == ADC_CHANNEL_14){
+
+		ADC_handler.channel = ADC_CHANNEL_7; // PARA COLECTOR
+		adc_Config(&ADC_handler);
+
+
+		for (uint16_t i = 0; i< 100; i++){
+			startSingleADC();
+
+			ADC_value = (ADC1->DR) * 3300 / 4095;
+			data_base[i] = ADC_value;
+
+		}
+		ADC1->CR2 &= ~ADC_CR2_ADON;
+	}
+
+
+	else if(ADC_handler.channel == ADC_CHANNEL_7){
+		ADC_handler.channel = ADC_CHANNEL_14; // PARA COLECTOR
+		adc_Config(&ADC_handler);
+
+		for (uint16_t i = 0; i< 100; i++){
+			startSingleADC();
+
+			ADC_value = (ADC1->DR) * 3300 / 4095;
+			data_collector[i] = ADC_value;
+
+		}
+		ADC1->CR2 &= ~ADC_CR2_ADON;
+	}
+}
+
+
 /* Función de la Finite State Machine  */
 void state_machine_action(void){
 
-	uint32_t currentTime = 1; 		// variable local que almacena el tiempo desde que inicia el código
+	uint32_t currentTime = 0; 		// variable local que almacena el tiempo desde que inicia el código
 
 	/* Switch case que evalua cada uno los estados de la FSM */
 	switch (fsm.fsmState){
@@ -681,6 +866,7 @@ void state_machine_action(void){
 		printf("Current time: %lu \n",currentTime);
 		// Se guarda el valor de los ticks
 		fsm_rgb_modeSelection();							// Se cambia el estado del Led RGB
+
 		break;
 
 	case DISPLAY_VALUE_STATE:
@@ -694,6 +880,7 @@ void state_machine_action(void){
 			fsm_rotation.rotationState = NO_ROTATION;	// Se actualiza la fsmRotation
 		}
 		fsm_display_handler(); 			    	 // Función que enciende los segmentos y el transistor
+		voltage_base_collector_sampling();
 		break;
 
 	case CHAR_RECEIVED_STATE:
@@ -1037,6 +1224,52 @@ void numberSelection(uint8_t displayNumber){
 			}
 	}
 }
+
+
+
+/* Callback del blinkytimer alterna el estado del ledState */
+void Timer2_Callback(void){
+	blinkyFlag = 1;				// Se sube la bandera al led de estado
+	counterproof +=1;
+}
+
+/* Callback del timer que enciende y apaga los transistores */
+void Timer4_Callback(void){
+	fsm.fsmState = DISPLAY_VALUE_STATE;				// Se actualiza el estado para la fsm
+	counterproof = 1;
+}
+
+/* Callback de la interrupcion del pin B2 que corresponde al Clk */
+void callback_ExtInt2(void){
+	fsm_rotation.rotationState = ROTATION_STATE;	// Se actualiza el estado para la fsm
+	// Se lee el valor del data y clock para determinar el giro en sentido CW o CCW
+	data = gpio_ReadPin(&userData);
+	clock = gpio_ReadPin(&userClock);
+}
+
+/* Callback de la interrupcion del Switch SW del encoder que controla el Led RGB */
+void callback_ExtInt15(void){
+	fsm.fsmState = SW_BUTTON_STATE;				 // Se define el estado para la fsm
+
+}
+
+void usart6_RxCallback(void){
+	rxData = usart_getRxData(&hCmdTerminal);
+	fsm.fsmState = CHAR_RECEIVED_STATE;
+}
+
+void adcComplete_Callback(void){
+	ADC_handler.adcData = getADC();
+
+}
+
+
+
+
+
+
+
+
 
 /*
  * Esta función sirve para detectar problemas de parametros
