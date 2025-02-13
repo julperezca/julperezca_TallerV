@@ -18,6 +18,7 @@
 #include "pwm_driver_hal.h"
 #include "usart_driver_hal.h"
 #include "AdcDriver.h"
+#include "pll_driver_hal.h"
 
 #define BUFFER_SIZE 64
 
@@ -307,7 +308,7 @@ int main (void){
 
 /* Funcion encargada de la configuración del GPIO, TIMERS y EXTIs */
 void init_config(void){
-
+//	change_to_100MHz();
 			/* Configuración de LED de estado y su respectivo timer */
 
 	// GPIO config para Led de estado
@@ -321,7 +322,7 @@ void init_config(void){
 
 	// Config para el timer del led de estado
 	blinkyTimer.pTIMx								= TIM2;
-	blinkyTimer.TIMx_Config.TIMx_Prescaler  		= 16000; //1ms conversion
+	blinkyTimer.TIMx_Config.TIMx_Prescaler  		= 16000; //100us conversion
 	blinkyTimer.TIMx_Config.TIMx_Period				= 200;
 	blinkyTimer.TIMx_Config.TIMx_mode				= TIMER_UP_COUNTER;
 	blinkyTimer.TIMx_Config.TIMx_InterruptEnable 	= TIMER_INT_ENABLE;
@@ -403,7 +404,7 @@ void init_config(void){
 
 	/*Se configura el timer de los digitos */
 	transistorsTimer.pTIMx								= TIM4;
-	transistorsTimer.TIMx_Config.TIMx_Prescaler  		= 16000; //1ms conversion
+	transistorsTimer.TIMx_Config.TIMx_Prescaler  		= 16000; //100us conversion
 	transistorsTimer.TIMx_Config.TIMx_Period			= 2;
 	transistorsTimer.TIMx_Config.TIMx_mode				= TIMER_UP_COUNTER;
 	transistorsTimer.TIMx_Config.TIMx_InterruptEnable 	= TIMER_INT_ENABLE;
@@ -529,7 +530,7 @@ void init_config(void){
 	handlerSignalPWMrgb.ptrTIMx = TIM3;
 	handlerSignalPWMrgb.config.channel = PWM_CHANNEL_3;
 	handlerSignalPWMrgb.config.duttyCicle = 50;
-	handlerSignalPWMrgb.config.periodo = 20;
+	handlerSignalPWMrgb.config.periodo = 1;
 	handlerSignalPWMrgb.config.prescaler = 16;
 	pwm_Config(&handlerSignalPWMrgb);
 
@@ -677,7 +678,7 @@ void parseCommands(char *ptrBufferReception){
 		usart_writeMsg(&hCmdTerminal,"9) readVoltB     -- Read the voltage on Base emitter after a setVolt in Base\n");
 		usart_writeMsg(&hCmdTerminal,"10) readVoltC    -- Read the voltage on Collector emitter after an appropriate setVolt on Base and Collector to\n");
 		usart_writeMsg(&hCmdTerminal,"11) IC-VCE #     -- Create a Ic vs Vce table and select the base voltage around 200 mV . Set period from 20 us in PWMFilter to\n");
-		usart_writeMsg(&hCmdTerminal,"12) IB-VBE #     -- Create a Ib vs Vbe table and select the collector voltage around from 100mV to 3300 mV. Set period from 20 us in PWMFilter to\n");
+		usart_writeMsg(&hCmdTerminal,"12) IB-VBE #     -- Create a Ib vs Vbe table and select the collector voltage around from 200mV to 3300 mV. Set period from 20 us in PWMFilter to\n");
 	}
 
 	/* Command dummy*/

@@ -52,6 +52,7 @@ void configMagic(void)
 	USART2->CR2 &= ~USART_CR2_STOP;
 	// Configuramos baudrate (115200)
 	USART2->BRR = 0x008B;
+//	USART2->BRR = 0x01B2;
 	// Rx enable
 	USART2->CR1 &= ~USART_CR1_RE;
 	USART2->CR1 |= USART_CR1_RE;
