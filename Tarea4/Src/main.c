@@ -87,7 +87,6 @@ fsm_rotation_t fsm_rotation 		= {0};
 uint8_t data 			 = 0;		// Variable que almacena el estado del DT del encoder
 uint8_t clock			 = 0;		// Variable que almacena el estado el CLK del encoder
 uint16_t rotationCounter = 0;		// Variable que es mostrada en el display (giros del encoder)
-uint16_t ADC_value = 0;
 uint8_t blinkyFlag 		 = 0;		// Flag para el parpadeo del led
 uint16_t duttyValueRgb = 0;			// valor de 0 a 100
 uint16_t duttyValueRC = 0;			// valor de 0 a 100
@@ -95,32 +94,40 @@ uint16_t blinkyPeriod = 0;
 
 
 
-uint16_t data_base[128];		// A7 channel 7
-uint16_t data_collector[128];	// C4 channel 14
-uint16_t counterproof = 0;
+uint16_t data_base[100];		// A7 channel 7
+uint16_t data_collector[100];	// C4 channel 14
 uint16_t baseVoltaje = 0;
 uint16_t Vcc = 0;
 uint16_t Vbb = 0;
 uint16_t VCE = 0;
 uint16_t VBE = 0;
-uint16_t collectorCurrent = 0;
-uint16_t baseCurrent = 0;
+//uint16_t ADC_value = 0;
+float ADC_value = 0;
+//uint16_t collectorCurrent = 0;
+float collectorCurrent = 0;
+//uint16_t baseCurrent = 0;
+float baseCurrent = 0;
 uint8_t R_emisor = 5;
 uint16_t R_base = 220;
 uint8_t R_colector = 220;
 
 
-uint16_t base_voltage_buffer[128];
-uint16_t base_current_buffer[128];
-uint16_t collecor_voltage_buffer[128];
-
+uint16_t base_voltage_buffer[100];
+uint16_t base_current_buffer[100];
+//uint16_t collecor_voltage_buffer[128];
+float collecor_voltage_buffer[100];
+//uint16_t collecor_current_buffer[128];
+float collecor_current_buffer[100];
 uint8_t contador_base = 0;
 uint8_t contador_collector = 0;
 uint16_t base_average = 0;
 uint16_t collector_average = 0;
 uint8_t duttyBase = 1;
+uint8_t initial_dutty_collector = 1;
 uint8_t bufferCounter = 0;
 uint8_t CONTER = 0;
+uint16_t counterproof = 0;
+uint16_t counterproof2 = 0;
 /* Estado de los transistores y segmentos */
 enum {
 	ON = 0,
@@ -149,7 +156,6 @@ void fsm_rotation_handler(void); 				// Función encargada del sentido de rotati
 void disableTransistors(void);					// Función encargada de apagar los transistores para evitar el "fantasma"
 void fsm_display_handler(void);					// Función encargada de manejar el los transistores y cada segmento
 void state_machine_action(void);
-void voltage_base_collector_sampling(void);
 uint16_t average(uint16_t *databuffer);
 /*
  * The main function, where everything happens.
@@ -171,63 +177,110 @@ int main (void){
 
 	while(1){
 
-
+/***********************************/
 		if (CONTER){
+			ADC_handler.adcData = getADC();
 
+		if(counterproof2){
 
-		if(counterproof){
+		ADC_value = (ADC_handler.adcData) * 3300.0 / 4095.0;
+		data_collector[contador_collector] = ADC_value;
+		contador_collector++;
 
-		if(ADC_handler.channel == ADC_CHANNEL_7){
-			ADC_value = (ADC_handler.adcData) * 3300 / 4095;
-			data_base[contador_base] = ADC_value;
-			ADC_handler.channel = ADC_CHANNEL_14; // PARA BASE
-			adc_Config(&ADC_handler);
-			contador_base++;
+		if (contador_collector == 100){
 
-		}
-		else if(ADC_handler.channel == ADC_CHANNEL_14){
-			ADC_value = (ADC_handler.adcData) * 3300 / 4095;
-			data_collector[contador_collector] = ADC_value;
-			ADC_handler.channel = ADC_CHANNEL_7; // PARA BASE
-			adc_Config(&ADC_handler);
-			contador_collector++;
-		}
+			collectorCurrent = (((handlerSignalPWMCollector.config.duttyCicle)*3300.0/100.0) - collector_average)/R_colector;
+			collector_average = average(data_collector) - collectorCurrent*R_emisor;
+			initial_dutty_collector++;
 
-
-		if (contador_base == 128){
-			base_average = average(data_base);
-			baseCurrent = (((handlerSignalPWMBase.config.duttyCicle)*3300/100) - base_average)/R_base;
-			duttyBase ++;
-
-			base_voltage_buffer[bufferCounter] = base_average;
-			base_current_buffer[bufferCounter] = baseCurrent;
+			collecor_voltage_buffer[bufferCounter] = collector_average;
+			collecor_current_buffer[bufferCounter] = collectorCurrent;
 			bufferCounter++;
-			pwm_Update_DuttyCycle(&handlerSignalPWMBase,duttyBase);
-			contador_base = 0;
 
-		}
-		if (contador_collector == 128){
-			collector_average = average(data_collector);
 
+			pwm_Update_DuttyCycle(&handlerSignalPWMCollector,initial_dutty_collector);
 			contador_collector = 0;
 
 		}
-		if(bufferCounter ==128){
+
+		if(bufferCounter == 100){
+
 			for (uint8_t i = 0; i < sizeof(bufferReception); i++){
 				bufferReception[i] = 0;
 			}
 			bufferCounter = 0;
-			for(uint16_t i = 0; i<128;i++){
-				sprintf(bufferData,"%u,%u \n",base_voltage_buffer[i],base_current_buffer[i]);
+			for(uint16_t i = 0; i<100;i++){
+				sprintf(bufferData,"%.2f-%.2f \n",collecor_voltage_buffer[i],collecor_current_buffer[i]);
 				usart_writeMsg(&hCmdTerminal,bufferData);
 			}
-		}
+			counterproof2 = 0;
+		 }
 		}
 		adc_Config(&ADC_handler);
 		startSingleADC();
 		CONTER = 0;
 		}
 
+
+
+ /*****************************************/
+//		if (CONTER){
+//
+//
+//		if(counterproof){
+//
+//		if(ADC_handler.channel == ADC_CHANNEL_7){
+//			ADC_value = (ADC_handler.adcData) * 3300 / 4095;
+//			data_base[contador_base] = ADC_value;
+//			ADC_handler.channel = ADC_CHANNEL_14; // PARA BASE
+//			adc_Config(&ADC_handler);
+//			contador_base++;
+//
+//		}
+//		else if(ADC_handler.channel == ADC_CHANNEL_14){
+//			ADC_value = (ADC_handler.adcData) * 3300 / 4095;
+//			data_collector[contador_collector] = ADC_value;
+//			ADC_handler.channel = ADC_CHANNEL_7; // PARA BASE
+//			adc_Config(&ADC_handler);
+//			contador_collector++;
+//		}
+//
+//
+//		if (contador_base == 128){
+//			base_average = average(data_base);
+//			baseCurrent = (((handlerSignalPWMBase.config.duttyCicle)*3300/100) - base_average)/R_base;
+//			duttyBase ++;
+//
+//			base_voltage_buffer[bufferCounter] = base_average;
+//			base_current_buffer[bufferCounter] = baseCurrent;
+//			bufferCounter++;
+//			pwm_Update_DuttyCycle(&handlerSignalPWMBase,duttyBase);
+//			contador_base = 0;
+//
+//		}
+//		if (contador_collector == 128){
+//			collector_average = average(data_collector);
+//
+//			contador_collector = 0;
+//
+//		}
+//		if(bufferCounter ==128){
+//			for (uint8_t i = 0; i < sizeof(bufferReception); i++){
+//				bufferReception[i] = 0;
+//			}
+//			bufferCounter = 0;
+//			for(uint16_t i = 0; i<128;i++){
+//				sprintf(bufferData,"%u-%u \n",base_voltage_buffer[i],base_current_buffer[i]);
+//				usart_writeMsg(&hCmdTerminal,bufferData);
+//			}
+//		 }
+//		}
+//		adc_Config(&ADC_handler);
+//		startSingleADC();
+//		CONTER = 0;
+//		}
+
+ /*****************************************/
 
 
 		/* Condicional para el alza de la bandera del Led de estado */
@@ -563,10 +616,8 @@ void init_config(void){
 
 	ADC_handler.channel = ADC_CHANNEL_7;
 	ADC_handler.resolution = ADC_RESOLUTION_12_BIT;
-	ADC_handler.samplingPeriod = ADC_SAMPLING_PERIOD_84_CYCLES;
+	ADC_handler.samplingPeriod = ADC_SAMPLING_PERIOD_56_CYCLES;
 	ADC_handler.dataAlignment = ADC_ALIGNMENT_RIGHT;
-
-
 
 
 	 	 	 /* Fin de la config del USART6 */
@@ -792,16 +843,41 @@ void parseCommands(char *ptrBufferReception){
 	}
 	/* Para esta curva es necesario setear un valor de voltaje en BE*/
 	// 					IC-VCE #A #B, donde #A es el voltaje de base con el que se generan la curva
+
+
+
+
 	else if (strcmp(cmd,"IC-VCE") == 0){
 
-		collectorCurrent = average(data_collector);
-		Vcc = (handlerSignalPWMCollector.config.duttyCicle)*3300/100;
+		// limpiamos el array por si hubo datos de la otra grafica
+		bufferCounter = 0;
+		for (uint16_t i = 0; i < 128; i++) {
+			data_collector[i] = 0;
+		}
 
+
+		counterproof2 = 1;
+		pwm_Update_DuttyCycle(&handlerSignalPWMBase, firstParameter*100/3300);
+		pwm_Update_DuttyCycle(&handlerSignalPWMCollector, initial_dutty_collector);
+
+		sprintf(bufferData,"Tabla IC-VCE generandose. Voltaje base seleccionado %u\n",firstParameter);
+		usart_writeMsg(&hCmdTerminal,bufferData);
+		ADC_handler.channel = ADC_CHANNEL_14;
+		adc_Config(&ADC_handler);
+		startSingleADC();
 	}
+
+
+
+
 
 	/* Para esta curva es necesario setear un valor de voltaje en BE*/
 	// 					IB-VBE #A #B, donde #A es el voltaje de colector con el que se generan la curva.
 	else if (strcmp(cmd,"IB-VBE") == 0){
+		bufferCounter = 0;
+		for (uint16_t i = 0; i < 128; i++) {
+			data_collector[i] = 0;
+		}
 
 		counterproof = 1;
 		pwm_Update_DuttyCycle(&handlerSignalPWMCollector, firstParameter*100/3300);
@@ -811,9 +887,8 @@ void parseCommands(char *ptrBufferReception){
 		adc_Config(&ADC_handler);
 		startSingleADC();
 
-		sprintf(bufferData,"Tabla IB-VBE generandose %u \n",ADC_handler.adcData);
+		sprintf(bufferData,"Tabla IB-VBE generandose \n");
 		usart_writeMsg(&hCmdTerminal,bufferData);
-
 	}
 
 
@@ -824,56 +899,17 @@ void parseCommands(char *ptrBufferReception){
 
 }
 
-
-
 uint16_t average(uint16_t *databuffer){
 	uint32_t Average = 0;
 	uint8_t counter = 0;
-	for (uint16_t i = 0; i<128; i++){
+	for (uint16_t i = 0; i<100; i++){
 		Average += databuffer[i];
 		counter++;
 	}
 	Average = Average/counter;
 	return Average;
-
 }
 
-
-
-void voltage_base_collector_sampling(void){
-
-	if (ADC_handler.channel == ADC_CHANNEL_14){
-
-		ADC_handler.channel = ADC_CHANNEL_7; // PARA BASE
-		adc_Config(&ADC_handler);
-
-
-		for (uint16_t i = 0; i< 100; i++){
-			startSingleADC();
-
-			ADC_value = (ADC_handler.adcData) * 3300 / 4095;
-			data_base[i] = ADC_value;
-
-		}
-
-	}
-
-
-	else if(ADC_handler.channel == ADC_CHANNEL_7){
-		ADC_handler.channel = ADC_CHANNEL_14; // PARA COLECTOR
-		adc_Config(&ADC_handler);
-
-		for (uint16_t i = 0; i< 100; i++){
-			startSingleADC();
-
-			ADC_value = (ADC_handler.adcData) * 3300 / 4095;
-			data_collector[i] = ADC_value;
-
-
-		}
-
-	}
-}
 
 
 /* Función de la Finite State Machine  */
@@ -1293,7 +1329,6 @@ void usart6_RxCallback(void){
 }
 
 void adcComplete_Callback(void){
-	ADC_handler.adcData = getADC();
 	CONTER = 1;
 
 }
