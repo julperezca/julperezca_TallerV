@@ -24,7 +24,8 @@ typedef enum
 	SW_BUTTON_STATE,
 	DISPLAY_VALUE_STATE,
 	CHAR_RECEIVED_STATE,
-	CMD_COMPLETE
+	CMD_COMPLETE,
+	ADC_COMPLETE
 } fsm_State;
 
 	/* Estructura  que maneja de la fsm del loop principal */
