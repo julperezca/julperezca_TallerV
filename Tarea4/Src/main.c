@@ -194,7 +194,7 @@ int main (void){
 		}
 
 
-		if (contador_base ==128){
+		if (contador_base == 128){
 			base_average = average(data_base);
 			baseCurrent = (((handlerSignalPWMBase.config.duttyCicle)*3300/100) - base_average)/R_base;
 			duttyBase ++;
@@ -829,7 +829,7 @@ void parseCommands(char *ptrBufferReception){
 uint16_t average(uint16_t *databuffer){
 	uint32_t Average = 0;
 	uint8_t counter = 0;
-	for (uint16_t i = 5; i<100; i++){
+	for (uint16_t i = 0; i<128; i++){
 		Average += databuffer[i];
 		counter++;
 	}
