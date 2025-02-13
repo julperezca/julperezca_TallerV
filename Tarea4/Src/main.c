@@ -232,7 +232,7 @@ int main (void){
 				if(ADC_handler.channel == ADC_CHANNEL_7){
 					ADC_value = (ADC_handler.adcData) * 3300.0 / 4095.0;
 					data_base[contador_base] = ADC_value;
-					ADC_handler.channel = ADC_CHANNEL_14; // PARA BASE
+					ADC_handler.channel = ADC_CHANNEL_14; // PARA colector
 					adc_Config(&ADC_handler);
 					contador_base++;
 
@@ -826,11 +826,22 @@ void parseCommands(char *ptrBufferReception){
 
 	/*This read the voltaje on the transistor base */
 	else if(strcmp(cmd,"readVoltB") == 0){
-		Vbb = (handlerSignalPWMBase.config.duttyCicle)*3300/100;
-		Vcc = average(data_collector);
-		baseCurrent = ( Vbb - average(data_base) ) / 220;
-		collectorCurrent = (average(data_collector) - Vcc)/R_colector;
-		baseVoltaje = ( average(data_base) - collectorCurrent*R_emisor );
+
+		ADC_handler.channel = ADC_CHANNEL_7; // base
+		adc_Config(&ADC_handler);
+		startSingleADC();
+
+		while (!(ADC1->SR & ADC_SR_EOC));
+		Vbb = ADC_handler.adcData*3300/4095;
+		baseCurrent = ((handlerSignalPWMBase.config.duttyCicle)*3300/100 - Vbb)/R_base;
+
+		ADC_handler.channel = ADC_CHANNEL_14; // colector
+		adc_Config(&ADC_handler);
+		startSingleADC();
+		while (!(ADC1->SR & ADC_SR_EOC));
+
+		collectorCurrent = ((ADC_handler.adcData)*3300/4095 - (handlerSignalPWMCollector.config.duttyCicle)*3300/100)/R_colector;
+		baseVoltaje = ( Vbb - collectorCurrent*R_emisor );
 
 		sprintf(bufferData,"Voltaje leido en BE: %u mV \n",baseVoltaje);
 		usart_writeMsg(&hCmdTerminal,bufferData);
@@ -840,7 +851,11 @@ void parseCommands(char *ptrBufferReception){
 	/*This read the voltaje on the transistor collector */
 	else if(strcmp(cmd,"readVoltC") == 0){
 
-		collector_average = average(data_collector);
+		ADC_handler.channel = ADC_CHANNEL_14; // colector
+		adc_Config(&ADC_handler);
+		startSingleADC();
+		while (!(ADC1->SR & ADC_SR_EOC));
+		collector_average = (ADC_handler.adcData )*3300/4095;
 		collectorCurrent = (((handlerSignalPWMCollector.config.duttyCicle)*3300.0/100.0) - collector_average)/R_colector;
 
 		VCE = collector_average - collectorCurrent*R_emisor;
@@ -854,7 +869,7 @@ void parseCommands(char *ptrBufferReception){
 
 		// limpiamos el array por si hubo datos de la otra grafica
 
-		for (uint16_t i = 0; i < 128; i++) {
+		for (uint16_t i = 0; i < 100; i++) {
 			data_collector[i] = 0;
 		}
 
@@ -878,7 +893,7 @@ void parseCommands(char *ptrBufferReception){
 	// 					IB-VBE #A #B, donde #A es el voltaje de colector con el que se generan la curva.
 	else if (strcmp(cmd,"IB-VBE") == 0){
 		bufferCounter = 0;
-		for (uint16_t i = 0; i < 128; i++) {
+		for (uint16_t i = 0; i < 100; i++) {
 			data_collector[i] = 0;
 		}
 		counterproof2 = 0;
@@ -1335,13 +1350,6 @@ void adcComplete_Callback(void){
 	CONTER = 1;
 	ADC_handler.adcData = getADC();
 }
-
-
-
-
-
-
-
 
 
 /*
