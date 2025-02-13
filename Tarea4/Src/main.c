@@ -110,7 +110,7 @@ uint16_t R_base = 220;
 uint8_t R_colector = 220;
 uint16_t Vbb = 0;
 uint16_t Vcc = 0;
-uint16_t VCE = 0;
+float VCE = 0;
 uint16_t baseVoltaje = 0;
 float base_voltage_buffer[100];
 float base_current_buffer[100];
@@ -269,7 +269,7 @@ int main (void){
 						bufferReception[i] = 0;
 					}
 					bufferCounter = 0;
-					for(uint16_t i = 0; i<100;i++){
+					for(uint16_t i = 7; i<100;i++){
 						sprintf(bufferData,"%.2f-%.2f \n",base_voltage_buffer[i],base_current_buffer[i]);
 						usart_writeMsg(&hCmdTerminal,bufferData);
 					}
@@ -674,8 +674,10 @@ void parseCommands(char *ptrBufferReception){
 		usart_writeMsg(&hCmdTerminal,"6) setDutty #    -- Select PWM: A=0 -> PWMrgb, A=1 -> PWMrcFilter. Select dutty B=dutty cycle from 0 to 100\n");
 		usart_writeMsg(&hCmdTerminal,"7) setVoltB #    -- Select the DAC in transistor base a value from 100 mV to 3300 mV. Set period from 20 us in PWMFilter to\n");
 		usart_writeMsg(&hCmdTerminal,"8) setVoltc #    -- Select the DAC in transistor collector a value from 100 mV to 3300 mV. Set period from 20 us in PWMFilter to\n");
-		usart_writeMsg(&hCmdTerminal,"9) IC-VCE #      -- Create a Ic vs Vce table and select the base voltage around 200 mV . Set period from 20 us in PWMFilter to\n");
-		usart_writeMsg(&hCmdTerminal,"10) IB-VBE #   -- Create a Ib vs Vbe table and select the collector voltage around from 100mV to 3300 mV. Set period from 20 us in PWMFilter to\n");
+		usart_writeMsg(&hCmdTerminal,"9) readVoltB     -- Read the voltage on Base emitter after a setVolt in Base\n");
+		usart_writeMsg(&hCmdTerminal,"10) readVoltC    -- Read the voltage on Collector emitter after an appropriate setVolt on Base and Collector to\n");
+		usart_writeMsg(&hCmdTerminal,"11) IC-VCE #     -- Create a Ic vs Vce table and select the base voltage around 200 mV . Set period from 20 us in PWMFilter to\n");
+		usart_writeMsg(&hCmdTerminal,"12) IB-VBE #     -- Create a Ib vs Vbe table and select the collector voltage around from 100mV to 3300 mV. Set period from 20 us in PWMFilter to\n");
 	}
 
 	/* Command dummy*/
@@ -824,14 +826,10 @@ void parseCommands(char *ptrBufferReception){
 
 	/*This read the voltaje on the transistor base */
 	else if(strcmp(cmd,"readVoltB") == 0){
-		Vbb = (handlerSignalPWMBase.config.duttyCicle)*3300./100;
+		Vbb = (handlerSignalPWMBase.config.duttyCicle)*3300/100;
 		Vcc = average(data_collector);
-		printf("%u \n",Vcc);
 		baseCurrent = ( Vbb - average(data_base) ) / 220;
-
-
 		collectorCurrent = (average(data_collector) - Vcc)/R_colector;
-
 		baseVoltaje = ( average(data_base) - collectorCurrent*R_emisor );
 
 		sprintf(bufferData,"Voltaje leido en BE: %u mV \n",baseVoltaje);
@@ -842,18 +840,15 @@ void parseCommands(char *ptrBufferReception){
 	/*This read the voltaje on the transistor collector */
 	else if(strcmp(cmd,"readVoltC") == 0){
 
-		VCE = average(data_collector) - collectorCurrent*R_emisor;
-		sprintf(bufferData,"Voltaje leído en el CE: %u mV \n",VCE);
+		collector_average = average(data_collector);
+		collectorCurrent = (((handlerSignalPWMCollector.config.duttyCicle)*3300.0/100.0) - collector_average)/R_colector;
+
+		VCE = collector_average - collectorCurrent*R_emisor;
+		sprintf(bufferData,"Voltaje leído en el CE: %.2f mV \n",VCE);
 		usart_writeMsg(&hCmdTerminal,bufferData);
 
-		// data_collector - (data_collector - PWMCollector)*R_emisor/R_colector
-		// ¿ por qué no me está funcionando?...
+
 	}
-	/* Para esta curva es necesario setear un valor de voltaje en BE*/
-	// 					IC-VCE #A #B, donde #A es el voltaje de base con el que se generan la curva
-
-
-
 
 	else if (strcmp(cmd,"IC-VCE") == 0){
 
