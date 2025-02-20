@@ -42,7 +42,6 @@ void usart_Config(USART_Handler_t *ptrUsartHandler){
 	/* En el CR1 estan parity (PCE y PS) y tamaño del dato (M) */
 
 
-
 	/* Mientras que en CR2 estan los stopbit (STOP)*/
 	/* Configuracion del Baudrate (registro BRR) */
 	/* Configuramos el modo: only TX, only RX, o RXTX */
@@ -207,6 +206,7 @@ static void usart_config_baudrate(USART_Handler_t *ptrUsartHandler){
 	switch(ptrUsartHandler->USART_Config.baudrate){
 		case USART_BAUDRATE_9600:
 		{
+
 		// El valor a cargar es 104.1875 -> Mantiza = 104,fraction = 0.1875
 		// Mantiza = 104 = 0x68, fraction = 16 * 0.1875 = 3
 		// Valor a cargar 0x0683
