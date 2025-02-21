@@ -9,7 +9,7 @@
 #include "stm32_assert.h"
 #include "rtc_driver_hal.h"
 
-
+uint8_t Dec_to_BCD(uint8_t dec);
 
 
 void RTC_config(RTC_Handler_t *pRTC_handler){
@@ -24,23 +24,21 @@ void RTC_config(RTC_Handler_t *pRTC_handler){
 	RCC->BDCR |= RCC_BDCR_LSEON;
 
 	// crear un delay para tener el LSE activo
-	if (!(RCC->BDCR & RCC_BDCR_LSERDY)) {
-	        RCC->BDCR |= RCC_BDCR_LSEON;
-	        // registro que alza la bandera para saber si está listo el LSE
-	        while (!(RCC->BDCR & RCC_BDCR_LSERDY)){
-	        	__NOP();
-	        }
-	 }
+	// registro que alza la bandera para saber si está listo el LSE
+	while (!(RCC->BDCR & RCC_BDCR_LSERDY)){
+		__NOP();
+	}
+
 
 	 // habilitar el clock del RTC
 
 	// crear una función  para la elección del reloj: por ahora será LSE pedida en la tarea // escoger reloj NoClock, LSE, LSI, HSE
 
-	RCC->BDCR &= ~RCC_BDCR_RTCSEL_0; // limpia registro
+	RCC->BDCR &= ~RCC_BDCR_RTCSEL; // limpia registro
 	RCC->BDCR |= RCC_BDCR_RTCSEL_0;  // 01 corresponde a LSE clock
 
 	 // habilitar el clock del RTC
-	RCC->BDCR  = RCC_BDCR_RTCEN;
+	RCC->BDCR  |= RCC_BDCR_RTCEN;
 
 	// pg 438 registro de protección de escritura del RTC-> se desactiva
 	// dice que se debe escribir :
@@ -48,8 +46,8 @@ void RTC_config(RTC_Handler_t *pRTC_handler){
 	//	Write ‘0xCA’ into the RTC_WPR register.
 	// Write ‘0x53’ into the RTC_WPR register. Si se aplica uno diferente se activa la protección de escritura
 
-	RTC->WPR = WPR_ENABLE_1;
-	RTC->WPR = WPR_ENABLE_2;
+	RTC->WPR |= ((WPR_ENABLE_1) << RTC_WPR_KEY_Pos);
+	RTC->WPR |= ((WPR_ENABLE_2) << RTC_WPR_KEY_Pos);
 
 	// está el registro de RTC initialization and statud register RTC_ISR
 
@@ -61,6 +59,7 @@ void RTC_config(RTC_Handler_t *pRTC_handler){
     	__NOP();
     }
 
+	RTC->CR |= RTC_CR_BYPSHAD;
 
     RTC->DR = 0; // Date register inicia en cero
     RTC->TR = 0; // Time register inicia en cero
@@ -68,9 +67,9 @@ void RTC_config(RTC_Handler_t *pRTC_handler){
 
     // EL TR tiene la información de configuración de la hora actual que se hace manualmente
 
-	RTC->TR |= (pRTC_handler->hour << RTC_TR_HU_Pos);
-	RTC->TR |= (pRTC_handler->minutes << RTC_TR_MNT_Pos);
-	RTC->TR |= (pRTC_handler->seconds << RTC_TR_SU_Pos); // HH:MM:SS en BCD
+	RTC->TR |= ((Dec_to_BCD(pRTC_handler->hour)) << RTC_TR_HU_Pos);
+	RTC->TR |= ((Dec_to_BCD(pRTC_handler->minutes)) << RTC_TR_MNU_Pos);
+	RTC->TR |= ((Dec_to_BCD(pRTC_handler->seconds)) << RTC_TR_SU_Pos); // HH:MM:SS en BCD
 
 	// El CR contiene la forma del formato
 	// dado que se creó el formato en el handler se puede funcionalizar
@@ -84,14 +83,14 @@ void RTC_config(RTC_Handler_t *pRTC_handler){
 
 	//Date register DR selecciona la fecha, año, mes y día
 
-	RTC->DR |= (pRTC_handler->day) << RTC_DR_DU_Pos;
-	RTC->DR |= (pRTC_handler->month) << RTC_DR_MU_Pos;
-	RTC->DR |= (pRTC_handler->year) << RTC_DR_YU_Pos;
+	RTC->DR |= ((Dec_to_BCD(pRTC_handler->day)) << RTC_DR_DU_Pos);
+	RTC->DR |= ((Dec_to_BCD(pRTC_handler->month)) << RTC_DR_MU_Pos);
+	RTC->DR |= ((Dec_to_BCD(pRTC_handler->year)) << RTC_DR_YU_Pos);
 
 
     RTC->ISR &= ~RTC_ISR_INIT; // se coloca 0 en el registro para terminar la inicialización
 
-    while (!(RTC->ISR & RTC_ISR_INITF)){
+    while (!(RTC->ISR & RTC_ISR_INITS)){
     	__NOP();
     }
 
@@ -106,8 +105,15 @@ uint8_t BCD_to_Dec(uint8_t bcd){
 	// ingresa un binario bcd y se separa en dos
 	// cuatro bits mas significativos y menos significativos
 	// se realiza una operación bitwise and para separarlos
-    return ((bcd & 0xF0) * 10) + (bcd & 0x0F);
+    return ((bcd/16)*10) + (bcd%16);
 }
+
+/* conversion de binario a decimal*/
+uint8_t Dec_to_BCD(uint8_t dec){
+
+	return  ((dec/10)*16) + (dec%10);
+}
+
 
 
 /* lectura de fecha y tiempo*/
@@ -115,14 +121,14 @@ void RTC_Read(uint8_t *storeDate, uint8_t *storeTime){
     // Leer Hora
     uint32_t tiempo = RTC->TR;
     storeTime[0] = BCD_to_Dec((tiempo >> RTC_TR_HU_Pos) & 0x3F); // hora
-    storeTime[1] = BCD_to_Dec((tiempo >> RTC_TR_MNT_Pos) & 0x7F);  //
+    storeTime[1] = BCD_to_Dec((tiempo >> RTC_TR_MNU_Pos) & 0x7F);  //
     storeTime[2] = BCD_to_Dec((tiempo >> RTC_TR_SU_Pos) & 0x7F);		  //
 
     // Leer Fecha
     uint32_t fecha = RTC->DR;
     storeDate[0] = BCD_to_Dec((fecha >> RTC_DR_YU_Pos) & 0xFF); // primer dato: año
     storeDate[1] = BCD_to_Dec((fecha >> RTC_DR_MU_Pos) & 0x1F);	 // segundo dato: mes
-    storeDate[2] = BCD_to_Dec((fecha >> RTC_DR_YU_Pos) & 0x1);		 // tercer dato : día
+    storeDate[2] = BCD_to_Dec((fecha >> RTC_DR_DU_Pos) & 0x3f);		 // tercer dato : día
 }
 
 

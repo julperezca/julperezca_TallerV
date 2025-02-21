@@ -20,6 +20,7 @@
 #include "AdcDriver.h"
 #include "pll_driver_hal.h"
 #include "i2c_driver_hal.h"
+#include "rtc_driver_hal.h"
 
 #define BUFFER_SIZE 64
 
@@ -98,43 +99,11 @@ GPIO_Handler_t sclPin = {0};
 GPIO_Handler_t sdaPin = {0};
 I2C_Handler_t LCD_handler = {0};
 
+RTC_Handler_t rtc_handler = {0};
+
 #define LCD_ADDRESS 0b0100100
 
-float data_base[100];		// A7 channel 7
-float data_collector[100];	// C4 channel 14
 
-
-
-//uint16_t ADC_value = 0;
-float ADC_value = 0;
-//uint16_t collectorCurrent = 0;
-float collectorCurrent = 0;
-//uint16_t baseCurrent = 0;
-float baseCurrent = 0;
-uint8_t R_emisor = 5;
-uint16_t R_base = 220;
-uint8_t R_colector = 220;
-uint16_t Vbb = 0;
-uint16_t Vcc = 0;
-float VCE = 0;
-uint16_t baseVoltaje = 0;
-float base_voltage_buffer[100];
-float base_current_buffer[100];
-//uint16_t collecor_voltage_buffer[128];
-float collecor_voltage_buffer[100];
-//uint16_t collecor_current_buffer[128];
-float collecor_current_buffer[100];
-uint8_t contador_base = 0;
-uint8_t contador_collector = 0;
-//uint16_t base_average = 0;
-float base_average = 0;
-float collector_average = 0;
-uint8_t duttyBase = 1;
-uint8_t initial_dutty_collector = 1;
-uint8_t bufferCounter = 0;
-uint8_t CONTER = 0;
-uint16_t counterproof = 0;
-uint16_t counterproof2 = 0;
 /* Estado de los transistores y segmentos */
 enum {
 	ON = 0,
@@ -151,6 +120,10 @@ char cmd[16];
 char userMsg[BUFFER_SIZE] = {0};
 char bufferData[BUFFER_SIZE] = {0};
 char clearBuffer[16] = {0};
+
+uint8_t dateBuffer[3] = {0}; 	// buffer de tres elementos que guarda: año, mes, día
+uint8_t timeBuffer[3] = {0};	// buffer de tres ekementos que guarda: hora, minutos, segundos
+
 unsigned int  firstParameter;
 unsigned int  secondParameter;
 
@@ -165,6 +138,7 @@ void fsm_display_handler(void);					// Función encargada de manejar el los tran
 void state_machine_action(void);
 float average(float *databuffer);
 void init_I2C(void);
+void rtc_Config(void);
 /*
  * The main function, where everything happens.
  */
@@ -172,8 +146,8 @@ int main (void){
 	configMagic();  // Se inicia la configuracion de Magic
 	init_config();	// Se inicia la configuracion del sistema
 	init_I2C();		// Se inicia la comunicación I2C para los pines B8,B9-> SCL, SDA
-
-
+	rtc_Config();
+	systickConfig();
 
 	/* Loop infinito */
 
@@ -183,12 +157,16 @@ int main (void){
 		if (blinkyFlag){
 			gpio_TooglePin(&ledState);		// Alterna estado del led
 			blinkyFlag = 0;					// Se limpia la bandera del parpadeo del led
-
 		}
+
+		RTC_Read(dateBuffer, timeBuffer);
+//		msDelay(3000);
+
 	}
 	return 0;
 }
 
+/*Configuración para handlers y pines de I2C*/
 void init_I2C(void){
 
 	sclPin.pGPIOx 								= GPIOB;
@@ -216,10 +194,8 @@ void init_I2C(void){
 	i2c_Config(&LCD_handler);
 }
 
-
 /* Funcion encargada de la configuración del GPIO, TIMERS y EXTIs */
 void init_config(void){
-//	change_to_100MHz();
 			/* Configuración de LED de estado y su respectivo timer */
 
 	// GPIO config para Led de estado
@@ -244,7 +220,23 @@ void init_config(void){
 
 }
 
-void ReceivedChar(void){
+/*Configuración de RTC*/
+void rtc_Config(void){
+
+	rtc_handler.year = 25;
+	rtc_handler.month = 2;
+	rtc_handler.day = 21;
+	rtc_handler.hour = 2;
+	rtc_handler.minutes = 38;
+	rtc_handler.seconds = 30;
+	rtc_handler.formato = FORMAT_24H;
+	RTC_config(&rtc_handler);
+}
+
+
+
+/*Caracter recibido*/
+ void ReceivedChar(void){
 	if (hCmdTerminal.receivedChar != '\0'){
 		bufferReception[counterReception] = hCmdTerminal.receivedChar;
 		counterReception++;
@@ -258,6 +250,7 @@ void ReceivedChar(void){
 	}
 }
 
+/*Analisis de comandos*/
 void parseCommands(char *ptrBufferReception){
 
 
@@ -842,11 +835,6 @@ void callback_ExtInt15(void){
 void usart6_RxCallback(void){
 	rxData = usart_getRxData(&hCmdTerminal);
 	fsm.fsmState = CHAR_RECEIVED_STATE;
-}
-
-void adcComplete_Callback(void){
-	CONTER = 1;
-	ADC_handler.adcData = getADC();
 }
 
 
