@@ -18,7 +18,7 @@
 	uint8_t dayOfWeek = 0;
 
 
-void algo(void){
+void RTC_config(RTC_Handler_t *pRTC_handler){
 
 
     // Habilitar acceso al BDCR
@@ -67,11 +67,15 @@ void algo(void){
 	RTC->CR &= ~RTC_CR_FMT; // 0 = formato 24h BIT 6 DEL FORMATO DE HORA
 
 
-	// EL rtc_TR tiene la información de configuración de la hora actual que se hace manualmente
+    RTC->DR = 0; // Date register inicia en cero
+    RTC->TR = 0; // Time register inicia en cero
 
-    RTC->TR = (12 << 16) | (34 << 8) | (56 << 0); // HH:MM:SS en BCD
 
+    // EL rtc_TR tiene la información de configuración de la hora actual que se hace manualmente
 
+	RTC->TR = (pRTC_handler->hour << RTC_TR_HU_Pos)
+			| (pRTC_handler->minutes << RTC_TR_MNT_Pos)
+			| (pRTC_handler->seconds << RTC_TR_SU_Pos); // HH:MM:SS en BCD
 
 
 
