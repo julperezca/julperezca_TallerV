@@ -68,12 +68,6 @@ void RTC_config(RTC_Handler_t *pRTC_handler){
     }
 
 
-
-	// dado que se creó el formato en el handler se puede funcionalizar
-	// el formato
-	RTC->CR &= ~RTC_CR_FMT; // 0 = formato 24h BIT 6 DEL FORMATO DE HORA
-
-
     RTC->DR = 0; // Date register inicia en cero
     RTC->TR = 0; // Time register inicia en cero
 
@@ -84,7 +78,21 @@ void RTC_config(RTC_Handler_t *pRTC_handler){
 	RTC->TR |= (pRTC_handler->minutes << RTC_TR_MNT_Pos)
 	RTC->TR |= (pRTC_handler->seconds << RTC_TR_SU_Pos); // HH:MM:SS en BCD
 
+	// El CR contiene la forma del formato
+	// dado que se creó el formato en el handler se puede funcionalizar
+	if (pRTC_handler->formato == FORMAT_24H){
+		RTC->CR &= ~RTC_CR_FMT; // 0 = formato 24h BIT 6 DEL FORMATO DE HORA
+	}
+	else{
+		RTC->CR &= ~RTC_CR_FMT;
+		RTC->CR |= RTC_CR_FMT;  // formato AM/PM
+	}
 
+	//Date register selecciona la fecha, año, mes y día
+
+	RTC->DR |= (pRTC_handler->day) << RTC_DR_DU_Pos;
+	RTC->DR |= (pRTC_handler->month) << RTC_DR_MU_Pos;
+	RTC->DR |= (pRTC_handler->year) << RTC_DR_YU_Pos;
 
 
     RTC->ISR &= ~RTC_ISR_INIT; // se coloca 0 en el registro para terminar la inicialización

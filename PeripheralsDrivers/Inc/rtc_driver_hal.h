@@ -15,6 +15,8 @@
 #define WPR_ENABLE_1	0xCA
 #define WPR_ENABLE_2	0x53
 #define WPR_DISABLE 	0xFF
+#define FORMAT_24H		0
+#define FORMAT_AMPM		1
 
 
 typedef struct
