@@ -12,11 +12,22 @@
 #include "stm32f4xx.h"
 #include "stm32_assert.h"
 
-#define
+#define WPR_ENABLE_1	0xCA
+#define WPR_ENABLE_2	0x53
+#define WPR_DISABLE 	0xFF
 
 
+typedef struct
+{
+	uint8_t year;
+	uint8_t month;
+	uint8_t day;
+	uint8_t hour;
+	uint8_t minutes;
+	uint8_t seconds;
+	uint8_t formato;
 
-
+}RTC_Handler_t;
 
 
 #endif /* RTC_DRIVER_HAL_H_ */

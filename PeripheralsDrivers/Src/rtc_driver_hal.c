@@ -20,6 +20,13 @@
 
 void algo(void){
 
+
+    // Habilitar acceso al BDCR
+    RCC->APB1ENR |= RCC_APB1ENR_PWREN; // Habilitar módulo PWR
+    PWR->CR |= PWR_CR_DBP; // Desbloquear BDCR para poder manipular el LSE
+
+
+
 	RCC->BDCR |= RCC_BDCR_LSEON;
 
 	// crear un delay para tener el LSE activo
@@ -45,8 +52,8 @@ void algo(void){
 	//	Write ‘0xCA’ into the RTC_WPR register.
 	// Write ‘0x53’ into the RTC_WPR register. Si se aplica uno diferente se activa la protección de escritura
 
-	RTC->WPR = 0xCA;
-	RTC->WPR = 0x53;
+	RTC->WPR = WPR_ENABLE_1;
+	RTC->WPR = WPR_ENABLE_2;
 
 	// está el registro de RTC initialization and statud register RTC_ISR
 
@@ -64,15 +71,19 @@ void algo(void){
 
     RTC->TR = (12 << 16) | (34 << 8) | (56 << 0); // HH:MM:SS en BCD
 
+
+
+
+
+
     RTC->ISR &= ~RTC_ISR_INIT; // se coloca 0 en el registro para terminar la inicialización
+	while (!(RTC->ISR & RTC_ISR_INITF));
 
-    RTC->WPR = 0xFF; // se escribe cualquier comando para bloquear el registro del RTC
-
-}
+    RTC->WPR = WPR_DISABLE; // se escribe cualquier comando para bloquear el registro del RTC
 
 
-uint8_t BCD_to_Dec(uint8_t bcd) {
-    return ((bcd >> 4) * 10) + (bcd & 0x0F);
+
+
 }
 
 
