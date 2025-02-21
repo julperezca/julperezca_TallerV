@@ -1,8 +1,21 @@
-
+/*
+ * rtc_driver_hal.c
+ *
+ *  Created on: Feb 2025
+ *      Author: julperezca
+ */
 
 #include "stm32f4xx.h"
 #include "stm32_assert.h"
 #include "rtc_driver_hal.h"
+
+    uint8_t hour;
+	uint8_t minutos;
+	uint8_t segundos = 0;
+    uint8_t dia;
+	uint8_t mes;
+	uint8_t anio;
+	uint8_t dayOfWeek = 0;
 
 
 void algo(void){
@@ -39,10 +52,47 @@ void algo(void){
 
 	// se inicializa
 	RTC->ISR |= RTC_ISR_INIT;
+
+	// espera a que se inicialice el RTC
 	while (!(RTC->ISR & RTC_ISR_INITF));
 
 
+	RTC->CR &= ~RTC_CR_FMT; // 0 = formato 24h BIT 6 DEL FORMATO DE HORA
 
+
+	// EL rtc_TR tiene la información de configuración de la hora actual que se hace manualmente
+
+    RTC->TR = (12 << 16) | (34 << 8) | (56 << 0); // HH:MM:SS en BCD
+
+    RTC->ISR &= ~RTC_ISR_INIT; // se coloca 0 en el registro para terminar la inicialización
+
+    RTC->WPR = 0xFF; // se escribe cualquier comando para bloquear el registro del RTC
+
+}
+
+
+uint8_t BCD_to_Dec(uint8_t bcd) {
+    return ((bcd >> 4) * 10) + (bcd & 0x0F);
+}
+
+
+
+
+void RTC_ReadTime(void) {
+
+
+    // Leer Hora
+    uint32_t tiempo = RTC->TR;
+    hour = BCD_to_Dec((tiempo >> 16) & 0x3F);
+    minutos = BCD_to_Dec((tiempo >> 8) & 0x7F);
+    segundos = BCD_to_Dec(tiempo & 0x7F);
+
+    // Leer Fecha
+    uint32_t fecha = RTC->DR;
+    anio = BCD_to_Dec((fecha >> 16) & 0xFF);
+    mes = BCD_to_Dec((fecha >> 8) & 0x1F);
+    dia = BCD_to_Dec(fecha & 0x3F);
+    dayOfWeek = (fecha >> 13) & 0x07;
 
 
 }

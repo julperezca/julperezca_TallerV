@@ -164,6 +164,7 @@ void disableTransistors(void);					// Función encargada de apagar los transisto
 void fsm_display_handler(void);					// Función encargada de manejar el los transistores y cada segmento
 void state_machine_action(void);
 float average(float *databuffer);
+void init_I2C(void);
 /*
  * The main function, where everything happens.
  */
