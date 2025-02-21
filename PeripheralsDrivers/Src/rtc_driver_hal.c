@@ -9,13 +9,7 @@
 #include "stm32_assert.h"
 #include "rtc_driver_hal.h"
 
-    uint8_t hour;
-	uint8_t minutos;
-	uint8_t segundos = 0;
-    uint8_t dia;
-	uint8_t mes;
-	uint8_t anio;
-	uint8_t dayOfWeek = 0;
+
 
 
 void RTC_config(RTC_Handler_t *pRTC_handler){
@@ -72,10 +66,10 @@ void RTC_config(RTC_Handler_t *pRTC_handler){
     RTC->TR = 0; // Time register inicia en cero
 
 
-    // EL rtc_TR tiene la información de configuración de la hora actual que se hace manualmente
+    // EL TR tiene la información de configuración de la hora actual que se hace manualmente
 
-	RTC->TR |= (pRTC_handler->hour << RTC_TR_HU_Pos)
-	RTC->TR |= (pRTC_handler->minutes << RTC_TR_MNT_Pos)
+	RTC->TR |= (pRTC_handler->hour << RTC_TR_HU_Pos);
+	RTC->TR |= (pRTC_handler->minutes << RTC_TR_MNT_Pos);
 	RTC->TR |= (pRTC_handler->seconds << RTC_TR_SU_Pos); // HH:MM:SS en BCD
 
 	// El CR contiene la forma del formato
@@ -88,7 +82,7 @@ void RTC_config(RTC_Handler_t *pRTC_handler){
 		RTC->CR |= RTC_CR_FMT;  // formato AM/PM
 	}
 
-	//Date register selecciona la fecha, año, mes y día
+	//Date register DR selecciona la fecha, año, mes y día
 
 	RTC->DR |= (pRTC_handler->day) << RTC_DR_DU_Pos;
 	RTC->DR |= (pRTC_handler->month) << RTC_DR_MU_Pos;
@@ -103,32 +97,34 @@ void RTC_config(RTC_Handler_t *pRTC_handler){
 
     RTC->WPR = WPR_DISABLE; // se escribe cualquier comando para bloquear el registro del RTC
 
-
-
-
 }
 
 
 
+/* conversion de binario a decimal*/
+uint8_t BCD_to_Dec(uint8_t bcd){
+	// ingresa un binario bcd y se separa en dos
+	// cuatro bits mas significativos y menos significativos
+	// se realiza una operación bitwise and para separarlos
+    return ((bcd & 0xF0) * 10) + (bcd & 0x0F);
+}
 
-void RTC_ReadTime(void) {
 
-
+/* lectura de fecha y tiempo*/
+void RTC_Read(uint8_t *storeDate, uint8_t *storeTime){
     // Leer Hora
     uint32_t tiempo = RTC->TR;
-    hour = BCD_to_Dec((tiempo >> 16) & 0x3F);
-    minutos = BCD_to_Dec((tiempo >> 8) & 0x7F);
-    segundos = BCD_to_Dec(tiempo & 0x7F);
+    storeTime[0] = BCD_to_Dec((tiempo >> RTC_TR_HU_Pos) & 0x3F); // hora
+    storeTime[1] = BCD_to_Dec((tiempo >> RTC_TR_MNT_Pos) & 0x7F);  //
+    storeTime[2] = BCD_to_Dec((tiempo >> RTC_TR_SU_Pos) & 0x7F);		  //
 
     // Leer Fecha
     uint32_t fecha = RTC->DR;
-    anio = BCD_to_Dec((fecha >> 16) & 0xFF);
-    mes = BCD_to_Dec((fecha >> 8) & 0x1F);
-    dia = BCD_to_Dec(fecha & 0x3F);
-    dayOfWeek = (fecha >> 13) & 0x07;
-
-
+    storeDate[0] = BCD_to_Dec((fecha >> RTC_DR_YU_Pos) & 0xFF); // primer dato: año
+    storeDate[1] = BCD_to_Dec((fecha >> RTC_DR_MU_Pos) & 0x1F);	 // segundo dato: mes
+    storeDate[2] = BCD_to_Dec((fecha >> RTC_DR_YU_Pos) & 0x1);		 // tercer dato : día
 }
+
 
 
 

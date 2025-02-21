@@ -32,4 +32,11 @@ typedef struct
 }RTC_Handler_t;
 
 
+/*Funciones publicas*/
+
+void RTC_config(RTC_Handler_t *pRTC_handler);
+uint8_t BCD_to_Dec(uint8_t bcd);
+void RTC_Read(uint8_t *storeDate, uint8_t *storeTime);
+
+
 #endif /* RTC_DRIVER_HAL_H_ */
