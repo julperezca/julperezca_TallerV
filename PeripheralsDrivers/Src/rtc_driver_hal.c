@@ -33,7 +33,9 @@ void RTC_config(RTC_Handler_t *pRTC_handler){
 	if (!(RCC->BDCR & RCC_BDCR_LSERDY)) {
 	        RCC->BDCR |= RCC_BDCR_LSEON;
 	        // registro que alza la bandera para saber si está listo el LSE
-	        while (!(RCC->BDCR & RCC_BDCR_LSERDY));
+	        while (!(RCC->BDCR & RCC_BDCR_LSERDY)){
+	        	__NOP();
+	        }
 	 }
 
 	 // habilitar el clock del RTC
@@ -61,9 +63,14 @@ void RTC_config(RTC_Handler_t *pRTC_handler){
 	RTC->ISR |= RTC_ISR_INIT;
 
 	// espera a que se inicialice el RTC
-	while (!(RTC->ISR & RTC_ISR_INITF));
+	while (!(RTC->ISR & RTC_ISR_INITF)){
+    	__NOP();
+    }
 
 
+
+	// dado que se creó el formato en el handler se puede funcionalizar
+	// el formato
 	RTC->CR &= ~RTC_CR_FMT; // 0 = formato 24h BIT 6 DEL FORMATO DE HORA
 
 
@@ -73,15 +80,18 @@ void RTC_config(RTC_Handler_t *pRTC_handler){
 
     // EL rtc_TR tiene la información de configuración de la hora actual que se hace manualmente
 
-	RTC->TR = (pRTC_handler->hour << RTC_TR_HU_Pos)
-			| (pRTC_handler->minutes << RTC_TR_MNT_Pos)
-			| (pRTC_handler->seconds << RTC_TR_SU_Pos); // HH:MM:SS en BCD
+	RTC->TR |= (pRTC_handler->hour << RTC_TR_HU_Pos)
+	RTC->TR |= (pRTC_handler->minutes << RTC_TR_MNT_Pos)
+	RTC->TR |= (pRTC_handler->seconds << RTC_TR_SU_Pos); // HH:MM:SS en BCD
 
 
 
 
     RTC->ISR &= ~RTC_ISR_INIT; // se coloca 0 en el registro para terminar la inicialización
-	while (!(RTC->ISR & RTC_ISR_INITF));
+
+    while (!(RTC->ISR & RTC_ISR_INITF)){
+    	__NOP();
+    }
 
     RTC->WPR = WPR_DISABLE; // se escribe cualquier comando para bloquear el registro del RTC
 
