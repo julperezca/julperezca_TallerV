@@ -282,13 +282,6 @@ void i2c_WriteSingleRegister(I2C_Handler_t *pHandlerI2C, uint8_t regToWrite, uin
 }
 
 
-void i2c_WriteSingleRegisterLCD(I2C_Handler_t *pHandlerI2C, uint8_t newValue){
-	i2c_start_signal(pHandlerI2C); 				//generamos la condicion de start
-	i2c_send_slave_address_rw(pHandlerI2C, eI2C_WRITE_DATA); //enviamos la direccion del esclavo y la orden de escribir
-	i2c_send_byte(pHandlerI2C, newValue); //enviamos el valor que queremos escribir en el registro dado
-	i2c_send_close_comm(pHandlerI2C); //enviamos la condicion de stop para que el esclavo envie un solo bite y se detenga
-}
-
 void i2c_WriteManyRegisters(I2C_Handler_t *pHandlerI2C, uint8_t regToWrite, uint8_t *bufferRxData, uint8_t numberOfBytes){
 	i2c_start_signal(pHandlerI2C); //enviamos la senal de start
 	i2c_send_slave_address_rw(pHandlerI2C, eI2C_WRITE_DATA); //enviamos la direccion del esclavo y la condicion de escritura
