@@ -91,3 +91,37 @@ void LCD_SendByte(I2C_Handler_t *pHandlerI2C, uint8_t rs, uint8_t data){
     LCD_SendNibble(pHandlerI2C, data & 0x0F, rs);  // Enviar nibble bajo
     msDelay(2);
 }
+
+
+void LCD_SetCursor(I2C_Handler_t *pHandlerI2C, uint8_t row, uint8_t col) {
+    uint8_t pos;
+    /*
+     * se selecciona la fila(row) a la cual se
+     * tine una dirección asignada.
+     * Ej: fila 3-> 0x94 ->> para elegir col se aumenta
+     * este valor de hexadecimal
+     */
+    switch(row) {
+	case 0:{
+		pos = FIRST_ROW + col;
+		break;  // Primera fila
+	}
+	case 1:{
+		pos = SECOND_ROW + col;
+		break;  // Segunda fila
+	}
+	case 2:{
+		pos = THIRD_ROW + col;
+		break;  // Tercera fila
+	}
+	case 3:{
+		pos = FOURTH_ROW + col;
+		break;  // Cuarta fila
+	}
+	default:{
+		break;
+	}
+    }
+    // RS 0 de comando
+    LCD_SendByte(pHandlerI2C, 0, pos);  // Enviar comando de dirección
+}

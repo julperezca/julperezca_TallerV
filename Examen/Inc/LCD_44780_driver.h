@@ -21,5 +21,9 @@
 #define MODE_INCREMENT 			0x06  // modo de incremento
 #define CLEAN_LCD	 			0x01  // Limpiar pantalla
 
+#define FIRST_ROW				0x80
+#define SECOND_ROW				0xC0
+#define THIRD_ROW				0x94
+#define FOURTH_ROW				0xD4
 
 #endif /* LCD_HD44780_DRIVER_H_ */
