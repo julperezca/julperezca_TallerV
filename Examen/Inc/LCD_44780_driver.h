@@ -25,5 +25,17 @@
 #define SECOND_ROW				0xC0
 #define THIRD_ROW				0x94
 #define FOURTH_ROW				0xD4
+#define BLINKY_CURSOR_ON		0x0F
+#define BLINKY_CURSOR_OFF		0x0E
 
+
+/* Funciones públicas*/
+
+void LCD_Init(I2C_Handler_t *pHandlerI2C);
+void LCD_writeString(I2C_Handler_t *pHandlerI2C, char *msg);
+void LCD_setCursor(I2C_Handler_t *pHandlerI2C, uint8_t row, uint8_t col);
+void LCD_sendByte(I2C_Handler_t *pHandlerI2C, uint8_t rs, uint8_t data);
+void clean_display_lcd(I2C_Handler_t *pHandlerI2C);
+void clean_row(I2C_Handler_t *pHandlerI2C, uint8_t row_to_clean);
+void LCD_cursor_blinky(I2C_Handler_t *pHandlerI2C,uint8_t cursorBlinky);
 #endif /* LCD_HD44780_DRIVER_H_ */

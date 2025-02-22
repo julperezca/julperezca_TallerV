@@ -21,6 +21,7 @@
 #include "pll_driver_hal.h"
 #include "i2c_driver_hal.h"
 #include "rtc_driver_hal.h"
+#include "LCD_44780_driver.h"
 
 #define BUFFER_SIZE 64
 
@@ -224,11 +225,11 @@ void init_config(void){
 void rtc_Config(void){
 
 	rtc_handler.year = 25;
-	rtc_handler.month = 2;
-	rtc_handler.day = 21;
-	rtc_handler.hour = 2;
-	rtc_handler.minutes = 38;
-	rtc_handler.seconds = 30;
+	rtc_handler.month = 12;
+	rtc_handler.day = 31;
+	rtc_handler.hour = 23;
+	rtc_handler.minutes = 59;
+	rtc_handler.seconds = 20;
 	rtc_handler.formato = FORMAT_24H;
 	RTC_config(&rtc_handler);
 }
