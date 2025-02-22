@@ -68,8 +68,8 @@ void RTC_Read(uint8_t *storeDate, uint8_t *storeTime){
     // Leer Hora
     uint32_t tiempo = RTC->TR;
     storeTime[0] = BCD_to_Dec((tiempo >> RTC_TR_HU_Pos) & 0x3F); // hora
-    storeTime[1] = BCD_to_Dec((tiempo >> RTC_TR_MNU_Pos) & 0x7F);  //
-    storeTime[2] = BCD_to_Dec((tiempo >> RTC_TR_SU_Pos) & 0x7F);		  //
+    storeTime[1] = BCD_to_Dec((tiempo >> RTC_TR_MNU_Pos) & 0x7F);  // minutos
+    storeTime[2] = BCD_to_Dec((tiempo >> RTC_TR_SU_Pos) & 0x7F);		  // segundos
 
     // Leer Fecha
     uint32_t fecha = RTC->DR;
