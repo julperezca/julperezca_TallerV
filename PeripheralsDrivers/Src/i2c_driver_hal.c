@@ -26,7 +26,8 @@ static void i2c_send_memory_address(I2C_Handler_t *pHandlerI2C, uint8_t memAddr)
 static void i2c_send_close_comm(I2C_Handler_t *pHandlerI2C);
 static void i2c_send_byte(I2C_Handler_t *pHandlerI2C, uint8_t dataToWrite);
 static uint8_t i2c_read_byte(I2C_Handler_t *pHandlerI2C);
-
+void i2c_WriteSingleRegister(I2C_Handler_t *pHandlerI2C, uint8_t regToWrite, uint8_t newValue);
+void i2c_WriteSingleRegisterLCD(I2C_Handler_t *pHandlerI2C, uint8_t newValue);
 void i2c_Config(I2C_Handler_t *pHandlerI2C){
 	//1. activamos la senal de reloj del periferico
 	i2c_enable_clock_peripheral(pHandlerI2C);
@@ -276,6 +277,14 @@ void i2c_WriteSingleRegister(I2C_Handler_t *pHandlerI2C, uint8_t regToWrite, uin
 	i2c_start_signal(pHandlerI2C); //generamos la condicion de start
 	i2c_send_slave_address_rw(pHandlerI2C, eI2C_WRITE_DATA); //enviamos la direccion del esclavo y la orden de escribir
 	i2c_send_memory_address(pHandlerI2C, regToWrite); //enviamos la direccion de memoria que queremos escribir
+	i2c_send_byte(pHandlerI2C, newValue); //enviamos el valor que queremos escribir en el registro dado
+	i2c_send_close_comm(pHandlerI2C); //enviamos la condicion de stop para que el esclavo envie un solo bite y se detenga
+}
+
+
+void i2c_WriteSingleRegisterLCD(I2C_Handler_t *pHandlerI2C, uint8_t newValue){
+	i2c_start_signal(pHandlerI2C); 				//generamos la condicion de start
+	i2c_send_slave_address_rw(pHandlerI2C, eI2C_WRITE_DATA); //enviamos la direccion del esclavo y la orden de escribir
 	i2c_send_byte(pHandlerI2C, newValue); //enviamos el valor que queremos escribir en el registro dado
 	i2c_send_close_comm(pHandlerI2C); //enviamos la condicion de stop para que el esclavo envie un solo bite y se detenga
 }
