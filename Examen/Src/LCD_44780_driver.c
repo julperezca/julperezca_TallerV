@@ -100,6 +100,7 @@ void LCD_SetCursor(I2C_Handler_t *pHandlerI2C, uint8_t row, uint8_t col) {
      * tine una dirección asignada.
      * Ej: fila 3-> 0x94 ->> para elegir col se aumenta
      * este valor de hexadecimal
+     * son 4 filas: de 0 a 3:  20 columnas: de 0 a 19
      */
     switch(row) {
 	case 0:{
@@ -124,4 +125,20 @@ void LCD_SetCursor(I2C_Handler_t *pHandlerI2C, uint8_t row, uint8_t col) {
     }
     // RS 0 de comando
     LCD_SendByte(pHandlerI2C, 0, pos);  // Enviar comando de dirección
+}
+
+
+/*
+ * Función que recibe un string + handler de I2C
+ * envía carácter por carácter a la LCD
+ * */
+void LCD_WriteString(I2C_Handler_t *pHandlerI2C, char *msg){
+  	/*
+	 * SD == 1, se envía dato
+	 * se avanza en cada elemento del mensaje
+	 * y se envía individualmente
+	 * */
+	while (*msg != '\0') {
+        LCD_SendByte(pHandlerI2C, 1, *msg++);
+    }
 }
