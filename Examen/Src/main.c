@@ -81,7 +81,7 @@ fsm_RGB_t fsm_RGB 					= {0};
 fsm_transistor_t fsm_transistor 	= {0};
 fsm_segments_t fsm_segments 		= {0};
 fsm_rotation_t fsm_rotation 		= {0};
-
+fsm_rtc_t 	   fsm_rtc  			= {0};
 	/* RTC  handler y buffer de tiempo y date*/
 RTC_Handler_t rtc_handler = {0};
 uint8_t dateBuffer[3] = {0}; 	// buffer de tres elementos que guarda: año, mes, día
@@ -102,7 +102,7 @@ uint16_t duttyValueRgb = 0;			// valor de 0 a 100
 uint16_t duttyValueRC = 0;			// valor de 0 a 100
 uint16_t blinkyPeriod = 0;
 
-
+uint8_t flag = 1;
 /* Estado de los transistores y segmentos */
 enum {
 	ON = 0,
@@ -130,7 +130,9 @@ void disableTransistors(void);					// Función encargada de apagar los transisto
 void fsm_display_handler(void);					// Función encargada de manejar el los transistores y cada segmento
 void state_machine_action(void);				// Maquina de estados en accción
 void rtc_Config(void);							// Rtc config inicial
-void i2c_config(void);							// I2C para LCD
+void i2c_config(void);	// I2C para LCD
+void array_to_string_hour(uint8_t array[3], char *str);
+void array_to_string_date(uint8_t array[3], char *str);
 /*
  * The main function, where everything happens.
  */
@@ -138,18 +140,9 @@ int main (void){
 	configMagic();  // Se inicia la configuracion de Magic
 	init_config();	// Se inicia la configuracion del sistema
 	LCD_Init(&i2cLCD_handler);
+	LCD_writeString(&i2cLCD_handler, "Screen Initialized", 3, 3);
 
-
-	LCD_writeString(&i2cLCD_handler, "peeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeerro",0,0);
-
-	msDelay(5000);
-	clean_row(&i2cLCD_handler, 2);
-	msDelay(5000);
-
-	LCD_writeString(&i2cLCD_handler, "Toy cansao, mano",1,0);
-	msDelay(5000);
 	clean_display_lcd(&i2cLCD_handler);
-
 	clearBuffer[0] = 0x1B;
 	clearBuffer[1] = 0x5B;
 	clearBuffer[2] = 0x32;
@@ -162,12 +155,18 @@ int main (void){
 
 	while(1){
 
-		RTC_Read(dateBuffer, timeBuffer); 	// colocarla en el main
 
 		/* Condicional para el alza de la bandera del Led de estado */
 		if (blinkyFlag){
-			gpio_TooglePin(&ledState);		// Alterna estado del led
-			blinkyFlag = 0;					// Se limpia la bandera del parpadeo del led
+			gpio_TooglePin(&ledState);				// Alterna estado del led
+			blinkyFlag = 0;							// Se limpia la bandera del parpadeo del led
+
+			if (fsm_rtc.rtcState == DATE_HOUR_ON){
+			RTC_Read(dateBuffer, timeBuffer); 		// lee y asigna los datos a los buffer
+			char str[9];
+			array_to_string_hour(timeBuffer, str);
+			LCD_writeString(&i2cLCD_handler, str, 6, 1); //(x,y)
+			}
 		}
 
 		if(fsm.fsmState != STANDBY_STATE){
@@ -556,13 +555,20 @@ void parseCommands(char *ptrBufferReception){
 	/* */
 	if ((strcmp(cmd,"help")) == 0){
 		usart_writeMsg(&hCmdTerminal,"Help Menu CMDs. CMD_Structure: cmd # # @\n");
-		usart_writeMsg(&hCmdTerminal,"1) help          -- Print this menu\n");
-		usart_writeMsg(&hCmdTerminal,"2) dummy #A #B   -- Dummy cmd, #A and #B are uint32_t\n");
-		usart_writeMsg(&hCmdTerminal,"3) setDisplay #  -- Change the display value. The max value is 12 bit \n");
-		usart_writeMsg(&hCmdTerminal,"4) setPeriod #   -- Change the led_state period (ms)\n");
-		usart_writeMsg(&hCmdTerminal,"5) setFreq #A #B -- Select PWM: A=0 -> PWMrgb, A=1 -> PWMrcFilter. Select period: B=pwm period in \n");
-		usart_writeMsg(&hCmdTerminal,"6) setDutty #    -- Select PWM: A=0 -> PWMrgb, A=1 -> PWMrcFilter. Select dutty B=dutty cycle from 0 to 100\n");
-		usart_writeMsg(&hCmdTerminal,"7) setVolt #     -- PWM-DAC output in mV from 100 mV to 3300 mV. Set period from 20 us in PWMFilter to\n");
+		usart_writeMsg(&hCmdTerminal,"1) help             -- Print this menu\n");
+		usart_writeMsg(&hCmdTerminal,"2) dummy #A #B      -- Dummy cmd, #A and #B are uint32_t\n");
+		usart_writeMsg(&hCmdTerminal,"3) setDisplay #     -- Change the display value. The max value is 12 bit \n");
+		usart_writeMsg(&hCmdTerminal,"4) setPeriod #      -- Change the led_state period (ms)\n");
+		usart_writeMsg(&hCmdTerminal,"5) setFreq #A #B    -- Select PWM: A=0 -> PWMrgb, A=1 -> PWMrcFilter. Select period: B=pwm period in \n");
+		usart_writeMsg(&hCmdTerminal,"6) setDutty #       -- Select PWM: A=0 -> PWMrgb, A=1 -> PWMrcFilter. Select dutty B=dutty cycle from 0 to 100\n");
+		usart_writeMsg(&hCmdTerminal,"7) setVolt #     	  -- PWM-DAC output in mV from 100 mV to 3300 mV. Set period from 20 us in PWMFilter to\n");
+		usart_writeMsg(&hCmdTerminal,"8) lcdClear #       -- Clear the screen and set the cursor in pos (0,0)\n");
+		usart_writeMsg(&hCmdTerminal,"9) blinkCursor #A   -- Set the blink(A=1)y o not blinky(A=0) in cursor screen. \n");
+		usart_writeMsg(&hCmdTerminal,"10) clearRow   #A   -- Clear the row A=0,1,2,3\n");
+		usart_writeMsg(&hCmdTerminal,"11) cursorPos #A #B -- Set the cursor position (row=A,col=B)\n");
+		usart_writeMsg(&hCmdTerminal,"12) date_hour  #    -- Shows the hour and date\n");
+		usart_writeMsg(&hCmdTerminal,"12) date_hour_real_time  #    -- Shows the hour and date\n");
+		usart_writeMsg(&hCmdTerminal,"12) date_hour_stop    #    -- Shows the hour and date\n");
 
 	}
 
@@ -693,6 +699,77 @@ void parseCommands(char *ptrBufferReception){
 		usart_writeMsg(&hCmdTerminal,bufferData);
 		}
 	}
+
+	/*clear de hitachi LCD*/
+	else if(strcmp(cmd,"lcdClear") == 0){
+		clean_display_lcd(&i2cLCD_handler);
+		sprintf(bufferData,"lcdCleared\n");
+		usart_writeMsg(&hCmdTerminal,bufferData);
+	}
+
+	/* setea el blink cursor*/
+	else if(strcmp(cmd,"blinkCursor") == 0){
+		LCD_cursor_blinky(&i2cLCD_handler, firstParameter);
+		sprintf(bufferData,"blinkCursor\n");
+		usart_writeMsg(&hCmdTerminal,bufferData);
+	}
+
+	/*clean de row A=0,1,2,3*/
+	else if(strcmp(cmd,"clearRow") == 0){
+		clean_row(&i2cLCD_handler, firstParameter);
+		sprintf(bufferData,"rowCleared: %u\n",firstParameter);
+		usart_writeMsg(&hCmdTerminal,bufferData);
+	}
+
+	/*select the position of the cursor*/
+	else if(strcmp(cmd,"cursorPos") == 0){
+		LCD_setCursor(&i2cLCD_handler, firstParameter, secondParameter);
+		sprintf(bufferData,"cursorpos: %u,%u\n",firstParameter,secondParameter);
+		usart_writeMsg(&hCmdTerminal,bufferData);
+	}
+
+	/*put the date and hour in the screen LCD hitachi*/
+	else if(strcmp(cmd,"date_hour") == 0){
+		/* dos ideas:
+		 * 1) se tiene la lectura del RTC en el while
+		 * de manera que se muestre o imprima la hora en la LCD en refresh display
+		 * crear un nuevo estado el cual indique si se quiere o no
+		 * mostrar la hora y fecha en el display
+		 *
+		 * */
+		LCD_writeString(&i2cLCD_handler, "Hour-->", 0, 0);
+		LCD_writeString(&i2cLCD_handler, "Date-->", 0, 2);
+		RTC_Read(dateBuffer, timeBuffer); 	// lee y asigna los datos a los buffer
+		char str_hour[9];
+		char str_date[9];
+
+		array_to_string_hour(timeBuffer, str_hour);
+		LCD_writeString(&i2cLCD_handler, str_hour, 8, 0); //(x,y)
+
+		array_to_string_date(dateBuffer, str_date);
+		LCD_writeString(&i2cLCD_handler, str_date, 8, 2); //(x,y)
+
+		sprintf(bufferData,"dateHourOn\n");
+		usart_writeMsg(&hCmdTerminal,bufferData);
+	}
+
+	/*date and hour in real time*/
+	else if(strcmp(cmd,"date_hour_real_time") == 0){
+
+		sprintf(bufferData,"Date and hour in real time LCD\n");
+		usart_writeMsg(&hCmdTerminal,bufferData);
+		fsm_rtc.rtcState = DATE_HOUR_ON;
+	}
+
+
+	else if(strcmp(cmd,"date_hour_stop") == 0){
+
+		sprintf(bufferData,"real time stopped LCD\n");
+		usart_writeMsg(&hCmdTerminal,bufferData);
+		fsm_rtc.rtcState = DATE_HOUR_OFF;
+	}
+
+
 	/*The inserted msg is not in the list*/
 	else{
 		usart_writeMsg(&hCmdTerminal,"Wrong CMD\n");
@@ -718,7 +795,6 @@ void state_machine_action(void){
 		break;
 
 	case DISPLAY_VALUE_STATE:
-
 		disableTransistors();		         	 // Se apagan los transistores
 
 		/* Condicional para el alza de la bandera dada por el extiCLK */
@@ -728,6 +804,10 @@ void state_machine_action(void){
 			fsm_rotation.rotationState = NO_ROTATION;	// Se actualiza la fsmRotation
 		}
 		fsm_display_handler(); 			    	 // Función que enciende los segmentos y el transistor
+
+
+
+
 		break;
 
 	case CHAR_RECEIVED_STATE:
@@ -746,6 +826,15 @@ void state_machine_action(void){
 	}
 	fsm.fsmState = STANDBY_STATE;
 }
+
+void array_to_string_hour(uint8_t array[3], char *str) {
+    snprintf(str, 9, "%02d:%02d:%02d", array[0], array[1], array[2]);
+}
+void array_to_string_date(uint8_t array[3], char *str) {
+    snprintf(str, 9, "%02d/%02d/%02d", array[0], array[1], array[2]);
+}
+
+
 
 /* Función que maneja los estados de cadad digito y segmento */
 void fsm_display_handler(void){

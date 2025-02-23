@@ -120,5 +120,23 @@ typedef struct
 
 
 
+/* Enumeración de los estados de rtc*/
+typedef enum
+{
+	DATE_HOUR_OFF,
+	DATE_HOUR_ON,
+} rtc_State;
+
+	/* Estructura que maneja los estados de rtc */
+typedef struct
+{
+	rtc_State rtcState;
+}fsm_rtc_t;
+
+		/* ******************* */
+
+
+
+
 #endif /* MAIN_H_ */
 

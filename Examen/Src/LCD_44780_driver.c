@@ -142,7 +142,7 @@ void LCD_cursorHome(I2C_Handler_t *pHandlerI2C){
  * Función que recibe un string + handler de I2C
  * envía carácter por carácter a la LCD
  * */
-void LCD_writeString(I2C_Handler_t *pHandlerI2C, char *msg, uint8_t row, uint8_t col){
+void LCD_writeString(I2C_Handler_t *pHandlerI2C, char *msg, uint8_t col, uint8_t row){
 	/*
 	 * SD == 1, se envía dato
 	 * se avanza en cada elemento del mensaje
@@ -150,7 +150,7 @@ void LCD_writeString(I2C_Handler_t *pHandlerI2C, char *msg, uint8_t row, uint8_t
 	 * */
 	while (*msg != '\0') {
 		if (col<20){
-		Crystalfontz_LCD(pHandlerI2C,row, col);
+		Crystalfontz_LCD(pHandlerI2C,col, row);
         LCD_sendByte(pHandlerI2C, 1, *msg++);
         col++;
 		}
@@ -158,13 +158,13 @@ void LCD_writeString(I2C_Handler_t *pHandlerI2C, char *msg, uint8_t row, uint8_t
 			if(row<3){
 				row++;
 				col = 0;
-				Crystalfontz_LCD(pHandlerI2C,row, col);
+				Crystalfontz_LCD(pHandlerI2C, col, row);
 		        LCD_sendByte(pHandlerI2C, 1, *msg++);
 			}
 			else if(row ==3){
 				row = 0;
 				col = 0;
-				Crystalfontz_LCD(pHandlerI2C,row, col);
+				Crystalfontz_LCD(pHandlerI2C,col, row);
 		        LCD_sendByte(pHandlerI2C, 1, *msg++);
 			}
 		}
@@ -210,7 +210,7 @@ void Crystalfontz_LCD(I2C_Handler_t *pHandlerI2C , uint8_t x, uint8_t y){
 			case 3: address_code = 0x80|0x54;break;
 			default:break;
 		}
-		LCD_setCursor(pHandlerI2C, x, y);
+		LCD_setCursor(pHandlerI2C, y, x);
 	}
 }
 
