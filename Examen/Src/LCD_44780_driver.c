@@ -13,6 +13,10 @@
 /**/
 void LCD_sendNibble(I2C_Handler_t *pHandlerI2C, uint8_t nibble, uint8_t rs);
 void LCD_sendByte(I2C_Handler_t *pHandlerI2C, uint8_t rs, uint8_t data);
+void Crystalfontz_LCD(I2C_Handler_t *pHandlerI2C , uint8_t x, uint8_t y);
+
+uint8_t address_code = 0;
+
 
 void LCD_Init(I2C_Handler_t *pHandlerI2C){
     msDelay(50);  // Esperar encendido del LCD
@@ -49,8 +53,8 @@ void LCD_Init(I2C_Handler_t *pHandlerI2C){
     LCD_sendByte(pHandlerI2C, 0, ROW_COLUMNS); 	    // Modo 4 bits, 2 líneas, 5x8
     LCD_sendByte(pHandlerI2C, 0, DISPLAY_ON);  		// Display ON, sin cursor
     LCD_sendByte(pHandlerI2C, 0, MODE_INCREMENT);   // Escribir de izquierda a derecha
-    LCD_sendByte(pHandlerI2C, 1, 0x48);  			// escribir letra H para verificar funcionamiento
     LCD_sendByte(pHandlerI2C, 0, CLEAN_LCD);  		// Limpiar pantalla
+    LCD_sendByte(pHandlerI2C, 1, 0x48);  			// escribir letra H para verificar funcionamiento
     msDelay(2);
 
     /* FIN  de la inicialización */
@@ -138,24 +142,40 @@ void LCD_cursorHome(I2C_Handler_t *pHandlerI2C){
  * Función que recibe un string + handler de I2C
  * envía carácter por carácter a la LCD
  * */
-void LCD_writeString(I2C_Handler_t *pHandlerI2C, char *msg){
-    LCD_sendByte(pHandlerI2C, 0, CLEAN_LCD);  // Limpiar pantalla
-
+void LCD_writeString(I2C_Handler_t *pHandlerI2C, char *msg, uint8_t row, uint8_t col){
 	/*
 	 * SD == 1, se envía dato
 	 * se avanza en cada elemento del mensaje
 	 * y se envía individualmente
 	 * */
 	while (*msg != '\0') {
+		if (col<20){
+		Crystalfontz_LCD(pHandlerI2C,row, col);
         LCD_sendByte(pHandlerI2C, 1, *msg++);
+        col++;
+		}
+		else{
+			if(row<3){
+				row++;
+				col = 0;
+				Crystalfontz_LCD(pHandlerI2C,row, col);
+		        LCD_sendByte(pHandlerI2C, 1, *msg++);
+			}
+			else if(row ==3){
+				row = 0;
+				col = 0;
+				Crystalfontz_LCD(pHandlerI2C,row, col);
+		        LCD_sendByte(pHandlerI2C, 1, *msg++);
+			}
+		}
     }
 }
 
 /*Limpieza de pantalla*/
 void clean_display_lcd(I2C_Handler_t *pHandlerI2C){
 	LCD_sendByte(pHandlerI2C, 0, CLEAN_LCD);  // Limpiar pantalla
-    LCD_setCursor(pHandlerI2C, 2, 3);
-	LCD_writeString(pHandlerI2C, "Screen cleared");
+
+	LCD_writeString(pHandlerI2C, "Screen cleared",2,3);
 	LCD_sendByte(pHandlerI2C, 0, CLEAN_LCD);  // Limpiar pantalla
 }
 
@@ -163,7 +183,7 @@ void clean_display_lcd(I2C_Handler_t *pHandlerI2C){
 /* Limpieza de fila*/
 void clean_row(I2C_Handler_t *pHandlerI2C, uint8_t row_to_clean){
 	char clear[1] = " ";
-	for(uint8_t i = 0; i<20 ; i++){
+	for(uint8_t i = 0; i < 20 ; i++){
 		LCD_setCursor(pHandlerI2C, row_to_clean, i);
 		LCD_sendByte(pHandlerI2C, 1, clear[0]);  // Limpiar de fila
 	}
@@ -176,6 +196,21 @@ void LCD_cursor_blinky(I2C_Handler_t *pHandlerI2C,uint8_t cursorBlinky){
 	}
 	else{
 	LCD_sendByte(pHandlerI2C, 0, BLINKY_CURSOR_OFF);
+	}
+}
+
+void Crystalfontz_LCD(I2C_Handler_t *pHandlerI2C , uint8_t x, uint8_t y){
+
+	if ((x<20)&&(y<4)){
+
+		switch (y) {
+			case 0:	address_code = 0x80|0x00;break;
+			case 1: address_code = 0x80|0x40;break;
+			case 2: address_code = 0x80|0x14;break;
+			case 3: address_code = 0x80|0x54;break;
+			default:break;
+		}
+		LCD_setCursor(pHandlerI2C, x, y);
 	}
 }
 

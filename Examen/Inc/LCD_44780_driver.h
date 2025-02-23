@@ -11,9 +11,9 @@
 #include "stm32f4xx.h"
 
 /* Puedo definir todos los def de las direcciones */
-
-
 #define LCD_I2C_ADDR 			0x21  //  pantalla 18
+
+//#define LCD_I2C_ADDR 			0x21  //  pantalla 18
 #define INITIALIZATION_VALUE 	0x03 // valor de inicialización  que se realizatres veces
 #define FOUR_BITS_MODE 			0x02	// MODO DE 4 BITS
 #define ROW_COLUMNS 			0x28 // FILAS Y COLUMNAS
@@ -32,10 +32,14 @@
 /* Funciones públicas*/
 
 void LCD_Init(I2C_Handler_t *pHandlerI2C);
-void LCD_writeString(I2C_Handler_t *pHandlerI2C, char *msg);
 void LCD_setCursor(I2C_Handler_t *pHandlerI2C, uint8_t row, uint8_t col);
+void LCD_writeString(I2C_Handler_t *pHandlerI2C, char *msg, uint8_t row, uint8_t col);
 void LCD_sendByte(I2C_Handler_t *pHandlerI2C, uint8_t rs, uint8_t data);
 void clean_display_lcd(I2C_Handler_t *pHandlerI2C);
 void clean_row(I2C_Handler_t *pHandlerI2C, uint8_t row_to_clean);
 void LCD_cursor_blinky(I2C_Handler_t *pHandlerI2C,uint8_t cursorBlinky);
+
+
+
+
 #endif /* LCD_HD44780_DRIVER_H_ */

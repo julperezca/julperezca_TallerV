@@ -52,8 +52,9 @@ uint8_t BCD_to_Dec(uint8_t bcd){
 	// ingresa un binario bcd y se separa en dos
 	// cuatro bits mas significativos y menos significativos
 	// se realiza una operación bitwise and para separarlos
-    return ((bcd/16)*10) + (bcd%16);
+    return ((bcd/16)*10) + (bcd%16); // realmente es cambio a hexadecimal
 }
+
 
 /* conversion de binario a decimal*/
 uint8_t Dec_to_BCD(uint8_t dec){
@@ -88,13 +89,14 @@ void power_interface_enable(void){
 
 /*   */
 void LSE_clock_enable(void){
+	// BDCR es back domain control para activar el LSE
 	RCC->BDCR |= RCC_BDCR_LSEON;
 
 	// crear un delay para tener el LSE activo
-	// registro que alza la bandera para saber si está listo el LSE
-	while (!(RCC->BDCR & RCC_BDCR_LSERDY)){
-		__NOP();
-		}
+		// registro que alza la bandera para saber si está listo el LSE
+		while (!(RCC->BDCR & RCC_BDCR_LSERDY)){
+			__NOP();
+			}
 	// crear una función  para la elección del reloj: por ahora será LSE pedida en la tarea // escoger reloj NoClock, LSE, LSI, HSE
 
 	RCC->BDCR &= ~RCC_BDCR_RTCSEL; // limpia registro
@@ -156,6 +158,7 @@ void date_and_time_selection(RTC_Handler_t *pRTC_handler){
 	RTC->DR |= ((Dec_to_BCD(pRTC_handler->month)) << RTC_DR_MU_Pos);
 	RTC->DR |= ((Dec_to_BCD(pRTC_handler->year)) << RTC_DR_YU_Pos);
 }
+
 
 
 
