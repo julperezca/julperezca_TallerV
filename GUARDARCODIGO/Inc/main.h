@@ -24,8 +24,7 @@ typedef enum
 	SW_BUTTON_STATE,
 	DISPLAY_VALUE_STATE,
 	CHAR_RECEIVED_STATE,
-	CMD_COMPLETE,
-	ADC_COMPLETE
+	CMD_COMPLETE
 } fsm_State;
 
 	/* Estructura  que maneja de la fsm del loop principal */
@@ -120,22 +119,5 @@ typedef struct
 
 
 
-/* Enumeración de los estados de rtc*/
-typedef enum
-{
-	DATE_HOUR_OFF,
-	DATE_HOUR_ON,
-} rtc_State;
-
-	/* Estructura que maneja los estados de rtc */
-typedef struct
-{
-	rtc_State rtcState;
-}fsm_rtc_t;
-
-		/* ******************* */
-
-
-
-
 #endif /* MAIN_H_ */
+

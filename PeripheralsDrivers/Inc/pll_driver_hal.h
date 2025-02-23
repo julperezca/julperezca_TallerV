@@ -11,6 +11,7 @@
 
 
 enum{
+	MC01_PRESCALER_DIV_1 = 0,
 	MC01_PRESCALER_DIV_2 = 0b100,
 	MC01_PRESCALER_DIV_3 = 0b101,
 	MC01_PRESCALER_DIV_4 = 0b110,
@@ -29,6 +30,7 @@ enum{
 
 
 
+
 enum{
 	HSI_CLOCK_CONFIGURED = 0,
 	HSE_CLOCK_CONFIGURED,
@@ -36,12 +38,11 @@ enum{
 };
 
 
+/* funciones publicas*/
 
-/* Cabeceras de funciones*/
-
-//void pll_Config_100MHz(void);
-//void pll_Config_MC01(uint8_t prescalerMCO, uint8_t channelMCO);
-//uint8_t pll_Get_MainClock(void);
+void pll_Config_100MHz(void);
+void pll_Config_MC01(uint8_t prescalerMCO, uint8_t channelMCO);
+uint8_t pll_Get_MainClock(void);
 
 
 #endif /* PLL_DRIVER_HAL_H_ */

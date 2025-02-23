@@ -223,6 +223,13 @@ static void usart_config_baudrate(USART_Handler_t *ptrUsartHandler){
 //		ptrUsartHandler->ptrUSARTx->BRR = 0x1458;
 			break;
 		}
+		case USART_BAUDRATE_57600:
+		{
+			// El valor a cargar es 17.3750 -> Mantiza = 17,fraction = 0.3750
+			// Mantiza = 17 = 0x11, fraction = 16 * 0.3750 = 6
+			// Valor a cargar 0x0116
+		ptrUsartHandler->ptrUSARTx->BRR = 0x0116;
+		}
 		case USART_BAUDRATE_115200:
 		{
 		// valor a cargar 8.6875,   8 -> 0x8 , 16*0.6875 -> 0xB

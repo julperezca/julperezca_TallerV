@@ -137,14 +137,12 @@ void array_to_string_date(uint8_t array[3], char *str);
  * The main function, where everything happens.
  */
 int main (void){
-	pll_Config_100MHz();
-	pll_Config_MC01(MC01_PRESCALER_DIV_5, MC01_PLL_CHANNEL);
 	configMagic();  // Se inicia la configuracion de Magic
 	init_config();	// Se inicia la configuracion del sistema
 	LCD_Init(&i2cLCD_handler);
-	LCD_writeString(&i2cLCD_handler, "Screen Initialized", 0, 0);
+	LCD_writeString(&i2cLCD_handler, "Screen Initialized", 3, 3);
 
-
+	clean_display_lcd(&i2cLCD_handler);
 	clearBuffer[0] = 0x1B;
 	clearBuffer[1] = 0x5B;
 	clearBuffer[2] = 0x32;
@@ -181,7 +179,8 @@ int main (void){
 
 /* Funcion encargada de la configuración del GPIO, TIMERS y EXTIs */
 void init_config(void){
-	/* Configuración de LED de estado y su respectivo timer */
+
+			/* Configuración de LED de estado y su respectivo timer */
 
 	// GPIO config para Led de estado
 	ledState.pGPIOx							= GPIOH;
@@ -194,8 +193,8 @@ void init_config(void){
 
 	// Config para el timer del led de estado
 	blinkyTimer.pTIMx								= TIM2;
-	blinkyTimer.TIMx_Config.TIMx_Prescaler  		= 50000; //500us conversion
-	blinkyTimer.TIMx_Config.TIMx_Period				= 500;  // 250ms
+	blinkyTimer.TIMx_Config.TIMx_Prescaler  		= 16000; //1ms conversion
+	blinkyTimer.TIMx_Config.TIMx_Period				= 200;
 	blinkyTimer.TIMx_Config.TIMx_mode				= TIMER_UP_COUNTER;
 	blinkyTimer.TIMx_Config.TIMx_InterruptEnable 	= TIMER_INT_ENABLE;
 	timer_Config(&blinkyTimer);
@@ -276,8 +275,8 @@ void init_config(void){
 
 	/*Se configura el timer de los digitos */
 	transistorsTimer.pTIMx								= TIM5;
-	transistorsTimer.TIMx_Config.TIMx_Prescaler  		= 50000; //500us conversion
-	transistorsTimer.TIMx_Config.TIMx_Period			= 5;	//2.5ms
+	transistorsTimer.TIMx_Config.TIMx_Prescaler  		= 16000; //1ms conversion
+	transistorsTimer.TIMx_Config.TIMx_Period			= 2;
 	transistorsTimer.TIMx_Config.TIMx_mode				= TIMER_UP_COUNTER;
 	transistorsTimer.TIMx_Config.TIMx_InterruptEnable 	= TIMER_INT_ENABLE;
 	timer_Config(&transistorsTimer);
@@ -725,7 +724,6 @@ void parseCommands(char *ptrBufferReception){
 	/*select the position of the cursor*/
 	else if(strcmp(cmd,"cursorPos") == 0){
 		LCD_setCursor(&i2cLCD_handler, firstParameter, secondParameter);
-		LCD_cursor_blinky(&i2cLCD_handler, 1);
 		sprintf(bufferData,"cursorpos: %u,%u\n",firstParameter,secondParameter);
 		usart_writeMsg(&hCmdTerminal,bufferData);
 	}

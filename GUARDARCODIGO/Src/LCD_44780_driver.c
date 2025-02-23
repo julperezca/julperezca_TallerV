@@ -13,7 +13,9 @@
 /**/
 void LCD_sendNibble(I2C_Handler_t *pHandlerI2C, uint8_t nibble, uint8_t rs);
 void LCD_sendByte(I2C_Handler_t *pHandlerI2C, uint8_t rs, uint8_t data);
+void Crystalfontz_LCD(I2C_Handler_t *pHandlerI2C , uint8_t x, uint8_t y);
 
+uint8_t address_code = 0;
 
 
 void LCD_Init(I2C_Handler_t *pHandlerI2C){
@@ -146,13 +148,9 @@ void LCD_writeString(I2C_Handler_t *pHandlerI2C, char *msg, uint8_t col, uint8_t
 	 * se avanza en cada elemento del mensaje
 	 * y se envía individualmente
 	 * */
-	if ((col<20)&&(row<4)){
-
-
-
 	while (*msg != '\0') {
 		if (col<20){
-		LCD_setCursor(pHandlerI2C, row, col);
+		Crystalfontz_LCD(pHandlerI2C,col, row);
         LCD_sendByte(pHandlerI2C, 1, *msg++);
         col++;
 		}
@@ -160,18 +158,17 @@ void LCD_writeString(I2C_Handler_t *pHandlerI2C, char *msg, uint8_t col, uint8_t
 			if(row<3){
 				row++;
 				col = 0;
-				LCD_setCursor(pHandlerI2C, row, col);
+				Crystalfontz_LCD(pHandlerI2C, col, row);
 		        LCD_sendByte(pHandlerI2C, 1, *msg++);
 			}
 			else if(row ==3){
 				row = 0;
 				col = 0;
-				LCD_setCursor(pHandlerI2C, row, col);
+				Crystalfontz_LCD(pHandlerI2C,col, row);
 		        LCD_sendByte(pHandlerI2C, 1, *msg++);
 			}
 		}
     }
-	}
 }
 
 /*Limpieza de pantalla*/
@@ -202,5 +199,19 @@ void LCD_cursor_blinky(I2C_Handler_t *pHandlerI2C,uint8_t cursorBlinky){
 	}
 }
 
+void Crystalfontz_LCD(I2C_Handler_t *pHandlerI2C , uint8_t x, uint8_t y){
+
+	if ((x<20)&&(y<4)){
+
+		switch (y) {
+			case 0:	address_code = 0x80|0x00;break;
+			case 1: address_code = 0x80|0x40;break;
+			case 2: address_code = 0x80|0x14;break;
+			case 3: address_code = 0x80|0x54;break;
+			default:break;
+		}
+		LCD_setCursor(pHandlerI2C, y, x);
+	}
+}
 
 
