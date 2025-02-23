@@ -12,10 +12,8 @@
 
 /* === Headeers for private functions === */
 void systick_CTRL(void);
-void systick_RVR(void);
 void systick_CVR(void);
-
-
+void systick_RVR(uint8_t clock_sourc);
 
  /* luego se puede agregar  una entrada en sistick_Config para seleccionar la señal de reloj externa */
 
@@ -25,12 +23,12 @@ uint32_t ticks = 0;
 
 
 
-void systickConfig(void){
+void systickConfig(uint8_t clock_source){
 
 	//ticks = 0;
 
 	// se carga la config del Reload
-	systick_RVR();
+	systick_RVR(clock_source);
 
 	// se pone el valor actual en 0
 	systick_CVR ();
@@ -65,9 +63,14 @@ void systick_CTRL(void){
 }
 
 // Reload Value Register
-void systick_RVR(void){
+void systick_RVR(uint8_t clock_sourc){
 	// Se carga el valor de la señal de reloj
+	if (clock_sourc == CLOCK_SOURCE_16MHz){
 	SysTick->LOAD = SYSTICKLOAD_16MHz-1;
+	}
+	else if(clock_sourc == CLOCK_SOURCE_100MHz){
+		SysTick->LOAD = SYSTICKLOAD_100MHz-1;
+	}
 }
 
 // Current Value Register

@@ -157,7 +157,6 @@ int main (void){
 
 	while(1){
 
-
 		/* Condicional para el alza de la bandera del Led de estado */
 		if (blinkyFlag){
 			gpio_TooglePin(&ledState);				// Alterna estado del led
@@ -455,9 +454,9 @@ void init_config(void){
 
 	// USART 6 CONFIG
 	hCmdTerminal.ptrUSARTx = USART6;
-	hCmdTerminal.USART_Config.baudrate = USART_BAUDRATE_115200;
+	hCmdTerminal.USART_Config.baudrate = USART_BAUDRATE_57600;
 	hCmdTerminal.USART_Config.datasize = USART_DATASIZE_8BIT;
-	hCmdTerminal.USART_Config.parity = USART_PARITY_NONE;
+	hCmdTerminal.USART_Config.parity = USART_PARITY_ODD;
 	hCmdTerminal.USART_Config.stopbits = USART_STOPBIT_1;
 	hCmdTerminal.USART_Config.mode = USART_MODE_RXTX;
 	hCmdTerminal.USART_Config.enableIntRX = USART_RX_INTERRUP_ENABLE;
@@ -468,7 +467,7 @@ void init_config(void){
 
 
 	/* Se configura el SysTick con la señal de reloj de 16 MHz	*/
-	systickConfig();
+	systickConfig(CLOCK_SOURCE_100MHz);
 			/* FIN del SysTick config*/
 
 
@@ -739,6 +738,7 @@ void parseCommands(char *ptrBufferReception){
 		 * mostrar la hora y fecha en el display
 		 *
 		 * */
+		clean_display_lcd(&i2cLCD_handler);
 		LCD_writeString(&i2cLCD_handler, "Hour-->", 0, 0);
 		LCD_writeString(&i2cLCD_handler, "Date-->", 0, 2);
 		RTC_Read(dateBuffer, timeBuffer); 	// lee y asigna los datos a los buffer

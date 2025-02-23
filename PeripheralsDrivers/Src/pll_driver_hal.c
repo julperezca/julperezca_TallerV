@@ -114,10 +114,10 @@ void pll_Config_MC01(uint8_t prescalerMCO, uint8_t channelMCO){
 void pll_Config_MC02(uint8_t prescalerMCO, uint8_t channelMCO){
 
 	//Configurar GPIO
-	MCO1_Pin.pGPIOx 						= GPIOC;
-	MCO1_Pin.pinConfig.GPIO_PinNumber		= PIN_9;
-	MCO1_Pin.pinConfig.GPIO_PinMode			= GPIO_MODE_ALTFN;
-	MCO1_Pin.pinConfig.GPIO_PinAltFunMode	= AF0;
+	MCO2_Pin.pGPIOx 						= GPIOC;
+	MCO2_Pin.pinConfig.GPIO_PinNumber		= PIN_9;
+	MCO2_Pin.pinConfig.GPIO_PinMode			= GPIO_MODE_ALTFN;
+	MCO2_Pin.pinConfig.GPIO_PinAltFunMode	= AF0;
 	gpio_Config(&MCO2_Pin);
 
 	//Configurar canal del MC01
@@ -129,41 +129,6 @@ void pll_Config_MC02(uint8_t prescalerMCO, uint8_t channelMCO){
 	RCC->CFGR |= prescalerMCO<<RCC_CFGR_MCO2PRE_Pos;
 }
 
-
-uint8_t pll_Get_MainClock(void){
-
-
-    uint8_t auxClock = 0;
-    uint32_t pll_m, pll_n, pll_p, pll_src;
-    uint32_t sysclk_source = (RCC->CFGR & RCC_CFGR_SWS) >> 2;
-
-    if (sysclk_source == 0)      // HSI seleccionado
-        auxClock = 16;
-    else if (sysclk_source == 1) // HSE seleccionado
-        auxClock = 8;            // Suponiendo un HSE de 8 MHz (puede cambiar)
-    else if (sysclk_source == 2) // PLL seleccionado
-    {
-        /* Leer valores del PLL */
-        pll_src = (RCC->PLLCFGR & RCC_PLLCFGR_PLLSRC) >> 22;  // 0 = HSI, 1 = HSE
-        pll_m = (RCC->PLLCFGR & RCC_PLLCFGR_PLLM);            // PLLM [5:0]
-        pll_n = (RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> 6;        // PLLN [14:6]
-        pll_p = ((RCC->PLLCFGR & RCC_PLLCFGR_PLLP) >> 16)*2 + 2; // PLLP es 2, 4, 6 u 8
-
-        /* Determinar la frecuencia de entrada del PLL */
-        uint32_t pll_input_freq;
-        if (!pll_src){
-
-        	pll_input_freq = 16;
-        }
-        else{
-        	pll_input_freq = 8;
-        }
-
-        /* Calcular SYSCLK */
-        auxClock = (pll_input_freq * pll_n) / (pll_m * pll_p);
-    }
-	return auxClock;
-}
 
 
 

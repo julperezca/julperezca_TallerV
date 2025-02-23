@@ -20,7 +20,7 @@ static void usart_config_baudrate(USART_Handler_t *ptrUsartHandler);
 static void usart_config_mode(USART_Handler_t *ptrUsartHandler);
 static void usart_config_interrupt(USART_Handler_t *ptrUsartHandler);
 static void usart_enable_peripheral(USART_Handler_t *ptrUsartHandler);
-
+void usart_config_baudrate_100MHz(USART_Handler_t *ptrUsartHandler);
 
 
 /**
@@ -111,6 +111,7 @@ static void usart_config_parity(USART_Handler_t *ptrUsartHandler){
 	// Verificamos si el parity esta activado o no
     // Tenga cuidado, el parity hace parte del tamaño de los datos...
 	ptrUsartHandler->ptrUSARTx->CR1 &= ~(0b11<<9);
+
 	if(ptrUsartHandler->USART_Config.parity != USART_PARITY_NONE){
 		ptrUsartHandler->ptrUSARTx->CR1 |= USART_CR1_PCE;
 		// Verificamos si se ha seleccionado ODD or EVEN
@@ -202,7 +203,13 @@ static void usart_config_stopbits(USART_Handler_t *ptrUsartHandler){
  * Ver tabla de valores (Tabla 73), Frec = 16MHz, overr = 0;
  */
 static void usart_config_baudrate(USART_Handler_t *ptrUsartHandler){
+
+	if((RCC->CFGR & RCC_CFGR_SW) == RCC_CFGR_SW_PLL){
+		usart_config_baudrate_100MHz(ptrUsartHandler);
+	}
+
 	// Caso para configurar cuando se trabaja con el Cristal Interno
+	else{
 	switch(ptrUsartHandler->USART_Config.baudrate){
 		case USART_BAUDRATE_9600:
 		{
@@ -228,7 +235,9 @@ static void usart_config_baudrate(USART_Handler_t *ptrUsartHandler){
 			// El valor a cargar es 17.3750 -> Mantiza = 17,fraction = 0.3750
 			// Mantiza = 17 = 0x11, fraction = 16 * 0.3750 = 6
 			// Valor a cargar 0x0116
+			// x115 o x116
 		ptrUsartHandler->ptrUSARTx->BRR = 0x0116;
+			break;
 		}
 		case USART_BAUDRATE_115200:
 		{
@@ -253,6 +262,56 @@ static void usart_config_baudrate(USART_Handler_t *ptrUsartHandler){
 //			ptrUsartHandler->ptrUSARTx->BRR = 0x0364;
 			break;
 		}
+	}
+}
+
+
+
+void usart_config_baudrate_100MHz(USART_Handler_t *ptrUsartHandler){
+	/* verifica que pll está usado como señal de reloj interna del micro*/
+
+	switch(ptrUsartHandler->USART_Config.baudrate){
+
+		case USART_BAUDRATE_9600:{
+		ptrUsartHandler->ptrUSARTx->BRR = 0x28B0;
+		}
+
+
+		case USART_BAUDRATE_19200:{
+		ptrUsartHandler->ptrUSARTx->BRR = 0x1458;
+		break;
+		}
+
+
+		case USART_BAUDRATE_57600:{
+			// El valor a cargar es 86.8055 -> Mantiza = 86,fraction = 0.8055
+			// Mantiza = 86 = 0x56, fraction = 16 * 0.8055 = 12.88 = 13
+			// Valor a cargar 0x056D
+			// Configurando el Baudrate generator para una velocidad de 57600bps
+		// 									//0x06C8
+		ptrUsartHandler->ptrUSARTx->BRR = 0x06C8;
+			break;
+		}
+
+
+		case USART_BAUDRATE_115200:{
+		ptrUsartHandler->ptrUSARTx->BRR = 0x0364;
+			break;
+		}
+
+
+		case USART_BAUDRATE_230400:{
+		ptrUsartHandler->ptrUSARTx->BRR = 0x01B2;
+			break;
+		}
+
+
+		default:
+			// Configurando el Baudrate generator para una velocidad de 115200bps
+			ptrUsartHandler->ptrUSARTx->BRR =  0x0364;
+			break;
+		}
+
 }
 
 /**

@@ -15,8 +15,14 @@
 #define SYSTICKLOAD_80MHz  80000
 #define SYSTICKLOAD_100MHz  100000
 
+enum
+{
+	CLOCK_SOURCE_16MHz,
+	CLOCK_SOURCE_80MHz,
+	CLOCK_SOURCE_100MHz
+};
 
-void systickConfig();
+void systickConfig(uint8_t clock_source);
 void msDelay(uint32_t delay);
 uint32_t ticksNumber(void);
 
