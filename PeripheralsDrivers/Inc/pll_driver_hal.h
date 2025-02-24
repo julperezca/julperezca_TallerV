@@ -34,7 +34,7 @@ enum{
 
 void pll_Config_100MHz(void);
 void signal_selection_MC01(uint8_t clock_signal, uint8_t prescalerMCO);
-
+void pll_calibration(uint8_t trimm);
 
 
 #endif /* PLL_DRIVER_HAL_H_ */

@@ -13,6 +13,8 @@ GPIO_Handler_t MCO1_Pin = {0};
 GPIO_Handler_t MCO2_Pin = {0};
 
 
+void pll_calibration(uint8_t trimm);
+
 
 /*Función de config de PLL a 100 MHz*/
 void pll_Config_100MHz(void){
@@ -88,6 +90,8 @@ void pll_Config_100MHz(void){
 	while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL){
 		__NOP();
 	}
+	pll_calibration(15);
+
 }
 
 void config_MC01_pin(void){
@@ -113,6 +117,29 @@ void signal_selection_MC01(uint8_t clock_signal, uint8_t prescalerMCO){
 	RCC->CFGR &= ~(RCC_CFGR_MCO1PRE);
 	RCC->CFGR |= (prescalerMCO << RCC_CFGR_MCO1PRE_Pos);
 }
+
+
+/*Calibración con el TRIM del HSI para mejorar variaciones en la freq
+ *  se escoge un valor de trim menor que 16 debido a que se encontró
+ *  que la freq era mayor. un valor de Trim mayor implica que
+ *  disminuye el valor neto de freq que se calibra respecto a "ideal"
+ *  y viceversa.
+ * */
+
+
+/*
+ * Por defecto el valor del registro es de 16 = 0b10000
+ * */
+void pll_calibration(uint8_t trimm){
+	if((trimm<31) && (trimm>0)){
+	RCC->CR &= ~RCC_CR_HSITRIM;  // Borrar bits de ajuste
+	RCC->CR |= (trimm << RCC_CR_HSITRIM_Pos);  // Usar el valor de fábrica
+	}
+	while(!(RCC->CR & RCC_CR_HSIRDY)){
+		__NOP();
+	}
+}
+
 
 
 

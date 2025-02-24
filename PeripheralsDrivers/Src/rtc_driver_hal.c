@@ -74,9 +74,9 @@ void RTC_Read(uint8_t *storeDate, uint8_t *storeTime){
 
     // Leer Fecha
     uint32_t fecha = RTC->DR;
-    storeDate[0] = BCD_to_Dec((fecha >> RTC_DR_YU_Pos) & 0xFF); // primer dato: año
+    storeDate[0] = BCD_to_Dec((fecha >> RTC_DR_DU_Pos) & 0x3f);		 // tercer dato : día
     storeDate[1] = BCD_to_Dec((fecha >> RTC_DR_MU_Pos) & 0x1F);	 // segundo dato: mes
-    storeDate[2] = BCD_to_Dec((fecha >> RTC_DR_DU_Pos) & 0x3f);		 // tercer dato : día
+    storeDate[2] = BCD_to_Dec((fecha >> RTC_DR_YU_Pos) & 0xFF); // primer dato: año
 }
 
 
@@ -156,7 +156,7 @@ void date_and_time_selection(RTC_Handler_t *pRTC_handler){
 
 	RTC->DR |= ((Dec_to_BCD(pRTC_handler->day)) << RTC_DR_DU_Pos);
 	RTC->DR |= ((Dec_to_BCD(pRTC_handler->month)) << RTC_DR_MU_Pos);
-	RTC->DR |= ((Dec_to_BCD(pRTC_handler->year)) << RTC_DR_YU_Pos);
+	RTC->DR |= ((Dec_to_BCD(((pRTC_handler->year)%2000))) << RTC_DR_YU_Pos);
 }
 
 

@@ -89,6 +89,7 @@ void clear_Scanf (void)
     }
 }
 
+
 /**/
 void read_input(char *data)
 {
