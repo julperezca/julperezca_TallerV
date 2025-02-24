@@ -2,7 +2,7 @@
  ******************************************************************************
  * @file           : main.c
  * @author         : Julián Pérez Carvajal (julperezca@unal.edu.co)
- * @brief          : Examen. LCD-> commands -> RTC + Clock Freq.
+ * @brief          : Examen. LCD Hitachi-> commands -> RTC + Clock Freq.
  ******************************************************************************
  */
 
@@ -455,7 +455,7 @@ void pwm_initial_config(){
 	handlerSignalPWMrgb.ptrTIMx = TIM3;
 	handlerSignalPWMrgb.config.channel = PWM_CHANNEL_3;
 	handlerSignalPWMrgb.config.duttyCicle = 50;
-	handlerSignalPWMrgb.config.periodo = 10;
+	handlerSignalPWMrgb.config.periodo = 10;   // conversión a 1ms
 	handlerSignalPWMrgb.config.prescaler = 10000;
 	pwm_Config(&handlerSignalPWMrgb);
 
@@ -537,6 +537,8 @@ void init_config(void){
 	/*Configuración del sistema con la señal de 100MHz*/
 	pll_Config_100MHz();
 
+	/*configuración del MC01 para PLL inicialmente*/
+	signal_selection_MC01(MC01_PLL_CHANNEL,PRESCALER_DIV_5);
 	/*Configuración del led de estado o blinky*/
 	led_state_config();
 
@@ -735,13 +737,13 @@ void parseCommands(char *ptrBufferReception){
 
 	/* 6) This modifies the voltaje of the output in the RC filter */
 	else if(strcmp(cmd,"setVolt") == 0){
-		if ((firstParameter>=1) & (firstParameter<=3300)){
+		if ((firstParameter>=500) & (firstParameter<=3300)){
 		pwm_Update_DuttyCycle(&handlerSignalPWMfilter, (uint16_t)firstParameter*100/3300);
 		sprintf(bufferData,"Voltaje actual: %u mV \n",firstParameter);
 		usart_writeMsg(&hCmdTerminal,bufferData);
 		}
 		else{
-		sprintf(bufferData,"Inserte un valor de voltaje entre 1 mV y 3300 mV");
+		sprintf(bufferData,"Inserte un valor de voltaje entre 500 mV y 3300 mV");
 		usart_writeMsg(&hCmdTerminal,bufferData);
 		}
 	}
