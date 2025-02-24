@@ -113,6 +113,7 @@ char bufferReception[BUFFER_SIZE];
 uint8_t counterReception;
 char cmd[16];
 char userMsg[BUFFER_SIZE] = {0};
+char endCommand[BUFFER_SIZE] = {0};
 char bufferData[BUFFER_SIZE] = {0};
 char clearBuffer[16] = {0};
 unsigned int  firstParameter;
@@ -135,22 +136,20 @@ void array_to_string_date(uint8_t array[3], char *str);
  * The main function, where everything happens.
  */
 int main (void){
-	pll_Config_100MHz();
-	configMagic();  // Se inicia la configuracion de Magic
-	init_config();	// Se inicia la configuracion del sistema
-	LCD_Init(&i2cLCD_handler);
-	LCD_writeString(&i2cLCD_handler, "Screen Initialized", 0, 0);
+	configMagic();  		   // Se inicia la configuracion de Magic
+	init_config();			   // Se inicia la configuracion del sistema
 
+	/*buffer para limpieza de terminal*/
 	clearBuffer[0] = 0x1B;
 	clearBuffer[1] = 0x5B;
 	clearBuffer[2] = 0x32;
 	clearBuffer[3] = 0x4A;
+
 	/* Se limpia la terminal*/
 	usart_writeMsg(&hCmdTerminal,clearBuffer);
-
 	usart_writeMsg(&hCmdTerminal,"Escriba help @ para desplegar el manual de comandos a utilizar\n");
-	/* Loop infinito */
 
+	/* Loop infinito */
 	while(1){
 
 		/* Condicional para el alza de la bandera del Led de estado */
@@ -173,9 +172,7 @@ int main (void){
 	return 0;
 }
 
-
-/* Funcion encargada de la configuración del GPIO, TIMERS y EXTIs */
-void init_config(void){
+void led_state_config(void){
 	/* Configuración de LED de estado y su respectivo timer */
 
 	// GPIO config para Led de estado
@@ -186,6 +183,8 @@ void init_config(void){
 	ledState.pinConfig.GPIO_PinOutputSpeed	= GPIO_OSPEED_MEDIUM;
 	ledState.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
 	gpio_Config(&ledState);
+	// Inicialmente led de estado está encendido
+	gpio_WritePin(&ledState, SET);
 
 	// Config para el timer del led de estado
 	blinkyTimer.pTIMx								= TIM2;
@@ -197,9 +196,11 @@ void init_config(void){
 	timer_SetState(&blinkyTimer, TIMER_ON);
 
 		/* FIN de configuración de Led de estado y su timer */
+}
 
+void config_rgb_segmentos(void){
 
-			/* Se configuran los pines para el led RGB */
+	/* Se configuran los pines para el led RGB */
 
 	//Led rojo
 	ledRed.pGPIOx							= GPIOA;
@@ -228,10 +229,10 @@ void init_config(void){
 	ledBlue.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
 	gpio_Config(&ledBlue);
 
-				/* FIN de la config de Led RGB */
+			/* FIN de la config de Led RGB */
 
 
-			/* Se configura GPIO y Timer para los transistores  */
+		/* Se configura GPIO y Timer para los transistores  */
 
 	// Transistor que maneja el digito de las unidades
 	digitoUnidad.pGPIOx								= GPIOC;
@@ -278,10 +279,10 @@ void init_config(void){
 	timer_Config(&transistorsTimer);
 	timer_SetState(&transistorsTimer, TIMER_ON);
 
-			/* FIN de configuración de transistores y su timer */
+		/* FIN de configuración de transistores y su timer */
 
 
-		/* Se configuran los pines que manejan los siete segmentos */
+	/* Se configuran los pines que manejan los siete segmentos */
 
 	//Segmento a
 	segmentA.pGPIOx							= GPIOB;
@@ -346,9 +347,53 @@ void init_config(void){
 	segmentG.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
 	gpio_Config(&segmentG);
 
-			/* FIN de la configuración de los segmentos */
+	// Inicia con los digitos apagados
+	gpio_WritePin(&digitoUnidad, OFF);
+	gpio_WritePin(&digitoDecena, OFF);
+	gpio_WritePin(&digitoCentena, OFF);
+	gpio_WritePin(&digitoUnMillar, OFF);
 
-		/* Se configura GPIO con su EXTI excepto para el userData*/
+		/* FIN de la configuración de los segmentos */
+
+}
+
+void usart_init_config(void){
+	/* Configuración para USART6 */
+	//  GPIO Rx, Tx config
+	usart6Tx.pGPIOx = GPIOC;
+	usart6Tx.pinConfig.GPIO_PinNumber = PIN_6;
+	usart6Tx.pinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
+	usart6Tx.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
+	usart6Tx.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_MEDIUM;
+	usart6Tx.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	usart6Tx.pinConfig.GPIO_PinAltFunMode = AF8;
+	gpio_Config(&usart6Tx);
+
+	usart6Rx.pGPIOx = GPIOC;
+	usart6Rx.pinConfig.GPIO_PinNumber = PIN_7;
+	usart6Rx.pinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
+	usart6Rx.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
+	usart6Rx.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_MEDIUM;
+	usart6Rx.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	usart6Rx.pinConfig.GPIO_PinAltFunMode = AF8;
+	gpio_Config(&usart6Rx);
+
+	// USART 6 CONFIG
+	hCmdTerminal.ptrUSARTx = USART6;
+	hCmdTerminal.USART_Config.baudrate = USART_BAUDRATE_57600;
+	hCmdTerminal.USART_Config.datasize = USART_DATASIZE_8BIT;
+	hCmdTerminal.USART_Config.parity = USART_PARITY_ODD;
+	hCmdTerminal.USART_Config.stopbits = USART_STOPBIT_1;
+	hCmdTerminal.USART_Config.mode = USART_MODE_RXTX;
+	hCmdTerminal.USART_Config.enableIntRX = USART_RX_INTERRUP_ENABLE;
+	hCmdTerminal.USART_Config.enableIntTX = USART_TX_INTERRUP_DISABLE;
+	usart_Config(&hCmdTerminal);
+
+		 /* Fin de la config del USART6 */
+}
+
+void exti_encoder_config(){
+	/* Se configura GPIO con su EXTI excepto para el userData*/
 
 	// GPIO mode in para el CLK
 	userClock.pGPIOx							= GPIOB;
@@ -382,7 +427,9 @@ void init_config(void){
 	gpio_Config(&userData);
 
 			/* FIN de GPIO and EXTI config */
+}
 
+void pwm_initial_config(){
 	/* config del PWM para el led RGB*/
 	handlerPinPwmRgbLed.pGPIOx 						= GPIOC;
 	handlerPinPwmRgbLed.pinConfig.GPIO_PinNumber 	= PIN_8;
@@ -427,62 +474,50 @@ void init_config(void){
 
 		/*FIN del config del PWM para salida del filtro RC*/
 
+}
 
-				/* Configuración para USART6 */
-	//  GPIO Rx, Tx config
-	usart6Tx.pGPIOx = GPIOC;
-	usart6Tx.pinConfig.GPIO_PinNumber = PIN_6;
-	usart6Tx.pinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
-	usart6Tx.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
-	usart6Tx.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_MEDIUM;
-	usart6Tx.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	usart6Tx.pinConfig.GPIO_PinAltFunMode = AF8;
-	gpio_Config(&usart6Tx);
+/* Funcion encargada de la configuración del GPIO, TIMERS y EXTIs */
+void init_config(void){
+	/*Configuración del sistema con la señal de 100MHz*/
+	pll_Config_100MHz();
 
-	usart6Rx.pGPIOx = GPIOC;
-	usart6Rx.pinConfig.GPIO_PinNumber = PIN_7;
-	usart6Rx.pinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
-	usart6Rx.pinConfig.GPIO_PinOutputType = GPIO_OTYPE_PUSHPULL;
-	usart6Rx.pinConfig.GPIO_PinOutputSpeed = GPIO_OSPEED_MEDIUM;
-	usart6Rx.pinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	usart6Rx.pinConfig.GPIO_PinAltFunMode = AF8;
-	gpio_Config(&usart6Rx);
-
-	// USART 6 CONFIG
-	hCmdTerminal.ptrUSARTx = USART6;
-	hCmdTerminal.USART_Config.baudrate = USART_BAUDRATE_57600;
-	hCmdTerminal.USART_Config.datasize = USART_DATASIZE_8BIT;
-	hCmdTerminal.USART_Config.parity = USART_PARITY_ODD;
-	hCmdTerminal.USART_Config.stopbits = USART_STOPBIT_1;
-	hCmdTerminal.USART_Config.mode = USART_MODE_RXTX;
-	hCmdTerminal.USART_Config.enableIntRX = USART_RX_INTERRUP_ENABLE;
-	hCmdTerminal.USART_Config.enableIntTX = USART_TX_INTERRUP_DISABLE;
-	usart_Config(&hCmdTerminal);
-
-	 	 	 /* Fin de la config del USART6 */
+	/*Configuración del led de estado o blinky*/
+	led_state_config();
 
 
-	/* Se configura el SysTick con la señal de reloj de 16 MHz	*/
+	/* Configuración de pines de led rgb y 7 segmentos + display timer*/
+	config_rgb_segmentos();
+
+
+	/* Configuración de los pines GPIO y exti para el encoder*/
+	exti_encoder_config();
+
+
+	/* Configuración de timer y pines para PWM*/
+	pwm_initial_config();
+
+
+	/*Se configura el USART 6*/
+	usart_init_config();
+
+
+	/* Se configura el SysTick con la señal de reloj de 100MHz	*/
 	systickConfig(CLOCK_SOURCE_100MHz);
-			/* FIN del SysTick config*/
 
 
 	/*RTC initialization*/
 	rtc_Config();
-			/*FIN del rtc config*/
+
 
 	/*I2C initialization for LCD screen*/
 	i2c_config();
-		/*FIN del I2C config*/
 
-	// Inicialmente led de estado está encendido
-	gpio_WritePin(&ledState, SET);
 
-	// Inicia con los digitos apagados
-	gpio_WritePin(&digitoUnidad, OFF);
-	gpio_WritePin(&digitoDecena, OFF);
-	gpio_WritePin(&digitoCentena, OFF);
-	gpio_WritePin(&digitoUnMillar, OFF);
+	/*HITACHI-Configuración inicial de la pantalla*/
+	LCD_Init(&i2cLCD_handler);
+
+	// Se muestra la inicialización
+	LCD_writeString(&i2cLCD_handler, "Screen Initialized", 1, 0);
 
 }
 
@@ -490,12 +525,12 @@ void init_config(void){
 /*RTC initial config */
 void rtc_Config(void){
 
-	rtc_handler.year = 24;
+	rtc_handler.year = 25;
 	rtc_handler.month = 2;
-	rtc_handler.day = 28;
-	rtc_handler.hour = 23;
-	rtc_handler.minutes = 59;
-	rtc_handler.seconds = 40;
+	rtc_handler.day = 24;
+	rtc_handler.hour = 10;
+	rtc_handler.minutes = 0;
+	rtc_handler.seconds = 0;
 	rtc_handler.formato = FORMAT_24H;
 	RTC_config(&rtc_handler);
 }
@@ -526,7 +561,6 @@ void i2c_config(void){
 }
 
 
-
 /*recepción de carácter*/
 void ReceivedChar(void){
 	if (hCmdTerminal.receivedChar != '\0'){
@@ -546,32 +580,31 @@ void ReceivedChar(void){
 void parseCommands(char *ptrBufferReception){
 
 
-	sscanf(ptrBufferReception,"%s %u %u %s",cmd,&firstParameter,&secondParameter, userMsg);
+	sscanf(ptrBufferReception,"%s %u %u %s %s",cmd,&firstParameter,&secondParameter, userMsg, endCommand);
 
-	/* */
+	/* 1)*/
 	if ((strcmp(cmd,"help")) == 0){
 		usart_writeMsg(&hCmdTerminal,"Help Menu CMDs. CMD_Structure: cmd # # @\n");
-		usart_writeMsg(&hCmdTerminal,"1) help             -- Print this menu\n");
-		usart_writeMsg(&hCmdTerminal,"2) dummy #A #B      -- Dummy cmd, #A and #B are uint32_t\n");
-		usart_writeMsg(&hCmdTerminal,"3) setDisplay #     -- Change the display value. The max value is 12 bit \n");
-		usart_writeMsg(&hCmdTerminal,"4) setPeriod #      -- Change the led_state period (ms)\n");
-		usart_writeMsg(&hCmdTerminal,"5) setFreq #A #B    -- Select PWM: A=0 -> PWMrgb, A=1 -> PWMrcFilter. Select period: B=pwm period in \n");
-		usart_writeMsg(&hCmdTerminal,"6) setDutty #       -- Select PWM: A=0 -> PWMrgb, A=1 -> PWMrcFilter. Select dutty B=dutty cycle from 0 to 100\n");
-		usart_writeMsg(&hCmdTerminal,"7) setVolt #     	  -- PWM-DAC output in mV from 100 mV to 3300 mV. Set period from 20 us in PWMFilter to\n");
-		usart_writeMsg(&hCmdTerminal,"8) lcdClear #       -- Clear the screen and set the cursor in pos (0,0)\n");
-		usart_writeMsg(&hCmdTerminal,"9) blinkCursor #A   -- Set the blink(A=1)y o not blinky(A=0) in cursor screen. \n");
-		usart_writeMsg(&hCmdTerminal,"10) clearRow   #A   -- Clear the row A=0,1,2,3\n");
-		usart_writeMsg(&hCmdTerminal,"11) cursorPos #A #B -- Set the cursor position (row=A,col=B)\n");
-		usart_writeMsg(&hCmdTerminal,"12) date_hour      -- Shows the hour and date\n");
-		usart_writeMsg(&hCmdTerminal,"13) date_hour_real_time    -- Shows the hour and date\n");
-		usart_writeMsg(&hCmdTerminal,"14) date_hour_stop         -- Shows the hour and date\n");
-		usart_writeMsg(&hCmdTerminal,"15) hsiClock   #A   -- 16MHz HSI clock in MC01. Where A=1,2,3,4,5 the prescaler.\n");
-		usart_writeMsg(&hCmdTerminal,"16) lseClock   #A   -- 32kHz LSE clock in MC01. Where A=1,2,3,4,5 the prescaler.\n");
-		usart_writeMsg(&hCmdTerminal,"17) pllClock   #A   -- 100MHz PLL clock in MC01. Where A=1,2,3,4,5 the prescaler.\n");
+		usart_writeMsg(&hCmdTerminal,"1)  help             -- Print this menu\n");
+		usart_writeMsg(&hCmdTerminal,"2)  dummy #A #B      -- Dummy cmd, #A and #B are uint32_t\n");
+		usart_writeMsg(&hCmdTerminal,"3)  setDisplay #     -- Change the display value. The max value is 12 bit \n");
+		usart_writeMsg(&hCmdTerminal,"4)  setPeriod #      -- Change the led_state period (ms)\n");
+		usart_writeMsg(&hCmdTerminal,"5)  setVolt #     	  -- PWM-DAC output in mV from 100 mV to 3300 mV. Set period from 20 us in PWMFilter to\n");
+		usart_writeMsg(&hCmdTerminal,"6)  lcdClear #       -- Clear the screen and set the cursor in pos (0,0)\n");
+		usart_writeMsg(&hCmdTerminal,"7)  blinkCursor #A   -- Set the blink(A=1) or not blinky(A=0) in cursor screen. \n");
+		usart_writeMsg(&hCmdTerminal,"8)  clearRow    #A   -- Clear the row A=0,1,2,3\n");
+		usart_writeMsg(&hCmdTerminal,"9)  cursorPos   #A #B -- Set the cursor position (A=row=0,1,2,3,col=0,1,..,19)\n");
+		usart_writeMsg(&hCmdTerminal,"10) date_hour       -- Shows the hour and date\n");
+
+		usart_writeMsg(&hCmdTerminal,"11) date_hour_real_time    -- Shows the hour and date in real time\n");
+		usart_writeMsg(&hCmdTerminal,"12) date_hour_stop         -- Stop the hour and date in realTime\n");
+		usart_writeMsg(&hCmdTerminal,"13) hsiClock   #A   -- 16MHz HSI clock in MC01. Where A=1,2,3,4,5 the prescaler.\n");
+		usart_writeMsg(&hCmdTerminal,"14) lseClock   #A   -- 32kHz LSE clock in MC01. Where A=1,2,3,4,5 the prescaler.\n");
+		usart_writeMsg(&hCmdTerminal,"15) pllClock   #A   -- 100MHz PLL clock in MC01. Where A=1,2,3,4,5 the prescaler.\n");
 
 	}
 
-	/* Command dummy*/
+	/* 1) Command dummy*/
 	else if(strcmp(cmd,"dummy") == 0){
 		usart_writeMsg(&hCmdTerminal,"CMD: dummy\n");
 		sprintf(bufferData,"number A = %u \n",firstParameter);
@@ -583,7 +616,7 @@ void parseCommands(char *ptrBufferReception){
 
 
 
-	/* setDisplay command to change the display valuu*/
+	/* 3) setDisplay command to change the display valuu*/
 	else if(strcmp(cmd,"setDisplay") == 0){
 		usart_writeMsg(&hCmdTerminal,"CMD: setDisplay\n");
 
@@ -600,7 +633,7 @@ void parseCommands(char *ptrBufferReception){
 		}
 	}
 
-	/*This elseif modifies the period of the blinky led */
+	/* 1)here the period of the blinky led is modified */
 	else if(strcmp(cmd,"setPeriod") == 0){
 
 		usart_writeMsg(&hCmdTerminal,"CMD: setPeriod\n");
@@ -623,69 +656,7 @@ void parseCommands(char *ptrBufferReception){
 		}
 	}
 
-	/* this elseif modifies the frequency of the PWMs*/
-	else if(strcmp(cmd,"setFreq") == 0){
-		usart_writeMsg(&hCmdTerminal,"CMD: setFreq\n");
 
-		// A = 0 corresponde al PWM del led RGB, led azul
-		if (firstParameter == 0){
-			// se ponen los otros pines en bajo por si se tiene un estado del led RGB
-			gpio_WritePin(&ledRed, RESET);
-			gpio_WritePin(&ledGreen, RESET);
-
-			// se cambia la config para modo PWM del pin
-			gpio_Config(&handlerPinPwmRgbLed);
-
-			// se enciende y configura el PWM  para los led RGB
-			pwm_Enable_Output(&handlerSignalPWMrgb);
-			pwm_Start_Signal(&handlerSignalPWMrgb);
-			pwm_Update_Frequency(&handlerSignalPWMrgb, secondParameter);
-			pwm_Config(&handlerSignalPWMrgb);
-
-
-			sprintf(bufferData,"Periodo (um) PWM led rgb: %u\n",secondParameter);
-			usart_writeMsg(&hCmdTerminal,bufferData);
-
-		}
-		 // A = 1 corresponde al PWM del ledRGB, led azul
-		else if(firstParameter == 1){
-			pwm_Update_Frequency(&handlerSignalPWMfilter, secondParameter);
-			pwm_Config(&handlerSignalPWMfilter);
-			sprintf(bufferData,"Periodo (um) del PWM filtro RC: %u\n",secondParameter);
-			usart_writeMsg(&hCmdTerminal,bufferData);
-		}
-	}
-
-	/* This elseif modifies the dutty cycle of the PWMs*/
-	else if(strcmp(cmd,"setDutty") == 0){
-		usart_writeMsg(&hCmdTerminal,"CMD: setDutty\n");
-
-		// A = 0 corresponde al PWM del led RGB, led azul
-		if (firstParameter == 0){
-
-			// se ponen los otros pines en bajo por si se tiene un estado del led RGB
-			gpio_WritePin(&ledRed, RESET);
-			gpio_WritePin(&ledGreen, RESET);
-			gpio_Config(&handlerPinPwmRgbLed);
-			pwm_Enable_Output(&handlerSignalPWMrgb);
-			pwm_Start_Signal(&handlerSignalPWMrgb);
-			pwm_Update_DuttyCycle(&handlerSignalPWMrgb, secondParameter);
-			sprintf(bufferData,"Modificación de dutty cycle del led rgb percentage: %u\n",secondParameter);
-			usart_writeMsg(&hCmdTerminal,bufferData);
-		}
-
-		 // A = 1 corresponde al PWM del ledRGB, led azul
-		else if(firstParameter == 1){
-
-			gpio_Config(&handlerPinPwmRgbLed);
-			pwm_Enable_Output(&handlerSignalPWMrgb);
-			pwm_Start_Signal(&handlerSignalPWMrgb);
-			pwm_Update_DuttyCycle(&handlerSignalPWMfilter, secondParameter);
-			sprintf(bufferData,"Modificación de dutty cycle del filtro RC percentage: %u\n",secondParameter);
-			usart_writeMsg(&hCmdTerminal,bufferData);
-
-		}
-	}
 	/*This modifies the voltaje of the output in the RC filter */
 	else if(strcmp(cmd,"setVolt") == 0){
 		if ((firstParameter>=1) & (firstParameter<=3300)){

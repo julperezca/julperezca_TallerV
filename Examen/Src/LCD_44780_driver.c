@@ -52,7 +52,6 @@ void LCD_Init(I2C_Handler_t *pHandlerI2C){
     LCD_sendByte(pHandlerI2C, 0, DISPLAY_ON);  		// Display ON, sin cursor
     LCD_sendByte(pHandlerI2C, 0, MODE_INCREMENT);   // Escribir de izquierda a derecha
     LCD_sendByte(pHandlerI2C, 0, CLEAN_LCD);  		// Limpiar pantalla
-    LCD_sendByte(pHandlerI2C, 1, 0x48);  			// escribir letra H para verificar funcionamiento
     msDelay(2);
 
     /* FIN  de la inicialización */
