@@ -15,6 +15,12 @@
 #define MAX_12_BITS 0xFFF  //Numero máximo del display
 #define BUFFER_SIZE 64
 
+
+/* Estado de los transistores y segmentos */
+enum {
+	ON = 0,
+	OFF
+};
 			/* ******************* */
 
 
@@ -136,6 +142,22 @@ typedef struct
 
 		/* ******************* */
 
+
+/* Enumeración de los estados de rtc*/
+typedef enum
+{
+	ADC_NRDY,
+	ADC_RDY,
+	ADC_FULL
+} adc_State;
+
+	/* Estructura que maneja los estados de rtc */
+typedef struct
+{
+	adc_State adcState;
+}fsm_adc_t;
+
+		/* ******************* */
 
 
 

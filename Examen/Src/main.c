@@ -24,6 +24,7 @@
 #include "rtc_driver_hal.h"
 #include "LCD_44780_driver.h"
 
+#define ADC_BUFFER_SIZE 100 		 // Tamaño del buffer
 
 	/* GPIO handler y TIMER para el led de estado */
 GPIO_Handler_t  ledState    	= {0}; 		// PinH1
@@ -81,43 +82,53 @@ fsm_transistor_t fsm_transistor 	= {0};
 fsm_segments_t fsm_segments 		= {0};
 fsm_rotation_t fsm_rotation 		= {0};
 fsm_rtc_t 	   fsm_rtc  			= {0};
+fsm_adc_t 	   fsm_adc 				= {0};
+
 	/* RTC  handler y buffer de tiempo y date*/
 RTC_Handler_t rtc_handler = {0};
 uint8_t dateBuffer[3] = {0}; 	// buffer de tres elementos que guarda: año, mes, día
 uint8_t timeBuffer[3] = {0};	// buffer de tres ekementos que guarda: hora, minutos, segundos
 
-/* I2C handker y pines de GPIO para la pantalla LCD*/
+/* I2C handler y pines de GPIO para la pantalla LCD*/
 I2C_Handler_t i2cLCD_handler ={0};
 GPIO_Handler_t pinSCL = {0};
 GPIO_Handler_t pinSDA = {0};
+
+
+
+/* Estructura de configuración del ADC */
+ADC_Config_t ADC_handler = {0};   	 // PA0
+
+float adcBuffer[ADC_BUFFER_SIZE]; 	 // Buffer de almacenamiento
+uint8_t bufferIndex = 0;  			 // Índice del buffer
+float voltaje_adc_value = 0;		 // Valor de voltaje promediado ADC
+
+
 
 /* Variables globales */
 uint8_t data 			 = 0;		// Variable que almacena el estado del DT del encoder
 uint8_t clock			 = 0;		// Variable que almacena el estado el CLK del encoder
 uint16_t rotationCounter = 0;		// Variable que es mostrada en el display (giros del encoder)
-
 uint8_t blinkyFlag 		 = 0;		// Flag para el parpadeo del led
-uint16_t duttyValueRgb = 0;			// valor de 0 a 100
-uint16_t duttyValueRC = 0;			// valor de 0 a 100
-uint16_t blinkyPeriod = 0;
-uint8_t cursorx  = 0;
-uint8_t cursory  = 0;
-/* Estado de los transistores y segmentos */
-enum {
-	ON = 0,
-	OFF
-};
+uint16_t blinkyPeriod = 0;			// blinky del led de estado
+uint8_t cursorx  = 0;				// valor del cursor en x(columna)
+uint8_t cursory  = 0;				// valor de cursor en y(fila)
 
 
+/*analisis de USART*/
 uint8_t rxData = 0;
 char bufferReception[BUFFER_SIZE];
 uint8_t counterReception;
+
+/*buffer para parsecommands*/
 char cmd[16];
 char write[80];
 char userMsg[BUFFER_SIZE] = {0};
 char endCommand[BUFFER_SIZE] = {0};
 char bufferData[BUFFER_SIZE] = {0};
 char clearBuffer[16] = {0};
+
+/*parametros para el parsecommands*/
 unsigned int  firstParameter;
 unsigned int  secondParameter;
 unsigned int  thirdParameter;
@@ -125,6 +136,7 @@ unsigned int  fourthParameter;
 unsigned int  fifthParameter;
 unsigned int  sixthParameter;
 unsigned int sevenParameter;
+
 /* Declaración o prototipo de funciones */
 extern void configMagic(void);  				// Config del Magic para comunicación serial
 void fsm_rgb_modeSelection(void);				// Función que selecciona el color del led RGB
@@ -160,13 +172,6 @@ int main (void){
 		if (blinkyFlag){
 			gpio_TooglePin(&ledState);				// Alterna estado del led
 			blinkyFlag = 0;							// Se limpia la bandera del parpadeo del led
-
-			if (fsm_rtc.rtcState == DATE_HOUR_ON){
-			RTC_Read(dateBuffer, timeBuffer); 		// lee y asigna los datos a los buffer
-			char str[9];
-			array_to_string_hour(timeBuffer, str);
-			LCD_writeString(&i2cLCD_handler, str, 6, 1); //(x,y)
-			}
 		}
 
 		if(fsm.fsmState != STANDBY_STATE){
@@ -517,6 +522,16 @@ void i2c_config(void){
     i2c_Config(&i2cLCD_handler);
 }
 
+
+// Inicialización del ADC en el pin A0 (canal0)
+void initADC_C0(void) {
+    ADC_handler.channel = ADC_CHANNEL_0;
+    ADC_handler.resolution = ADC_RESOLUTION_12_BIT;
+    ADC_handler.samplingPeriod = ADC_SAMPLING_PERIOD_112_CYCLES;
+    ADC_handler.dataAlignment = ADC_ALIGNMENT_RIGHT;
+    adc_Config(&ADC_handler);
+}
+
 /* Funcion encargada de la configuración del GPIO, TIMERS y EXTIs */
 void init_config(void){
 	/*Configuración del sistema con la señal de 100MHz*/
@@ -558,8 +573,40 @@ void init_config(void){
 	LCD_Init(&i2cLCD_handler);
 
 	// Se muestra la inicialización
-	LCD_writeString(&i2cLCD_handler, "Screen Initialized", 1, 0);
+	LCD_writeString(&i2cLCD_handler, "=== SISTEMA ===", 3, 1);
+	LCD_writeString(&i2cLCD_handler, "CARGADO", 7, 2);
 
+
+	/*config chanel 0 ADC  pin A0*/
+	initADC_C0();
+	startSingleADC();
+
+}
+
+/*average buffer adc*/
+float average(float *databuffer){
+	float Average = 0;
+	uint8_t counter = 0;
+	for (uint8_t i = 0; i<100; i++){
+		Average += databuffer[i];
+		counter++;
+	}
+	Average = Average/counter;
+	return Average;
+}
+
+/*función para hacer sampling del adc*/
+void adc_samplin(void){
+	if(fsm_adc.adcState == ADC_RDY){
+		adcBuffer[bufferIndex]= (ADC_handler.adcData)*3300.0/4095;
+		bufferIndex++;
+		if(bufferIndex>=ADC_BUFFER_SIZE){
+			bufferIndex = 0;
+			voltaje_adc_value = average(adcBuffer);
+		}
+		startSingleADC();
+	}
+	fsm_adc.adcState = ADC_NRDY;
 }
 
 /*recepción de carácter*/
@@ -580,7 +627,7 @@ void ReceivedChar(void){
 /* analisis de comando*/
 void parseCommands(char *ptrBufferReception){
 
-
+	/***Analisis para determinar escritura en LCD**/
 	sscanf(ptrBufferReception, "%s %s %u %u %u %u %u %u %s",
 	       cmd, write, &firstParameter, &secondParameter, &thirdParameter,
 	       &fourthParameter, &fifthParameter, &sixthParameter, userMsg);
@@ -589,7 +636,7 @@ void parseCommands(char *ptrBufferReception){
 		   cmd, &firstParameter, &secondParameter, &thirdParameter,
 		   &fourthParameter, &fifthParameter, &sixthParameter, userMsg);
 	}
-
+	/***FIN De analisis***/
 
 
 	if ((strcmp(cmd,"help")) == 0){
@@ -599,17 +646,19 @@ void parseCommands(char *ptrBufferReception){
 		usart_writeMsg(&hCmdTerminal,"3)  setDisplay #    -- Change the display value. The max value is 12 bit \n");
 		usart_writeMsg(&hCmdTerminal,"4)  setPeriod #     -- Change the led_state period (ms)\n");
 		usart_writeMsg(&hCmdTerminal,"5)  setDutty #A	  -- A=dutty cycle from 0 to 100 in led blue RGB.\n");
-		usart_writeMsg(&hCmdTerminal,"7)  setVolt #   	  -- PWM-DAC output in mV from 100 mV to 3300 mV. Set period from 20 us in PWMFilter to\n");
+		usart_writeMsg(&hCmdTerminal,"6)  setVolt #   	  -- PWM-DAC output in mV from 100 mV to 3300 mV.\n");
+		usart_writeMsg(&hCmdTerminal,"7)  readVolt #   	  -- ADC reading the PWM-DAC mV in the Hitachi LCD screen.\n");
 		usart_writeMsg(&hCmdTerminal,"8)  lcdClear #      -- Clear the screen and set the cursor in pos (0,0)\n");
 		usart_writeMsg(&hCmdTerminal,"9)  blinkCursor #A  -- Set the blink(A=1) or not blinky(A=0) in cursor screen. \n");
 		usart_writeMsg(&hCmdTerminal,"10) clearRow   #A   -- Clear the row A=0,1,2,3\n");
 		usart_writeMsg(&hCmdTerminal,"11) cursorPos #A #B -- Set the cursor position (A=row=0,1,2,3,col=0,1,..,19)\n");
-		usart_writeMsg(&hCmdTerminal,"12) writeLCD (str)  -- Write in LCD in the cursor position(instead of using space use hyphen)\n");
-		usart_writeMsg(&hCmdTerminal,"13) setRTC          -- #d #m #y #h #min #sec set the RTC values (y>=2000) ");
-		usart_writeMsg(&hCmdTerminal,"14) date_hour       -- Shows the hour and date\n");
-		usart_writeMsg(&hCmdTerminal,"15) hsiClock   #A   -- 16MHz HSI clock in MC01. Where A=1,2,3,4,5 the prescaler.\n");
-		usart_writeMsg(&hCmdTerminal,"16) lseClock   #A   -- 32kHz LSE clock in MC01. Where A=1,2,3,4,5 the prescaler.\n");
-		usart_writeMsg(&hCmdTerminal,"17) pllClock   #A   -- 100MHz PLL clock in MC01. Where A=1,2,3,4,5 the prescaler.\n");
+		usart_writeMsg(&hCmdTerminal,"12) writeLCD (str)  -- Write in LCD in the cursor position(instead of using space use hyphen).\n");
+		usart_writeMsg(&hCmdTerminal,"13) date_hour       -- Shows the hour and date.\n");
+		usart_writeMsg(&hCmdTerminal,"14) setRTC          -- #d #m #y #h #min #sec set the RTC values (y>=2000).\n");
+		usart_writeMsg(&hCmdTerminal,"15) date_hour       -- Shows the hour and date\n");
+		usart_writeMsg(&hCmdTerminal,"16) hsiClock   #A   -- 16MHz HSI clock in MC01. Where A=1,2,3,4,5 the prescaler.\n");
+		usart_writeMsg(&hCmdTerminal,"17) lseClock   #A   -- 32kHz LSE clock in MC01. Where A=1,2,3,4,5 the prescaler.\n");
+		usart_writeMsg(&hCmdTerminal,"18) pllClock   #A   -- 100MHz PLL clock in MC01. Where A=1,2,3,4,5 the prescaler.\n");
 
 	}
 
@@ -696,6 +745,19 @@ void parseCommands(char *ptrBufferReception){
 		usart_writeMsg(&hCmdTerminal,bufferData);
 		}
 	}
+
+	/* 7) This read the output voltage in the RC filter */
+	else if(strcmp(cmd,"readVolt") == 0){
+		clean_display_lcd(&i2cLCD_handler);
+		char buffer_voltage[40];
+		sprintf(buffer_voltage,"ADC volt: %.2f mV",voltaje_adc_value);
+		LCD_writeString(&i2cLCD_handler, "ADC COMPLETE", 4, 0);
+		LCD_writeString(&i2cLCD_handler, buffer_voltage, 0, 2);
+		sprintf(bufferData,"ADC voltage: %.2f mV\n",voltaje_adc_value);
+		usart_writeMsg(&hCmdTerminal,bufferData);
+	}
+
+
 
 	/* 7) Clear de hitachi LCD*/
 	else if(strcmp(cmd,"lcdClear") == 0){
@@ -829,6 +891,10 @@ void parseCommands(char *ptrBufferReception){
 	}
 }
 
+
+
+
+
 /* Función de la Finite State Machine  */
 void state_machine_action(void){
 
@@ -857,6 +923,10 @@ void state_machine_action(void){
 			fsm_rotation.rotationState = NO_ROTATION;	// Se actualiza la fsmRotation
 		}
 		fsm_display_handler(); 			    	 // Función que enciende los segmentos y el transistor
+
+		/*muestreo del ADC y adicion a un bufferdata*/
+		adc_samplin();
+
 		break;
 
 
@@ -1248,6 +1318,12 @@ void callback_ExtInt15(void){
 void usart6_RxCallback(void){
 	rxData = usart_getRxData(&hCmdTerminal);
 	fsm.fsmState = CHAR_RECEIVED_STATE;
+}
+
+
+void adcComplete_Callback(void){
+	fsm_adc.adcState = ADC_RDY;
+	ADC_handler.adcData = getADC();
 }
 
 /****************************** FIN CALLBACKS ***************************/
