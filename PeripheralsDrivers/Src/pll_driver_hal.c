@@ -20,8 +20,7 @@ void pll_calibration(uint8_t trimm);
 void pll_Config_100MHz(void){
 
 
-	// Seleccionar HSI como la señal de entrada al PLL         HSI = 0   , HSE = 1
-
+	// Seleccionar HSI como la señal de entrada al PLL         HSI = 0
 	RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLSRC);
 
 
