@@ -90,7 +90,7 @@ void pll_Config_100MHz(void){
 	while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL){
 		__NOP();
 	}
-	pll_calibration(15);
+	pll_calibration(13);
 
 }
 
