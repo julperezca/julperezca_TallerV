@@ -90,43 +90,28 @@ void pll_Config_100MHz(void){
 	}
 }
 
-
- // configuración de los pines para obtener la señal de 100MHz
-void pll_Config_MC01(uint8_t prescalerMCO, uint8_t channelMCO){
-
-	//Configurar GPIO
+void config_MC01_pin(void){
+	//Configuración de GPIO
 	MCO1_Pin.pGPIOx 						= GPIOA;
 	MCO1_Pin.pinConfig.GPIO_PinNumber		= PIN_8;
 	MCO1_Pin.pinConfig.GPIO_PinMode			= GPIO_MODE_ALTFN;
 	MCO1_Pin.pinConfig.GPIO_PinAltFunMode	= AF0;
 	gpio_Config(&MCO1_Pin);
 
-	//Configurar canal del MC01
-	RCC->CFGR &= ~RCC_CFGR_MCO1;
-	RCC->CFGR |= channelMCO<<RCC_CFGR_MCO1_Pos;
-
-	//Configurar prescaler para observar señal
-	RCC->CFGR &= ~RCC_CFGR_MCO1PRE;
-	RCC->CFGR |= prescalerMCO<<RCC_CFGR_MCO1PRE_Pos;
 }
 
-// configuración de los pines para obtener la señal de 100MHz
-void pll_Config_MC02(uint8_t prescalerMCO, uint8_t channelMCO){
+void signal_selection_MC01(uint8_t clock_signal, uint8_t prescalerMCO){
 
-	//Configurar GPIO
-	MCO2_Pin.pGPIOx 						= GPIOC;
-	MCO2_Pin.pinConfig.GPIO_PinNumber		= PIN_9;
-	MCO2_Pin.pinConfig.GPIO_PinMode			= GPIO_MODE_ALTFN;
-	MCO2_Pin.pinConfig.GPIO_PinAltFunMode	= AF0;
-	gpio_Config(&MCO2_Pin);
+	/*configuración del pin*/
+	config_MC01_pin();
 
-	//Configurar canal del MC01
-	RCC->CFGR &= ~RCC_CFGR_MCO2;
-	RCC->CFGR |= channelMCO<<RCC_CFGR_MCO2_Pos;
+	//Configurar canal del MC01--> señal que saldrá por él
+	RCC->CFGR &= ~(RCC_CFGR_MCO1);
+	RCC->CFGR |= (clock_signal << RCC_CFGR_MCO1_Pos);
 
 	//Configurar prescaler para observar señal
-	RCC->CFGR &= ~RCC_CFGR_MCO2PRE;
-	RCC->CFGR |= prescalerMCO<<RCC_CFGR_MCO2PRE_Pos;
+	RCC->CFGR &= ~(RCC_CFGR_MCO1PRE);
+	RCC->CFGR |= (prescalerMCO << RCC_CFGR_MCO1PRE_Pos);
 }
 
 

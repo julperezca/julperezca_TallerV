@@ -9,18 +9,19 @@
 #define PLL_DRIVER_HAL_H_
 
 
-
+/*cinco diferetes prescaler para las señales*/
 enum{
-	MC01_PRESCALER_DIV_1 = 0,
-	MC01_PRESCALER_DIV_2 = 0b100,
-	MC01_PRESCALER_DIV_3 = 0b101,
-	MC01_PRESCALER_DIV_4 = 0b110,
-	MC01_PRESCALER_DIV_5 = 0b111
+	PRESCALER_DIV_1 = 0,
+	PRESCALER_DIV_2 = 0b100,
+	PRESCALER_DIV_3 = 0b101,
+	PRESCALER_DIV_4 = 0b110,
+	PRESCALER_DIV_5 = 0b111
 };
 
 
 
-
+ // Registro RCC_CFGR BIT 21-22 señala la salida de
+// la señal de reloj escogida en la enumeracion MC01
 enum{
 	MC01_HSI_CHANNEL = 0,
 	MC01_LSE_CHANNEL,
@@ -29,20 +30,11 @@ enum{
 };
 
 
-
-
-enum{
-	HSI_CLOCK_CONFIGURED = 0,
-	HSE_CLOCK_CONFIGURED,
-	PLL_CLOCK_CONFIGURED
-};
-
-
 /* funciones publicas*/
 
 void pll_Config_100MHz(void);
-void pll_Config_MC01(uint8_t prescalerMCO, uint8_t channelMCO);
-uint8_t pll_Get_MainClock(void);
+void signal_selection_MC01(uint8_t clock_signal, uint8_t prescalerMCO);
+
 
 
 #endif /* PLL_DRIVER_HAL_H_ */

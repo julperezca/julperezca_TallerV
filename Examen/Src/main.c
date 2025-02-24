@@ -24,8 +24,6 @@
 #include "LCD_44780_driver.h"
 
 
-#define BUFFER_SIZE 64
-
 	/* GPIO handler y TIMER para el led de estado */
 GPIO_Handler_t  ledState    	= {0}; 		// PinH1
 Timer_Handler_t blinkyTimer		= {0}; 		// TIM2 Led de estado
@@ -138,12 +136,10 @@ void array_to_string_date(uint8_t array[3], char *str);
  */
 int main (void){
 	pll_Config_100MHz();
-	pll_Config_MC01(MC01_PRESCALER_DIV_5, MC01_PLL_CHANNEL);
 	configMagic();  // Se inicia la configuracion de Magic
 	init_config();	// Se inicia la configuracion del sistema
 	LCD_Init(&i2cLCD_handler);
 	LCD_writeString(&i2cLCD_handler, "Screen Initialized", 0, 0);
-
 
 	clearBuffer[0] = 0x1B;
 	clearBuffer[1] = 0x5B;
@@ -566,9 +562,12 @@ void parseCommands(char *ptrBufferReception){
 		usart_writeMsg(&hCmdTerminal,"9) blinkCursor #A   -- Set the blink(A=1)y o not blinky(A=0) in cursor screen. \n");
 		usart_writeMsg(&hCmdTerminal,"10) clearRow   #A   -- Clear the row A=0,1,2,3\n");
 		usart_writeMsg(&hCmdTerminal,"11) cursorPos #A #B -- Set the cursor position (row=A,col=B)\n");
-		usart_writeMsg(&hCmdTerminal,"12) date_hour  #    -- Shows the hour and date\n");
-		usart_writeMsg(&hCmdTerminal,"12) date_hour_real_time  #    -- Shows the hour and date\n");
-		usart_writeMsg(&hCmdTerminal,"12) date_hour_stop    #    -- Shows the hour and date\n");
+		usart_writeMsg(&hCmdTerminal,"12) date_hour      -- Shows the hour and date\n");
+		usart_writeMsg(&hCmdTerminal,"13) date_hour_real_time    -- Shows the hour and date\n");
+		usart_writeMsg(&hCmdTerminal,"14) date_hour_stop         -- Shows the hour and date\n");
+		usart_writeMsg(&hCmdTerminal,"15) hsiClock   #A   -- 16MHz HSI clock in MC01. Where A=1,2,3,4,5 the prescaler.\n");
+		usart_writeMsg(&hCmdTerminal,"16) lseClock   #A   -- 32kHz LSE clock in MC01. Where A=1,2,3,4,5 the prescaler.\n");
+		usart_writeMsg(&hCmdTerminal,"17) pllClock   #A   -- 100MHz PLL clock in MC01. Where A=1,2,3,4,5 the prescaler.\n");
 
 	}
 
@@ -725,7 +724,7 @@ void parseCommands(char *ptrBufferReception){
 	else if(strcmp(cmd,"cursorPos") == 0){
 		LCD_setCursor(&i2cLCD_handler, firstParameter, secondParameter);
 		LCD_cursor_blinky(&i2cLCD_handler, 1);
-		sprintf(bufferData,"cursorpos: %u,%u\n",firstParameter,secondParameter);
+		sprintf(bufferData,"Cursor position: %u,%u\n",firstParameter,secondParameter);
 		usart_writeMsg(&hCmdTerminal,bufferData);
 	}
 
@@ -771,6 +770,50 @@ void parseCommands(char *ptrBufferReception){
 		fsm_rtc.rtcState = DATE_HOUR_OFF;
 	}
 
+	/*hsi clock*/
+	else if(strcmp(cmd,"hsiClock") == 0){
+		switch (firstParameter) {
+			case 1:signal_selection_MC01(MC01_HSI_CHANNEL, PRESCALER_DIV_1);break;
+			case 2:signal_selection_MC01(MC01_HSI_CHANNEL, PRESCALER_DIV_2);break;
+			case 3:signal_selection_MC01(MC01_HSI_CHANNEL, PRESCALER_DIV_3);break;
+			case 4:signal_selection_MC01(MC01_HSI_CHANNEL, PRESCALER_DIV_4);break;
+			case 5:signal_selection_MC01(MC01_HSI_CHANNEL, PRESCALER_DIV_5);break;
+			default:
+				break;
+		}
+		sprintf(bufferData,"Freq in MC01->HSI: %.3f MHz \n",16.0/firstParameter);
+		usart_writeMsg(&hCmdTerminal,bufferData);
+	}
+
+	/*lse clock*/
+	else if(strcmp(cmd,"lseClock") == 0){
+		switch (firstParameter) {
+			case 1:signal_selection_MC01(MC01_LSE_CHANNEL, PRESCALER_DIV_1);break;
+			case 2:signal_selection_MC01(MC01_LSE_CHANNEL, PRESCALER_DIV_2);break;
+			case 3:signal_selection_MC01(MC01_LSE_CHANNEL, PRESCALER_DIV_3);break;
+			case 4:signal_selection_MC01(MC01_LSE_CHANNEL, PRESCALER_DIV_4);break;
+			case 5:signal_selection_MC01(MC01_LSE_CHANNEL, PRESCALER_DIV_5);break;
+			default:
+				break;
+		}
+		sprintf(bufferData,"Freq in MC01->LSE: %.3f kHz \n",32.768/firstParameter);
+		usart_writeMsg(&hCmdTerminal,bufferData);
+	}
+
+	/* pll clock*/
+	else if(strcmp(cmd,"pllClock") == 0){
+		switch (firstParameter) {
+			case 1:signal_selection_MC01(MC01_PLL_CHANNEL, PRESCALER_DIV_1);break;
+			case 2:signal_selection_MC01(MC01_PLL_CHANNEL, PRESCALER_DIV_2);break;
+			case 3:signal_selection_MC01(MC01_PLL_CHANNEL, PRESCALER_DIV_3);break;
+			case 4:signal_selection_MC01(MC01_PLL_CHANNEL, PRESCALER_DIV_4);break;
+			case 5:signal_selection_MC01(MC01_PLL_CHANNEL, PRESCALER_DIV_5);break;
+			default:
+				break;
+		}
+		sprintf(bufferData,"Freq in MC01->PLL: %.3f MHz \n",100.0/firstParameter);
+		usart_writeMsg(&hCmdTerminal,bufferData);
+	}
 
 	/*The inserted msg is not in the list*/
 	else{
