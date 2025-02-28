@@ -49,7 +49,6 @@ uint8_t i2c_ReadManyRegister(I2C_Handler_t *pHandlerI2C, uint8_t regToRead, uint
 void i2c_WriteSingleRegister(I2C_Handler_t *pHandlerI2C, uint8_t regToWrite, uint8_t newValue);
 void i2c_WriteManyRegisters(I2C_Handler_t *pHandlerI2C, uint8_t regToWrite, uint8_t *bufferRxData, uint8_t numerOfBytes);
 void i2c_WriteSingleRegisterLCD(I2C_Handler_t *pHandlerI2C, uint8_t newValue);
-
-
-
+void i2c_send_slave_address_rw(I2C_Handler_t *pHandlerI2C, uint8_t rw);
+uint8_t i2c_Read8BitsFrom16BitReg(I2C_Handler_t *pHandlerI2C, uint16_t regAddress);
 #endif /* I2C_DRIVER_HAL_H_ */

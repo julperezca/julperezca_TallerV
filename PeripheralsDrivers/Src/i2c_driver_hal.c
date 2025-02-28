@@ -8,6 +8,8 @@
 #include "i2c_driver_hal.h"
 #include "gpio_driver_hal.h"
 
+
+
 /*headers de las funciones privadas*/
 
 static void i2c_enable_clock_peripheral(I2C_Handler_t *pHandlerI2C);
@@ -21,7 +23,7 @@ static void i2c_start_signal(I2C_Handler_t *pHandlerI2C);
 static void i2c_restart_signal(I2C_Handler_t *pHandlerI2C);
 static void i2c_send_no_ack(I2C_Handler_t *pHandlerI2C);
 static void i2c_send_ack(I2C_Handler_t *pHandlerI2C);
-static void i2c_send_slave_address_rw(I2C_Handler_t *pHandlerI2C, uint8_t rw);
+void i2c_send_slave_address_rw(I2C_Handler_t *pHandlerI2C, uint8_t rw);
 static void i2c_send_memory_address(I2C_Handler_t *pHandlerI2C, uint8_t memAddr);
 static void i2c_send_close_comm(I2C_Handler_t *pHandlerI2C);
 static void i2c_send_byte(I2C_Handler_t *pHandlerI2C, uint8_t dataToWrite);
@@ -29,6 +31,7 @@ static uint8_t i2c_read_byte(I2C_Handler_t *pHandlerI2C);
 void i2c_WriteSingleRegister(I2C_Handler_t *pHandlerI2C, uint8_t regToWrite, uint8_t newValue);
 void i2c_WriteSingleRegisterLCD(I2C_Handler_t *pHandlerI2C, uint8_t newValue);
 void i2c_Config(I2C_Handler_t *pHandlerI2C){
+
 	//1. activamos la senal de reloj del periferico
 	i2c_enable_clock_peripheral(pHandlerI2C);
 
@@ -175,7 +178,7 @@ static void i2c_send_ack(I2C_Handler_t *pHandlerI2C){
  *
  * ESTO ESTA INDICADO EN EL EVENTO EV6 DE LA FIGURA 164 DEL USER MANUAL
  */
-static void i2c_send_slave_address_rw(I2C_Handler_t *pHandlerI2C, uint8_t rw){
+void i2c_send_slave_address_rw(I2C_Handler_t *pHandlerI2C, uint8_t rw){
 	uint8_t auxByte = 0; //definimos una variable auxiliar
 	(void) auxByte;
 
@@ -295,3 +298,32 @@ void i2c_WriteManyRegisters(I2C_Handler_t *pHandlerI2C, uint8_t regToWrite, uint
 
 	i2c_send_close_comm(pHandlerI2C); //enviamos la condicion de parada para que ya no se escriban mas registros
 }
+
+
+uint8_t i2c_Read8BitsFrom16BitReg(I2C_Handler_t *pHandlerI2C, uint16_t regAddress) {
+    uint8_t regValue = 0;
+
+    i2c_start_signal(pHandlerI2C);
+
+    i2c_send_slave_address_rw(pHandlerI2C, eI2C_WRITE_DATA);
+
+
+    i2c_send_byte(pHandlerI2C, (uint8_t)(regAddress >> 8)); // Enviar MSB
+    i2c_send_byte(pHandlerI2C, (uint8_t)(regAddress & 0xFF)); // Enviar LSB
+
+    i2c_restart_signal(pHandlerI2C);
+
+    i2c_send_slave_address_rw(pHandlerI2C, eI2C_READ_DATA);
+
+    regValue = i2c_read_byte(pHandlerI2C);
+    i2c_send_no_ack(pHandlerI2C); // No ACK para finalizar la lectura
+
+    i2c_stop_signal(pHandlerI2C);
+
+    return regValue;
+}
+
+
+
+
+
