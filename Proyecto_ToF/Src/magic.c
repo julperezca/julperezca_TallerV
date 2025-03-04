@@ -51,8 +51,8 @@ void configMagic(void)
 	// Configuramos stop bits (1 bit)
 	USART2->CR2 &= ~USART_CR2_STOP;
 	// Configuramos baudrate (115200)
-//	USART2->BRR = 0x01B2; // BD a 100MHz del PLL
-	USART2->BRR = 0x008B; // BD 16MHz
+	USART2->BRR = 0x01B2; // BD a 100MHz del PLL
+//	USART2->BRR = 0x008B; // BD 16MHz
 	// Rx enable
 	USART2->CR1 &= ~USART_CR1_RE;
 	USART2->CR1 |= USART_CR1_RE;

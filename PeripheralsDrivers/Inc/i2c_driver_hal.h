@@ -43,12 +43,19 @@ typedef struct{
 
 
 /* prototipos de las funciones publicas */
+uint16_t i2c_Read16BitsFromRegister(I2C_Handler_t *pHandlerI2C, uint16_t regToRead);
+void i2c_stop_signal(I2C_Handler_t *pHandlerI2C);
+void i2c_send_no_ack(I2C_Handler_t *pHandlerI2C);
+void i2c_send_ack(I2C_Handler_t *pHandlerI2C);
+void i2c_send_close_comm(I2C_Handler_t *pHandlerI2C);
+void i2c_start_signal(I2C_Handler_t *pHandlerI2C);
+void i2c_restart_signal(I2C_Handler_t *pHandlerI2C);
+void i2c_send_byte(I2C_Handler_t *pHandlerI2C, uint8_t dataToWrite);
 void i2c_Config(I2C_Handler_t *pHandlerI2C);
 uint8_t i2c_ReadSingleRegister(I2C_Handler_t *pHandlerI2C, uint8_t regToRead);
-uint8_t i2c_ReadManyRegister(I2C_Handler_t *pHandlerI2C, uint8_t regToRead, uint8_t *bufferRxData, uint8_t numerOfBytes);
+uint8_t readManyRegisters(I2C_Handler_t *pHandlerI2C, uint8_t regToread, uint8_t *bufferRxData, uint8_t numberOfBytes);
 void i2c_WriteSingleRegister(I2C_Handler_t *pHandlerI2C, uint8_t regToWrite, uint8_t newValue);
 void i2c_WriteManyRegisters(I2C_Handler_t *pHandlerI2C, uint8_t regToWrite, uint8_t *bufferRxData, uint8_t numerOfBytes);
-void i2c_WriteSingleRegisterLCD(I2C_Handler_t *pHandlerI2C, uint8_t newValue);
 void i2c_send_slave_address_rw(I2C_Handler_t *pHandlerI2C, uint8_t rw);
-uint8_t i2c_Read8BitsFrom16BitReg(I2C_Handler_t *pHandlerI2C, uint16_t regAddress);
+uint16_t i2c_Read16BitsFromRegister(I2C_Handler_t *pHandlerI2C, uint16_t regToRead);
 #endif /* I2C_DRIVER_HAL_H_ */

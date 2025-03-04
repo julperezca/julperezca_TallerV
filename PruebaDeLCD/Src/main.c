@@ -68,107 +68,14 @@ void LCD_ToggleEnable(uint8_t data);
  * Función principal del programa.
  */
 int main(void) {
-	systickConfig();
-    // Inicializar el sistema
+	systickConfig(CLOCK_SOURCE_16MHz);
+
     initSystem();
-  //  LCD_Init();
+
     msDelay(100);
-  //  lcd_i2c_cursor_blinky_Enable(&lcdI2C);
- //   msmsDelay(100);
+
     while (1) {
-        // Bucle infinito
-
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_ENABLE|TURN_ON_DISPLAY | 1 << D4 | 1 << D5);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_DISABLED|TURN_ON_DISPLAY | 1 << D4 | 1 << D5);
-    msDelay(10);
-
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_ENABLE|TURN_ON_DISPLAY | 1 << D4 | 1 << D5);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_DISABLED|TURN_ON_DISPLAY | 1 << D4 | 1 << D5);
-    msDelay(1);
-
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_ENABLE|TURN_ON_DISPLAY | 1 << D4 | 1 << D5);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_DISABLED|TURN_ON_DISPLAY | 1 << D4 | 1 << D5);
-    msDelay(1);
-
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_ENABLE|TURN_ON_DISPLAY | 1 << D5);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_DISABLED|TURN_ON_DISPLAY | 1 << D5);
-
-    msDelay(1);
-
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_ENABLE|TURN_ON_DISPLAY| 1 << D5);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_DISABLED|TURN_ON_DISPLAY| 1 << D5);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_ENABLE|TURN_ON_DISPLAY|  1 << D7 | 0 << D6);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_DISABLED|TURN_ON_DISPLAY| 0 << D7 | 0 << D6);
-
-    msDelay(1);
-
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_ENABLE|TURN_ON_DISPLAY);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_DISABLED|TURN_ON_DISPLAY);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_ENABLE|TURN_ON_DISPLAY| 1 << D7);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_DISABLED|TURN_ON_DISPLAY| 1 << D7);
-
-    msDelay(1);
-
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_ENABLE|TURN_ON_DISPLAY);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_DISABLED|TURN_ON_DISPLAY);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_ENABLE|TURN_ON_DISPLAY| 1 << D4);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_DISABLED|TURN_ON_DISPLAY| 1 << D4);
-
-    msDelay(10);
-
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_ENABLE|TURN_ON_DISPLAY);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_DISABLED|TURN_ON_DISPLAY);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_ENABLE|TURN_ON_DISPLAY| 1 << D6);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_DISABLED|TURN_ON_DISPLAY| 1 << D6);
-
-    msDelay(10);
-
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_ENABLE|TURN_ON_DISPLAY);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_DISABLED|TURN_ON_DISPLAY);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_ENABLE|TURN_ON_DISPLAY|1 << D7 | 1 << D6 | 1 << D5 | 1 << D4);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_DISABLED|TURN_ON_DISPLAY|1 << D7 | 1 << D6 | 1 << D5 | 1 << D4);
-
-    msDelay(10);
-
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_ENABLE|TURN_ON_DISPLAY| 1 << D7 | 1 << D6 | 1 << D5);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_DISABLED|TURN_ON_DISPLAY| 1 << D7 | 1 << D6 | 1 << D5);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_ENABLE|TURN_ON_DISPLAY| 0 << D7 | 1 << D6 | 1 << D5 | 1 << D4);
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_DISABLED|TURN_ON_DISPLAY| 0 << D7 | 1 << D6 | 1 << D5 | 1 << D4);
-
-    msDelay(10);
-
-    i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_ENABLE|TURN_ON_DISPLAY| 1 << D7 | 1 << D6 | 1 << D5);
-	i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_DISABLED|TURN_ON_DISPLAY| 1 << D7 | 1 << D6 | 1 << D5);
-	i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_ENABLE|TURN_ON_DISPLAY| 0 << D7 | 1 << D6 | 1 << D5 | 1 << D4);
-	i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_ID|RW_SELECT_WRITE|EN_DISABLED|TURN_ON_DISPLAY| 0 << D7 | 1 << D6 | 1 << D5 | 1 << D4);
-
-	msDelay(10);
-
-	i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_DR|RW_SELECT_WRITE|EN_ENABLE|TURN_ON_DISPLAY| 0 << D7 | 1 << D6 | 0 << D5 | 1 << D4);
-	i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_DR|RW_SELECT_WRITE|EN_DISABLED|TURN_ON_DISPLAY| 0 << D7 | 1 << D6 | 0 << D5 | 1 << D4);
-	i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_DR|RW_SELECT_WRITE|EN_ENABLE|TURN_ON_DISPLAY| 0 << D7 | 0 << D6 | 0 << D5 | 0 << D4);
-	i2c_WriteSingleRegisterLCD(&lcdI2C, RS_SELECT_DR|RW_SELECT_WRITE|EN_DISABLED|TURN_ON_DISPLAY| 0 << D7 | 0 << D6 | 0 << D5 | 0 << D4);
-
-	msDelay(50);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     return 0;
 }
 

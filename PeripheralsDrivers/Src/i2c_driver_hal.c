@@ -18,15 +18,15 @@ static void i2c_set_main_clock(I2C_Handler_t *pHandlerI2C);
 static void i2c_set_mode(I2C_Handler_t *pHandlerI2C);
 static void i2c_enable_port(I2C_Handler_t *pHandlerI2C);
 static void i2c_disable_port(I2C_Handler_t *pHandlerI2C);
-static void i2c_stop_signal(I2C_Handler_t *pHandlerI2C);
-static void i2c_start_signal(I2C_Handler_t *pHandlerI2C);
-static void i2c_restart_signal(I2C_Handler_t *pHandlerI2C);
-static void i2c_send_no_ack(I2C_Handler_t *pHandlerI2C);
-static void i2c_send_ack(I2C_Handler_t *pHandlerI2C);
+void i2c_stop_signal(I2C_Handler_t *pHandlerI2C);
+void i2c_start_signal(I2C_Handler_t *pHandlerI2C);
+void i2c_restart_signal(I2C_Handler_t *pHandlerI2C);
+void i2c_send_no_ack(I2C_Handler_t *pHandlerI2C);
+void i2c_send_ack(I2C_Handler_t *pHandlerI2C);
 void i2c_send_slave_address_rw(I2C_Handler_t *pHandlerI2C, uint8_t rw);
 static void i2c_send_memory_address(I2C_Handler_t *pHandlerI2C, uint8_t memAddr);
-static void i2c_send_close_comm(I2C_Handler_t *pHandlerI2C);
-static void i2c_send_byte(I2C_Handler_t *pHandlerI2C, uint8_t dataToWrite);
+void i2c_send_close_comm(I2C_Handler_t *pHandlerI2C);
+void i2c_send_byte(I2C_Handler_t *pHandlerI2C, uint8_t dataToWrite);
 static uint8_t i2c_read_byte(I2C_Handler_t *pHandlerI2C);
 void i2c_WriteSingleRegister(I2C_Handler_t *pHandlerI2C, uint8_t regToWrite, uint8_t newValue);
 void i2c_WriteSingleRegisterLCD(I2C_Handler_t *pHandlerI2C, uint8_t newValue);
@@ -114,7 +114,7 @@ static void i2c_soft_reset(I2C_Handler_t *pHandlerI2C){
 }
 
 //funcion para generar la condicion de stop
-static void i2c_stop_signal(I2C_Handler_t *pHandlerI2C){
+void i2c_stop_signal(I2C_Handler_t *pHandlerI2C){
 	pHandlerI2C->pI2Cx->CR1 |= I2C_CR1_STOP; //generamos la condicion de stop
 }
 
@@ -128,7 +128,7 @@ static void i2c_stop_signal(I2C_Handler_t *pHandlerI2C){
  *
  * ESTOS SON LOS PASOS ESPECIFICADOS EN EL EVENTO EV5 DE LA FIGURA 164
  */
-static void i2c_start_signal(I2C_Handler_t *pHandlerI2C){
+void i2c_start_signal(I2C_Handler_t *pHandlerI2C){
 	uint8_t auxByte = 0; //definimos una variable auxiliar
 	(void) auxByte;
 
@@ -159,17 +159,17 @@ static void i2c_start_signal(I2C_Handler_t *pHandlerI2C){
  * tanto es suficiente con hacer otro start
  */
 
-static void i2c_restart_signal(I2C_Handler_t *pHandlerI2C){
+void i2c_restart_signal(I2C_Handler_t *pHandlerI2C){
 	i2c_start_signal(pHandlerI2C); //generamos una senal de start
 }
 
 /* activamos la indicacion para no hacer ack para que el esclavo deje de tranmitir datos */
-static void i2c_send_no_ack(I2C_Handler_t *pHandlerI2C){
+void i2c_send_no_ack(I2C_Handler_t *pHandlerI2C){
 	pHandlerI2C->pI2Cx->CR1 &= ~I2C_CR1_ACK; //no hacemos ack, por lo que escribimos 0
 }
 
 /* activamos la indicacion ack, la cual ordena al esclavo que siga enviando informacion, es decir que envie el siguiente byte en memoria */
-static void i2c_send_ack(I2C_Handler_t *pHandlerI2C){
+void i2c_send_ack(I2C_Handler_t *pHandlerI2C){
 	pHandlerI2C->pI2Cx->CR1 |= I2C_CR1_ACK;
 }
 
@@ -202,7 +202,7 @@ void i2c_send_slave_address_rw(I2C_Handler_t *pHandlerI2C, uint8_t rw){
 	 */
 }
 
-static void i2c_send_byte(I2C_Handler_t *pHandlerI2C, uint8_t dataToWrite){
+void i2c_send_byte(I2C_Handler_t *pHandlerI2C, uint8_t dataToWrite){
 	pHandlerI2C->pI2Cx->DR = dataToWrite; //5. montamos el dato que queremos enviar usando el dataregister
 
 	//5.1. esperamos a que el byte sea montado een el DSR, quedando el DR libre de nuevo
@@ -322,6 +322,46 @@ uint8_t i2c_Read8BitsFrom16BitReg(I2C_Handler_t *pHandlerI2C, uint16_t regAddres
 
     return regValue;
 }
+
+
+uint16_t i2c_Read16BitsFromRegister(I2C_Handler_t *pHandlerI2C, uint16_t regToRead) {
+    uint8_t msb = 0, lsb = 0;
+    uint16_t bit = 0;
+    // 1. Generar condición de START
+    i2c_start_signal(pHandlerI2C);
+
+    // 2. Enviar dirección del esclavo con W=0 (Escritura)
+    i2c_send_slave_address_rw(pHandlerI2C, eI2C_WRITE_DATA);
+
+    // 3. Enviar los dos bytes de la dirección del registro
+    i2c_send_memory_address(pHandlerI2C, (uint8_t)(regToRead >> 8)); // Enviar MSB de la dirección
+    i2c_send_memory_address(pHandlerI2C, (uint8_t)(regToRead & 0xFF)); // Enviar LSB de la dirección
+
+    // 4. Generar condición de RESTART para cambiar a modo lectura
+    i2c_restart_signal(pHandlerI2C);
+
+    // 5. Enviar dirección del esclavo con R=1 (Lectura)
+    i2c_send_slave_address_rw(pHandlerI2C, eI2C_READ_DATA);
+
+    // 6. Leer MSB del registro
+    msb = i2c_read_byte(pHandlerI2C);
+    i2c_send_ack(pHandlerI2C); // Enviar ACK para recibir el siguiente byte
+
+    i2c_restart_signal(pHandlerI2C);
+    i2c_send_slave_address_rw(pHandlerI2C, eI2C_READ_DATA);
+
+    // 7. Leer LSB del registro
+    lsb = i2c_read_byte(pHandlerI2C);
+    i2c_send_no_ack(pHandlerI2C); // Enviar NACK para finalizar la lectura
+
+    // 8. Generar condición de STOP para cerrar la comunicación
+    i2c_stop_signal(pHandlerI2C);
+
+    // 9. Combinar los bytes y retornar el valor de 16 bits
+    bit = (msb << 8) | lsb;
+    return bit;
+}
+
 
 
 
