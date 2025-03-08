@@ -293,11 +293,18 @@ void usart_config_baudrate_100MHz(USART_Handler_t *ptrUsartHandler){
 			break;
 		}
 
+//
+//		case USART_BAUDRATE_115200:{
+//
+//		ptrUsartHandler->ptrUSARTx->BRR = 0x0364;
+//			break;
+//		}
+				case USART_BAUDRATE_115200:{
 
-		case USART_BAUDRATE_115200:{
-		ptrUsartHandler->ptrUSARTx->BRR = 0x0364;
-			break;
-		}
+				ptrUsartHandler->ptrUSARTx->BRR = 0x01B2;;
+					break;
+				}
+
 
 
 		case USART_BAUDRATE_230400:{

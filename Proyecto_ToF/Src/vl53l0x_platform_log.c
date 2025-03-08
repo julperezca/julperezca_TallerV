@@ -44,16 +44,4 @@ int32_t VL53L0X_trace_config(char *filename, uint32_t modules, uint32_t level, u
     return STATUS;
 }
 
-
-void trace_print_module_function(uint32_t module, uint32_t level, uint32_t function, const char *format, ...)
-{
-    if ( ((level <=_trace_level) && ((module & _trace_modules) > 0))
-        || ((function & _trace_functions) > 0) )
-    {
-    	va_list arg_list;
-        va_start(arg_list, format);
-        trace_vprintf( format, arg_list);
-        va_end(arg_list);
-    }
-}
 #endif

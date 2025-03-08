@@ -1,5 +1,5 @@
 /*******************************************************************************
-Copyright © 2015, STMicroelectronics International N.V.
+Copyright ï¿½ 2015, STMicroelectronics International N.V.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -71,7 +71,7 @@ enum {
 };
 
 
-#if defined(VL53L0X_LOG_ENABLE) && (TRACE_UART==1)
+#if defined(VL53L0X_LOG_ENABLE)
 
 #include <stdarg.h>
 extern int uart_printf(const char *msg, ...);
