@@ -5,11 +5,13 @@
  *
  */
 
-#define lidar_max_mm 2000
 
 #ifndef LIDAR_H_
 #define LIDAR_H_
-
+#define VL53L3CX_I2C_ADDR  0x29  // Dirección I2C del sensor
+#define lidar_max_mm 2000
+#define VL53L3CX_MODEL_ID_REG 0xC0
+#define VL53L3CX_MODULE_TYPE_REG 0xC1
 #define dir_s1 0x29  // dirección de 7 bits
 
 #include "vl53l0x_api.h"

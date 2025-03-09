@@ -20,7 +20,6 @@
 	/* Enumeración de los estados de la FSM*/
 typedef enum
 {
-
 	STANDBY_STATE,
 	CHAR_RECEIVED_STATE,
 	CMD_COMPLETE

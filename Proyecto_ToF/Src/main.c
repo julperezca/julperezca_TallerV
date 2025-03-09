@@ -64,7 +64,15 @@ char clearBuffer[16] = {0};
 /*parametros para el parsecommands*/
 unsigned int  firstParameter;
 unsigned int  secondParameter;
-
+/*variables */
+uint8_t led_flag = 0;
+uint32_t distance = 0;
+uint16_t counter = 0;
+uint16_t lectura = 0;
+uint16_t angulo = 0;
+uint32_t milimetros = 0;
+float distancia = 0;
+char texto[100];
 
 /*cabecera de funciones*/
 void config_i2c(void);
@@ -75,142 +83,48 @@ void exti_limit_switch_config(void);
 void usart_init_config(void);
 void stepper_config(void);
 void state_machine_action(void);
-
-/*variables */
-uint8_t led_flag = 0;
-uint32_t distance = 0;
-uint16_t counter = 0;
-uint16_t lectura = 0;
-uint8_t angulo = 0;
-uint16_t milimetros = 0;
-float distancia = 0;
-char texto[100];
-
-
-#define VL53L3CX_I2C_ADDR  0x29  // Dirección I2C del sensor
-#define VL53L3CX_MODEL_ID_REG 0xC0
-#define VL53L3CX_MODULE_TYPE_REG 0xC1  // Registro Module_Type (16 bits)
-
-void setHome(void){
-	/* Giro en sentido horario */
-	gpio_WritePin(&DIR, RESET);
-
-	/*delay para definir giro*/
-	msDelay(100);
-
-	/*se gira hasta que se llegue al final de carrera donde está la interrupción*/
-	for(uint8_t i=0;i<200;i++){
-		gpio_WritePin(&STEP, SET);
-		msDelay(50);
-		gpio_WritePin(&STEP, RESET);
-		msDelay(50);
-		/*Condicion de final de carrera en sentido CW*/
-		if (fsm_giro.fsmState_cw == CW_STATE){
-			fsm_giro.fsmState_cw = NO_STATE;
-				break;
-		}
-	}
-
-	/* Giro en sentido antihorario */
-	gpio_WritePin(&DIR, RESET);
-
-	/*delay para definir giro*/
-	msDelay(100);
-
-	/*con el propósito de liberar el final de carrera*/
-	for (uint8_t i = 0; i<5;i++){{
-		gpio_WritePin(&STEP, SET);
-		msDelay(50);
-		gpio_WritePin(&STEP, RESET);
-		msDelay(50);
-	}
-
-	/*se imprime en USART2*/
-
-	usart_writeMsg(&hCmdTerminal,"Sensor is in home\n");
-}
-}
-
-/*función para realizar un escaneado rápido*/
-void fast_scaning(void){
-	usart_writeMsg(&hCmdTerminal," Fast sampling and going home\n");
-	usart_writeMsg(&hCmdTerminal,"  Distance(mm) vs Angle(°)\n");
-	/*se define el sentido de giro horario*/
-	gpio_WritePin(&DIR, SET);
-
-	/*delay de sentido de giro*/
-	msDelay(100);
-
-	/*se avanza en sentido horario hasta en ifnal de carreara*/
-	for(uint8_t i=0;i<200;i++){
-		if (fsm_giro.fsmState_cw == CCW_STATE){
-			fsm_giro.fsmState_cw = NO_STATE;
-			break;
-		}
-		angulo = 1.8*(i+1);
-
-		/*paso para el motor stepper*/
-		gpio_WritePin(&STEP, SET);
-		msDelay(100);
-		gpio_WritePin(&STEP, RESET);
-		msDelay(100);
-		/*se toma medida en milimetros de la distancia medida por el sensor ToF*/
-		milimetros=lidar_lee_mm(dir_s1);
-
-		/*se imprime columna milimetros angulo*/
-		sprintf(bufferData,"Datos : %u, %u\n", milimetros,angulo);
-		usart_writeMsg(&hCmdTerminal,bufferData);
-
-	}
-
-	/* se elige la dirección en sentido opuesto debido al final de carrera anteior*/
-	gpio_WritePin(&DIR, RESET);
-	msDelay(100);
-
-	/*giro en sentido CCW*/
-	for(uint8_t i=0;i<200;i++){
-		if (fsm_giro.fsmState_cw == CW_STATE){
-			fsm_giro.fsmState_cw = NO_STATE;
-			break;
-		}
-		angulo = 1.8*(i+1);
-
-		/*paso para el motor stepper*/
-		gpio_WritePin(&STEP, SET);
-		msDelay(100);
-		gpio_WritePin(&STEP, RESET);
-		msDelay(100);
-		/*se toma medida en milimetros de la distancia medida por el sensor ToF*/
-		milimetros=lidar_lee_mm(dir_s1);
-
-		/*se imprime columna milimetros angulo*/
-		sprintf(bufferData,"Distancia : %u, %u\n", milimetros,angulo);
-		usart_writeMsg(&hCmdTerminal,bufferData);
-	}
-}
+void slow_sampling(void);
+void fast_scaning(void);
+void normalSampling(void);
+void continuosSampling(void);
+void velSampling(uint8_t parameter);
+void setHome(void);
 
 
 
+/*the main function of this amazing programmmm of taller V :) */
 int main() {
-    init_config();
+
+	/* init config */
+
+	init_config();
+
+    /*ToF sensor Config*/
     lidar_init(dir_s1);
-/*buffer para limpieza de terminal*/
+    /*buffer para limpieza de terminal*/
 	clearBuffer[0] = 0x1B;
 	clearBuffer[1] = 0x5B;
 	clearBuffer[2] = 0x32;
 	clearBuffer[3] = 0x4A;
 
+	/*Mensaje para inicio de comunicación con usuario*/
 	usart_writeMsg(&hCmdTerminal,clearBuffer);
 	usart_writeMsg(&hCmdTerminal,"Escriba help @ para desplegar el manual de comandos a utilizar\n");
 
 
 
     while (1) {
+
+    	/*se toglea el led de estado*/
     	if(led_flag == 1){
     		gpio_TooglePin(&ledState);
     		led_flag = 0;
     	}
+
+    	/*estado de espera, solo se activa si se recibe un comando */
 		if(fsm.fsmState != STANDBY_STATE){
+
+			/*la maquina de estados inicia*/
 			state_machine_action();
 		}
     }
@@ -231,6 +145,9 @@ void parseCommands(char *ptrBufferReception){
 		usart_writeMsg(&hCmdTerminal,"2)  setHome           -- go to home\n");
 		usart_writeMsg(&hCmdTerminal,"3) fastSampl  -- Makes a fast sample of rotation in CW and CCW.\n");
 		usart_writeMsg(&hCmdTerminal,"4) slowSampl  -- Makes a slow sampling in CW rotation taking means.\n");
+		usart_writeMsg(&hCmdTerminal,"5) normalSampl  -- Makes a medium velocity sampling in CW and CCW.\n");
+		usart_writeMsg(&hCmdTerminal,"6) contSampl  -- Makes a continuos sampling in CW and CCW.\n");
+		usart_writeMsg(&hCmdTerminal,"7) velSampl  #A -- Makes a sampling with the delay of A in ms in CW and CCW.\n");
 
 
 	}
@@ -247,17 +164,20 @@ void parseCommands(char *ptrBufferReception){
 
 	/* 1) sensor reconocimiento*/
 	else if (strcmp(cmd,"sensor") == 0){
+		usart_writeMsg(&hCmdTerminal,"Recognizing the ToF Sensor...\n");
 		reference_registers_ToF();
     }
 
 	/* 2) SetHomeSensor*/
 	else if (strcmp(cmd,"setHome") == 0){
+		usart_writeMsg(&hCmdTerminal,"Homing... \n");
 		setHome();
     }
 
 
 	/*sampleo rapido*/
 	else if (strcmp(cmd,"fastSampl") == 0){
+		usart_writeMsg(&hCmdTerminal,"Fast sampling begins..\n");
 		fast_scaning();
 	}
 
@@ -265,43 +185,22 @@ void parseCommands(char *ptrBufferReception){
 /*sampleo con promedio*/
 
 	else if (strcmp(cmd,"slowSampl") == 0){
-
-	/*va primero a home*/
-	setHome();
-
-	/*sentido de giro*/
-	gpio_WritePin(&STEP, SET);
-	msDelay(50);
-	/*tabla de qué contra qué  distancia contra angulo*/
+		slow_sampling();
+	}
 
 
-	usart_writeMsg(&hCmdTerminal,"Distance(mm) vs Angle(°)\n");
-	for(uint8_t i=1;i < 201;i++){
-
-
-		/*condicion de parada debido a los finales de carrera*/
-		if (fsm_giro.fsmState_cw == CCW_STATE){
-			fsm_giro.fsmState_cw = NO_STATE;
-			usart_writeMsg(&hCmdTerminal,"Data sampling done\n");
-			break;
-		}
-
-
-		/* se toman multiples medidas y se proemdia entre 10 datos*/
-		for (uint8_t k = 0; k<11;k++){
-			lectura=lidar_lee_mm(dir_s1);
-			milimetros+=lectura;
-		}
-		milimetros = milimetros/10;
-		angulo = 1.8*i;
-		sprintf(bufferData,"%u, %u\n", milimetros,angulo);
-		usart_writeMsg(&hCmdTerminal,bufferData);
+	/*normal sampling*/
+	else if (strcmp(cmd,"normalSampl") == 0){
+		normalSampling();
 
 	}
 
-	/*se vuelve a la casa, inicio de final de carrera*/
-	setHome();
+	else if (strcmp(cmd,"contSampl") == 0){
+		continuosSampling();
+	}
 
+	else if((strcmp(cmd,"velSampl") == 0)){
+		velSampling(firstParameter);
 	}
 
 
@@ -390,10 +289,342 @@ void reference_registers_ToF(void){
 }
 
 
+/*
+ * set a home
+ * */
+void setHome(void){
+	/* Giro en sentido horario */
+	gpio_WritePin(&DIR, RESET);
+
+	/*delay para definir giro*/
+	msDelay(100);
+
+	/*se gira hasta que se llegue al final de carrera donde está la interrupción*/
+	for(uint16_t i=0;i<300;i++){
+		gpio_WritePin(&STEP, SET);
+		msDelay(50);
+		gpio_WritePin(&STEP, RESET);
+		msDelay(50);
+		/*Condicion de final de carrera en sentido CW*/
+		if (fsm_giro.fsmState_cw == CW_STATE){
+			fsm_giro.fsmState_cw = NO_STATE;
+				break;
+		}
+	}
+
+	/* Giro en sentido antihorario */
+	gpio_WritePin(&DIR, RESET);
+
+	/*delay para definir giro*/
+	msDelay(100);
+
+	/*con el propósito de liberar el final de carrera*/
+	for (uint8_t i = 0; i<5;i++){{
+		gpio_WritePin(&STEP, SET);
+		msDelay(50);
+		gpio_WritePin(&STEP, RESET);
+		msDelay(50);
+	}
+
+	/*se imprime en USART2*/
+
+	usart_writeMsg(&hCmdTerminal,"Sensor is in home\n");
+}
+}
+
+/*
+ * función para realizar un escaneado rápido
+ * */
+void fast_scaning(void){
+	usart_writeMsg(&hCmdTerminal," Fast sampling and going home\n");
+	usart_writeMsg(&hCmdTerminal,"  Distance(mm) vs Angle(°)\n");
+	/*se define el sentido de giro horario*/
+	gpio_WritePin(&DIR, SET);
+
+	/*delay de sentido de giro*/
+	msDelay(100);
+
+	/*se avanza en sentido horario hasta en ifnal de carreara*/
+	for(uint16_t i=0;i<300;i++){
+		if (fsm_giro.fsmState_cw == CCW_STATE){
+			fsm_giro.fsmState_cw = NO_STATE;
+			break;
+		}
+		angulo = 1.8*(i+1);
+
+		/*paso para el motor stepper*/
+		gpio_WritePin(&STEP, SET);
+		msDelay(30);
+		gpio_WritePin(&STEP, RESET);
+		msDelay(30);
+		/*se toma medida en milimetros de la distancia medida por el sensor ToF*/
+		milimetros=lidar_lee_mm(dir_s1);
+
+		/*se imprime columna milimetros angulo*/
+		sprintf(bufferData,"Datos : %lu, %u\n", milimetros,angulo);
+		usart_writeMsg(&hCmdTerminal,bufferData);
+
+	}
+
+	/* se elige la dirección en sentido opuesto debido al final de carrera anteior*/
+	gpio_WritePin(&DIR, RESET);
+	msDelay(100);
+
+	/*giro en sentido CCW*/
+	for(uint8_t i=0;i<200;i++){
+		if (fsm_giro.fsmState_cw == CW_STATE){
+			fsm_giro.fsmState_cw = NO_STATE;
+			break;
+		}
+		angulo = 1.8*(i+1);
+
+		/*paso para el motor stepper*/
+		gpio_WritePin(&STEP, SET);
+		msDelay(100);
+		gpio_WritePin(&STEP, RESET);
+		msDelay(100);
+		/*se toma medida en milimetros de la distancia medida por el sensor ToF*/
+		milimetros=lidar_lee_mm(dir_s1);
+
+		/*se imprime columna milimetros angulo*/
+		sprintf(bufferData,"Distancia : %lu, %u\n", milimetros,angulo);
+		usart_writeMsg(&hCmdTerminal,bufferData);
+	}
+}
 
 
-/*inicio de configuración*/
+/*
+ * func that makes a slow sampling of the ToF Sensor
+ * */
+void slow_sampling(void){
+	/*va primero a home*/
+	setHome();
+
+	/*sentido de giro*/
+	gpio_WritePin(&DIR, SET);
+	msDelay(50);
+	/*tabla de qué contra qué  distancia contra angulo*/
+
+	usart_writeMsg(&hCmdTerminal,"Slow sampling begins...\n");
+	usart_writeMsg(&hCmdTerminal,"Distance(mm) vs Angle(°)\n");
+	for(uint16_t i = 1 ; i < 301;i++){
+
+
+		/*condicion de parada debido a los finales de carrera*/
+		if (fsm_giro.fsmState_cw == CCW_STATE){
+			fsm_giro.fsmState_cw = NO_STATE;
+			usart_writeMsg(&hCmdTerminal,"Data sampling done\n");
+			break;
+		}
+
+
+		/* se toman multiples medidas y se proemdia entre 20 datos*/
+		for (uint8_t k = 0; k<21;k++){
+			lectura = lidar_lee_mm(dir_s1);
+			msDelay(5);
+			milimetros+=lectura;
+		}
+
+		/*hago el promedio de los datos tomados*/
+		milimetros = milimetros/20;
+		angulo = 1.8*i;
+		sprintf(bufferData,"%lu, %u\n", milimetros,angulo);
+		usart_writeMsg(&hCmdTerminal,bufferData);
+
+		/*doy un paso en el stepper*/
+
+		gpio_WritePin(&STEP, SET);
+		msDelay(1);
+		gpio_WritePin(&STEP, RESET);
+
+
+	}
+
+	/*se vuelve a la casa, inicio de final de carrera*/
+	setHome();
+}
+
+
+
+/*normal sampling
+ * */
+void normalSampling(void){
+	usart_writeMsg(&hCmdTerminal," Normal sampling and going home\n");
+	usart_writeMsg(&hCmdTerminal,"  Distance(mm) vs Angle(°)\n");
+
+	/*se define el sentido de giro horario*/
+	gpio_WritePin(&DIR, SET);
+
+	/*delay de sentido de giro*/
+	msDelay(100);
+
+	/*se avanza en sentido horario hasta en ifnal de carreara*/
+
+	for(uint8_t i=0;i<200;i++){
+		if (fsm_giro.fsmState_cw == CCW_STATE){
+			fsm_giro.fsmState_cw = NO_STATE;
+			break;
+		}
+		angulo = 1.8*(i+1);
+
+		/*paso para el motor stepper*/
+		gpio_WritePin(&STEP, SET);
+		msDelay(50);
+		gpio_WritePin(&STEP, RESET);
+		msDelay(50);
+		/*se toma medida en milimetros de la distancia medida por el sensor ToF*/
+		milimetros=lidar_lee_mm(dir_s1);
+
+		/*se imprime columna milimetros angulo*/
+		sprintf(bufferData,"Datos : %lu, %u\n", milimetros,angulo);
+		usart_writeMsg(&hCmdTerminal,bufferData);
+
+		}
+
+	/* se elige la dirección en sentido opuesto debido al final de carrera anteior*/
+	gpio_WritePin(&DIR, RESET);
+	msDelay(100);
+
+	/*giro en sentido CCW*/
+	for(uint8_t i = 0;i<200;i++){
+		if (fsm_giro.fsmState_cw == CW_STATE){
+			fsm_giro.fsmState_cw = NO_STATE;
+			break;
+		}
+		angulo = 1.8*(i+1);
+
+		/*paso para el motor stepper*/
+		gpio_WritePin(&STEP, SET);
+		msDelay(200);
+		gpio_WritePin(&STEP, RESET);
+		msDelay(200);
+		/*se toma medida en milimetros de la distancia medida por el sensor ToF*/
+		milimetros=lidar_lee_mm(dir_s1);
+
+		/*se imprime columna milimetros angulo*/
+		sprintf(bufferData,"Distancia : %lu, %u\n", milimetros,angulo);
+		usart_writeMsg(&hCmdTerminal,bufferData);
+		}
+}
+
+/*sampleo de forma continua*/
+void continuosSampling(void){
+	usart_writeMsg(&hCmdTerminal," Normal sampling and going home\n");
+	usart_writeMsg(&hCmdTerminal,"  Distance(mm) vs Angle(°)\n");
+
+	/*se define el sentido de giro horario*/
+	gpio_WritePin(&DIR, SET);
+
+	/*delay de sentido de giro*/
+	msDelay(100);
+
+	/*se avanza en sentido horario hasta en ifnal de carreara*/
+
+	for(uint8_t i=0;i<200;i++){
+		if (fsm_giro.fsmState_cw == CCW_STATE){
+			fsm_giro.fsmState_cw = NO_STATE;
+			break;
+		}
+		angulo = 1.8*(i+1);
+
+		/*paso para el motor stepper*/
+		gpio_WritePin(&STEP, SET);
+		msDelay(1);
+		gpio_WritePin(&STEP, RESET);
+		msDelay(1);
+		/*se toma medida en milimetros de la distancia medida por el sensor ToF*/
+		milimetros=lidar_lee_mm(dir_s1);
+
+		/*se imprime columna milimetros angulo*/
+		sprintf(bufferData,"Datos : %lu, %u\n", milimetros,angulo);
+		usart_writeMsg(&hCmdTerminal,bufferData);
+
+		}
+
+	/* se elige la dirección en sentido opuesto debido al final de carrera anteior*/
+	gpio_WritePin(&DIR, RESET);
+	msDelay(100);
+
+	/*giro en sentido CCW*/
+	for(uint8_t i = 0;i<200;i++){
+		if (fsm_giro.fsmState_cw == CW_STATE){
+			fsm_giro.fsmState_cw = NO_STATE;
+			break;
+		}
+		angulo = 1.8*(i+1);
+
+		/*paso para el motor stepper*/
+		gpio_WritePin(&STEP, SET);
+		msDelay(1);
+		gpio_WritePin(&STEP, RESET);
+		msDelay(1);
+		/*se toma medida en milimetros de la distancia medida por el sensor ToF*/
+		milimetros=lidar_lee_mm(dir_s1);
+
+		/*se imprime columna milimetros angulo*/
+		sprintf(bufferData,"Distancia : %lu, %u\n", milimetros,angulo);
+		usart_writeMsg(&hCmdTerminal,bufferData);
+		}
+}
+
+
+void velSampling(uint8_t parameter){
+	/*va primero a home*/
+		setHome();
+
+		/*sentido de giro*/
+		gpio_WritePin(&DIR, SET);
+		msDelay(50);
+		/*tabla de qué contra qué  distancia contra angulo*/
+
+		usart_writeMsg(&hCmdTerminal,"Slow sampling begins...\n");
+		usart_writeMsg(&hCmdTerminal,"Distance(mm) vs Angle(°)\n");
+		for(uint16_t i = 1 ; i < 301;i++){
+
+
+			/*condicion de parada debido a los finales de carrera*/
+			if (fsm_giro.fsmState_cw == CCW_STATE){
+				fsm_giro.fsmState_cw = NO_STATE;
+				usart_writeMsg(&hCmdTerminal,"Data sampling done\n");
+				break;
+			}
+
+
+			/* se toman multiples medidas y se proemdia entre 20 datos*/
+			for (uint8_t k = 0; k<21;k++){
+				lectura = lidar_lee_mm(dir_s1);
+				msDelay(parameter);
+				milimetros+=lectura;
+			}
+
+			/*hago el promedio de los datos tomados*/
+			milimetros = milimetros/20;
+			angulo = 1.8*i;
+			sprintf(bufferData,"%lu, %u\n", milimetros,angulo);
+			usart_writeMsg(&hCmdTerminal,bufferData);
+
+			/*doy un paso en el stepper*/
+
+			gpio_WritePin(&STEP, SET);
+			msDelay(1);
+			gpio_WritePin(&STEP, RESET);
+
+
+		}
+
+		/*se vuelve a la casa, inicio de final de carrera*/
+		setHome();
+}
+
+
+
+
+/*
+ * Inicio de configuración
+ *
+ * */
 void init_config(void) {
+
 	/*reloj a 100MHz*/
 	pll_Config_100MHz();
 
@@ -441,7 +672,7 @@ void led_state_config(void){
     // Config para el timer del led de estado
     blinkyTimer.pTIMx								= TIM2;
     blinkyTimer.TIMx_Config.TIMx_Prescaler  		= 10000; //100us conversion
-    blinkyTimer.TIMx_Config.TIMx_Period				= 2500*4;  // 250ms
+    blinkyTimer.TIMx_Config.TIMx_Period				= 2500;  // 250ms
     blinkyTimer.TIMx_Config.TIMx_mode				= TIMER_UP_COUNTER;
     blinkyTimer.TIMx_Config.TIMx_InterruptEnable 	= TIMER_INT_ENABLE;
     timer_Config(&blinkyTimer);
@@ -575,9 +806,6 @@ void exti_limit_switch_config(void){
 
 			/* FIN de GPIO and EXTI config */
 }
-
-
-
 
 
 
