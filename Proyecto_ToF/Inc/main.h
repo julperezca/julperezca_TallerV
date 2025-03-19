@@ -35,9 +35,9 @@ typedef struct
 /* Enumeración de los estados de la FSM*/
 typedef enum
 {
-CW_STATE,
-CCW_STATE,
-NO_STATE
+	NO_STATE,
+	CW_STATE,
+	CCW_STATE
 } fsm_State_cw;
 
 /* Estructura  que maneja de la fsm del loop principal */
