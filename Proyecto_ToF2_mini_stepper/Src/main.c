@@ -38,6 +38,7 @@ GPIO_Handler_t pinSDA_ToF = {0};
 
 GPIO_Handler_t DIR = {0};
 GPIO_Handler_t STEP = {0};
+
 GPIO_Handler_t IN1 = {0};
 GPIO_Handler_t IN2 = {0};
 GPIO_Handler_t IN3 = {0};
@@ -78,12 +79,12 @@ uint8_t led_flag = 0;
 uint8_t sampling_counter = 9;
 uint32_t lectura = 0;
 uint32_t milimetros = 0;
-float angulo = 0.0f;
+double angulo = 0.0;
 float data_mm = 0.0f;
-float z_position = 0;
-uint16_t angle_position = 0;
-uint16_t number_of_samples_cw = 0;
-
+uint16_t indexx = 0;
+uint16_t start_counter = 0;
+uint16_t cw_counter = 0;
+uint16_t ccw_counter = 0;
 /*cabecera de funciones*/
 void config_i2c(void);
 void led_state_config(void);
@@ -93,13 +94,20 @@ void exti_limit_switch_config(void);
 void usart_init_config(void);
 void stepper_config(void);
 void state_machine_action(void);
-void angle_ccw_positioning(uint16_t angle);
-void angle_cw_positioning(uint16_t angle);
-void z_up_positioning(uint16_t number_of_mm);
-void z_down_positioning(uint16_t number_of_mm);
 void start(void);
 
+void sampling(void){
+	for (uint8_t i = 0; i<1;i++)
+	{
+		milimetros += lidar_lee_mm(dir_s1);
+	}
 
+	data_mm = milimetros/1.0;
+	angulo = 360.0*start_counter/4096.0;
+	sprintf(bufferData,"%.2f, %.2f\n",data_mm,angulo);
+	usart_writeMsg(&hCmdTerminal,bufferData);
+	milimetros = 0;
+}
 /*the main function of this amazing programmmm of taller V :) */
 int main() {
 
@@ -110,6 +118,8 @@ int main() {
 	// Coprocesador Matemático - FPU
 	SCB->CPACR |= (0XF << 20);
 
+	/*respuesta inicial del sensor*/
+	reference_registers_ToF();
     /*ToF sensor Config*/
     lidar_init(dir_s1);
 
@@ -136,15 +146,170 @@ int main() {
 
 
 
-    	/*estado de espera, solo se activa si se recibe un comando */
-		if(fsm.fsmState != STANDBY_STATE){
 
-			/*la maquina de estados inicia*/
-			state_machine_action();
+
+
+    	sampling();
+
+
+		// Paso 1: IN1=SET, IN2=RESET, IN3=RESET, IN4=RESET
+		gpio_WritePin(&IN1, SET);
+		gpio_WritePin(&IN2, RESET);
+		gpio_WritePin(&IN3, RESET);
+		gpio_WritePin(&IN4, RESET);
+		msDelay(1);
+		start_counter++;
+
+
+
+		// Paso 2: IN1=SET, IN2=SET, IN3=RESET, IN4=RESET
+		gpio_WritePin(&IN1, SET);
+		gpio_WritePin(&IN2, SET);
+		gpio_WritePin(&IN3, RESET);
+		gpio_WritePin(&IN4, RESET);
+		msDelay(1);
+		start_counter++;
+
+		// Paso 3: IN1=RESET, IN2=SET, IN3=RESET, IN4=RESET
+		gpio_WritePin(&IN1, RESET);
+		gpio_WritePin(&IN2, SET);
+		gpio_WritePin(&IN3, RESET);
+		gpio_WritePin(&IN4, RESET);
+		msDelay(1);
+		start_counter++;
+
+		// Paso 4: IN1=RESET, IN2=SET, IN3=SET, IN4=RESET
+		gpio_WritePin(&IN1, RESET);
+		gpio_WritePin(&IN2, SET);
+		gpio_WritePin(&IN3, SET);
+		gpio_WritePin(&IN4, RESET);
+		msDelay(1);
+		start_counter++;
+
+		// Paso 5: IN1=RESET, IN2=RESET, IN3=SET, IN4=RESET
+		gpio_WritePin(&IN1, RESET);
+		gpio_WritePin(&IN2, RESET);
+		gpio_WritePin(&IN3, SET);
+		gpio_WritePin(&IN4, RESET);
+		msDelay(1);
+		start_counter++;
+
+		// Paso 6: IN1=RESET, IN2=RESET, IN3=SET, IN4=SET
+		gpio_WritePin(&IN1, RESET);
+		gpio_WritePin(&IN2, RESET);
+		gpio_WritePin(&IN3, SET);
+		gpio_WritePin(&IN4, SET);
+		msDelay(1);
+		start_counter++;
+
+		// Paso 7: IN1=RESET, IN2=RESET, IN3=RESET, IN4=SET
+		gpio_WritePin(&IN1, RESET);
+		gpio_WritePin(&IN2, RESET);
+		gpio_WritePin(&IN3, RESET);
+		gpio_WritePin(&IN4, SET);
+		msDelay(1);
+		start_counter++;
+
+
+		// Paso 8: IN1=SET, IN2=RESET, IN3=RESET, IN4=SET
+		gpio_WritePin(&IN1, SET);
+		gpio_WritePin(&IN2, RESET);
+		gpio_WritePin(&IN3, RESET);
+		gpio_WritePin(&IN4, SET);
+		msDelay(1);
+		start_counter++;
+
+
+		cw_counter++;
+
+
+
+
+		if(cw_counter == 80){
+			start_counter = 0;
+			ccw_counter = cw_counter;
+
+			while(1){
+
+			sampling();
+
+
+			// Paso 1: (original paso 8)
+			gpio_WritePin(&IN1, SET);
+			gpio_WritePin(&IN2, RESET);
+			gpio_WritePin(&IN3, RESET);
+			gpio_WritePin(&IN4, SET);
+			msDelay(1);
+			start_counter++;
+
+			// Paso 2: (original paso 7)
+			gpio_WritePin(&IN1, RESET);
+			gpio_WritePin(&IN2, RESET);
+			gpio_WritePin(&IN3, RESET);
+			gpio_WritePin(&IN4, SET);
+			msDelay(1);
+			start_counter++;
+
+			// Paso 3: (original paso 6)
+			gpio_WritePin(&IN1, RESET);
+			gpio_WritePin(&IN2, RESET);
+			gpio_WritePin(&IN3, SET);
+			gpio_WritePin(&IN4, SET);
+			msDelay(1);
+			start_counter++;
+
+			// Paso 4: (original paso 5)
+			gpio_WritePin(&IN1, RESET);
+			gpio_WritePin(&IN2, RESET);
+			gpio_WritePin(&IN3, SET);
+			gpio_WritePin(&IN4, RESET);
+			msDelay(1);
+			start_counter++;
+
+			// Paso 5: (original paso 4)
+			gpio_WritePin(&IN1, RESET);
+			gpio_WritePin(&IN2, SET);
+			gpio_WritePin(&IN3, SET);
+			gpio_WritePin(&IN4, RESET);
+			msDelay(1);
+			start_counter++;
+
+			// Paso 6: (original paso 3)
+			gpio_WritePin(&IN1, RESET);
+			gpio_WritePin(&IN2, SET);
+			gpio_WritePin(&IN3, RESET);
+			gpio_WritePin(&IN4, RESET);
+			msDelay(1);
+			start_counter++;
+
+			// Paso 7: (original paso 2)
+			gpio_WritePin(&IN1, SET);
+			gpio_WritePin(&IN2, SET);
+			gpio_WritePin(&IN3, RESET);
+			gpio_WritePin(&IN4, RESET);
+			msDelay(1);
+			start_counter++;
+
+			// Paso 8: (original paso 1)
+			gpio_WritePin(&IN1, SET);
+			gpio_WritePin(&IN2, RESET);
+			gpio_WritePin(&IN3, RESET);
+			gpio_WritePin(&IN4, RESET);
+			msDelay(1);
+			start_counter++;
+
+
+			ccw_counter--;
+
+
+			if(ccw_counter == 0){
+				ccw_counter = 0;
+				cw_counter = 0;
+				start_counter = 0;
+				break;
+			}
+			}
 		}
-
-
-
     }
     return 0;
 }
@@ -163,8 +328,6 @@ void parseCommands(char *ptrBufferReception){
 		usart_writeMsg(&hCmdTerminal,"2) dummy # # -- Dummy cmd for user\n");
 		usart_writeMsg(&hCmdTerminal,"3) sensor    -- Reconocimiento de sensor de ToF\n");
 		usart_writeMsg(&hCmdTerminal,"4) start     -- Makes a sampling with the delay of A in ms in CW and CCW.\n");
-		usart_writeMsg(&hCmdTerminal,"5) up,down   #mm --  \n");
-		usart_writeMsg(&hCmdTerminal,"6) cw,ccw  #angle° --\n");
 
 
 	}
@@ -190,26 +353,6 @@ void parseCommands(char *ptrBufferReception){
 		start();
 	}
 
-
-	/* 5) up z position*/
-	else if((strcmp(cmd,"up") == 0)){
-		z_down_positioning(firstParameter);
-	}
-
-	/* 6) down z position*/
-	else if((strcmp(cmd,"down") == 0)){
-		z_up_positioning(firstParameter);
-	}
-
-	/* 7) down z position*/
-	else if((strcmp(cmd,"cw") == 0)){
-		angle_cw_positioning(firstParameter);
-	}
-
-	/* 8) down z position*/
-	else if((strcmp(cmd,"ccw") == 0)){
-		angle_ccw_positioning(firstParameter);
-	}
 
 	/*The inserted msg is not in the list*/
 	else{
@@ -299,429 +442,124 @@ void reference_registers_ToF(void){
 }
 
 
-/* se ingresa en valor en milimetro para subir*/
-void z_up_positioning(uint16_t number_of_mm){
-
-	uint16_t steps = (uint16_t)(number_of_mm*200);
-
-	gpio_WritePin(&DIR, RESET);
-	for (uint16_t i = 0; i< steps; i++){
-		msDelay(2);
-		gpio_WritePin(&STEP, SET);
-		msDelay(1);
-		gpio_WritePin(&STEP, RESET);
-	}
-}
-
-/* se ingresa en valor en milimetro para bajar*/
-void z_down_positioning(uint16_t number_of_mmm){
-
-	uint16_t steps = (uint16_t)(number_of_mmm*200);
-
+void setHome(void){
+	/* Giro en sentido horario */
 	gpio_WritePin(&DIR, SET);
-	for (uint16_t i = 0; i< steps; i++){
-		msDelay(2);
+
+	/*delay para definir giro*/
+	msDelay(100);
+	usart_writeMsg(&hCmdTerminal,"Sensor is going home\n");
+
+	/*se gira hasta que se llegue al final de carrera donde está la interrupción*/
+	for(uint16_t i = 0; i < 3200; i++){
+		gpio_WritePin(&STEP, SET);
+		msDelay(5);
+		gpio_WritePin(&STEP, RESET);
+
+		/*Condicion de final de carrera en sentido CW*/
+		if (fsm_giro.fsmState_cw == CW_STATE){
+			fsm_giro.fsmState_cw = NO_STATE;
+			break;
+		}
+	}
+}
+
+
+void CCW_Sampling(void){
+	/* Giro en sentido antihorario */
+	gpio_WritePin(&DIR, RESET);
+	/*delay para definir giro*/
+	msDelay(100);
+
+	for (uint16_t i = 0; i<2200;i++){
+
+		/*condicion de parada debido a los finales de carrera*/
+		if (fsm_giro.fsmState_cw == CCW_STATE){
+			fsm_giro.fsmState_cw = NO_STATE;
+			usart_writeMsg(&hCmdTerminal,"Data sampling done\n");
+			break;
+		}
+
+		if (sampling_counter == 9){
+			for (uint8_t k = 0; k < 1;k++){
+				lectura = lidar_lee_mm(dir_s1);
+				milimetros+=lectura;
+			}
+			data_mm = milimetros/1.0;
+			angulo = 0.1125*i;
+			sprintf(bufferData,"%.2f, %.2f\n",data_mm,angulo);
+			usart_writeMsg(&hCmdTerminal,bufferData);
+			sampling_counter = 0;
+			milimetros = 0;
+			indexx = i;
+			}
+
 		gpio_WritePin(&STEP, SET);
 		msDelay(1);
 		gpio_WritePin(&STEP, RESET);
+		sampling_counter++;
 	}
 }
 
 
-/*se ingresa en ángulo en ° que se quiere rotar en CW*/
-void angle_cw_positioning(uint16_t angle){
-	uint16_t numer_of_steps = (uint16_t)((4096.0 * angle) / 360.0);
+void CW_Sampling(void){
+	gpio_WritePin(&DIR,  SET);
+	/*delay para definir giro*/
+	msDelay(100);
 
-	uint16_t counter_steps = 0;
+	for (int16_t i = indexx; i>=0;i--){
 
-	while (1){
-	// Paso 1: IN1=SET, IN2=RESET, IN3=RESET, IN4=RESET
-	gpio_WritePin(&IN1, SET);
-	gpio_WritePin(&IN2, RESET);
-	gpio_WritePin(&IN3, RESET);
-	gpio_WritePin(&IN4, RESET);
-	counter_steps++;
-	if(counter_steps == numer_of_steps){
-		break;
-	}
-	msDelay(1);
+		/*condicion de parada debido a los finales de carrera*/
+		if (fsm_giro.fsmState_cw == CW_STATE){
+			fsm_giro.fsmState_cw = NO_STATE;
+			usart_writeMsg(&hCmdTerminal,"Data sampling done\n");
+			break;
+		}
 
-	// Paso 2: IN1=SET, IN2=SET, IN3=RESET, IN4=RESET
-	gpio_WritePin(&IN1, SET);
-	gpio_WritePin(&IN2, SET);
-	gpio_WritePin(&IN3, RESET);
-	gpio_WritePin(&IN4, RESET);
-	counter_steps++;
-	if(counter_steps == numer_of_steps){
-		break;
-	}
-	msDelay(1);
+		if (sampling_counter == 9){
+			for (uint8_t k = 0; k < 1;k++){
+				lectura = lidar_lee_mm(dir_s1);
+				milimetros+=lectura;
+			}
+			data_mm = milimetros/1.0;
+			angulo = 0.1125*i;
+			sprintf(bufferData,"%.2f, %.2f\n",data_mm,angulo);
+			usart_writeMsg(&hCmdTerminal,bufferData);
+			sampling_counter = 0;
+			milimetros = 0;
+			}
 
-	// Paso 3: IN1=RESET, IN2=SET, IN3=RESET, IN4=RESET
-	gpio_WritePin(&IN1, RESET);
-	gpio_WritePin(&IN2, SET);
-	gpio_WritePin(&IN3, RESET);
-	gpio_WritePin(&IN4, RESET);
-	counter_steps++;
-	if(counter_steps == numer_of_steps){
-		break;
-	}
-	msDelay(1);
-
-	// Paso 4: IN1=RESET, IN2=SET, IN3=SET, IN4=RESET
-	gpio_WritePin(&IN1, RESET);
-	gpio_WritePin(&IN2, SET);
-	gpio_WritePin(&IN3, SET);
-	gpio_WritePin(&IN4, RESET);
-	counter_steps++;
-	if(counter_steps == numer_of_steps){
-		break;
-	}
-	msDelay(1);
-
-	// Paso 5: IN1=RESET, IN2=RESET, IN3=SET, IN4=RESET
-	gpio_WritePin(&IN1, RESET);
-	gpio_WritePin(&IN2, RESET);
-	gpio_WritePin(&IN3, SET);
-	gpio_WritePin(&IN4, RESET);
-	counter_steps++;
-	if(counter_steps == numer_of_steps){
-		break;
-	}
-	msDelay(1);
-
-	// Paso 6: IN1=RESET, IN2=RESET, IN3=SET, IN4=SET
-	gpio_WritePin(&IN1, RESET);
-	gpio_WritePin(&IN2, RESET);
-	gpio_WritePin(&IN3, SET);
-	gpio_WritePin(&IN4, SET);
-	counter_steps++;
-	if(counter_steps == numer_of_steps){
-		break;
-	}
-	msDelay(1);
-
-	// Paso 7: IN1=RESET, IN2=RESET, IN3=RESET, IN4=SET
-	gpio_WritePin(&IN1, RESET);
-	gpio_WritePin(&IN2, RESET);
-	gpio_WritePin(&IN3, RESET);
-	gpio_WritePin(&IN4, SET);
-	counter_steps++;
-	if(counter_steps == numer_of_steps){
-		break;
-	}
-	msDelay(1);
-
-	// Paso 8: IN1=SET, IN2=RESET, IN3=RESET, IN4=SET
-	gpio_WritePin(&IN1, SET);
-	gpio_WritePin(&IN2, RESET);
-	gpio_WritePin(&IN3, RESET);
-	gpio_WritePin(&IN4, SET);
-	counter_steps++;
-	if(counter_steps == numer_of_steps){
-		break;
-	}
-	msDelay(1);
+		gpio_WritePin(&STEP, SET);
+		msDelay(1);
+		gpio_WritePin(&STEP, RESET);
+		sampling_counter++;
 	}
 }
-
-
-
-/*se ingresa en ángulo en ° se que quiere rotar en CCW */
-void angle_ccw_positioning(uint16_t angle){
-	uint16_t numer_of_steps = (uint16_t)((4096.0 * angle) / 360.0);
-	uint16_t counter_steps = 0;
-	while (1){
-
-		// Paso 1: (original paso 8)
-		gpio_WritePin(&IN1, SET);
-		gpio_WritePin(&IN2, RESET);
-		gpio_WritePin(&IN3, RESET);
-		gpio_WritePin(&IN4, SET);
-		counter_steps++;
-		if(counter_steps == numer_of_steps){
-			break;
-		}
-		msDelay(1);
-
-		// Paso 2: (original paso 7)
-		gpio_WritePin(&IN1, RESET);
-		gpio_WritePin(&IN2, RESET);
-		gpio_WritePin(&IN3, RESET);
-		gpio_WritePin(&IN4, SET);
-		counter_steps++;
-		if(counter_steps == numer_of_steps){
-			break;
-		}
-		msDelay(1);
-
-		// Paso 3: (original paso 6)
-		gpio_WritePin(&IN1, RESET);
-		gpio_WritePin(&IN2, RESET);
-		gpio_WritePin(&IN3, SET);
-		gpio_WritePin(&IN4, SET);
-		counter_steps++;
-		if(counter_steps == numer_of_steps){
-			break;
-		}
-		msDelay(1);
-
-		// Paso 4: (original paso 5)
-		gpio_WritePin(&IN1, RESET);
-		gpio_WritePin(&IN2, RESET);
-		gpio_WritePin(&IN3, SET);
-		gpio_WritePin(&IN4, RESET);
-		counter_steps++;
-		if(counter_steps == numer_of_steps){
-			break;
-		}
-		msDelay(1);
-
-		// Paso 5: (original paso 4)
-		gpio_WritePin(&IN1, RESET);
-		gpio_WritePin(&IN2, SET);
-		gpio_WritePin(&IN3, SET);
-		gpio_WritePin(&IN4, RESET);
-		counter_steps++;
-		if(counter_steps == numer_of_steps){
-			break;
-		}
-		msDelay(1);
-
-		// Paso 6: (original paso 3)
-		gpio_WritePin(&IN1, RESET);
-		gpio_WritePin(&IN2, SET);
-		gpio_WritePin(&IN3, RESET);
-		gpio_WritePin(&IN4, RESET);
-		counter_steps++;
-		if(counter_steps == numer_of_steps){
-			break;
-		}
-		msDelay(1);
-
-		// Paso 7: (original paso 2)
-		gpio_WritePin(&IN1, SET);
-		gpio_WritePin(&IN2, SET);
-		gpio_WritePin(&IN3, RESET);
-		gpio_WritePin(&IN4, RESET);
-		counter_steps++;
-		if(counter_steps == numer_of_steps){
-			break;
-		}
-		msDelay(1);
-
-
-		// Paso 8: (original paso 1)
-		gpio_WritePin(&IN1, SET);
-		gpio_WritePin(&IN2, RESET);
-		gpio_WritePin(&IN3, RESET);
-		gpio_WritePin(&IN4, RESET);
-		counter_steps++;
-		if(counter_steps == numer_of_steps){
-			break;
-		}
-		msDelay(1);
-
-
-	}
-
-}
-
-
-void cw_steps(void){
-
-	// Paso 1: IN1=SET, IN2=RESET, IN3=RESET, IN4=RESET
-	gpio_WritePin(&IN1, SET);
-	gpio_WritePin(&IN2, RESET);
-	gpio_WritePin(&IN3, RESET);
-	gpio_WritePin(&IN4, RESET);
-	angle_position++;
-	msDelay(2);
-
-	// Paso 2: IN1=SET, IN2=SET, IN3=RESET, IN4=RESET
-	gpio_WritePin(&IN1, SET);
-	gpio_WritePin(&IN2, SET);
-	gpio_WritePin(&IN3, RESET);
-	gpio_WritePin(&IN4, RESET);
-	angle_position++;
-	msDelay(2);
-
-	// Paso 3: IN1=RESET, IN2=SET, IN3=RESET, IN4=RESET
-	gpio_WritePin(&IN1, RESET);
-	gpio_WritePin(&IN2, SET);
-	gpio_WritePin(&IN3, RESET);
-	gpio_WritePin(&IN4, RESET);
-	angle_position++;
-	msDelay(2);
-
-	// Paso 4: IN1=RESET, IN2=SET, IN3=SET, IN4=RESET
-	gpio_WritePin(&IN1, RESET);
-	gpio_WritePin(&IN2, SET);
-	gpio_WritePin(&IN3, SET);
-	gpio_WritePin(&IN4, RESET);
-	angle_position++;
-	msDelay(2);
-
-	// Paso 5: IN1=RESET, IN2=RESET, IN3=SET, IN4=RESET
-	gpio_WritePin(&IN1, RESET);
-	gpio_WritePin(&IN2, RESET);
-	gpio_WritePin(&IN3, SET);
-	gpio_WritePin(&IN4, RESET);
-	angle_position++;
-	msDelay(2);
-
-	// Paso 6: IN1=RESET, IN2=RESET, IN3=SET, IN4=SET
-	gpio_WritePin(&IN1, RESET);
-	gpio_WritePin(&IN2, RESET);
-	gpio_WritePin(&IN3, SET);
-	gpio_WritePin(&IN4, SET);
-	angle_position++;
-	msDelay(2);
-
-	// Paso 7: IN1=RESET, IN2=RESET, IN3=RESET, IN4=SET
-	gpio_WritePin(&IN1, RESET);
-	gpio_WritePin(&IN2, RESET);
-	gpio_WritePin(&IN3, RESET);
-	gpio_WritePin(&IN4, SET);
-	angle_position++;
-	msDelay(2);
-
-	// Paso 8: IN1=SET, IN2=RESET, IN3=RESET, IN4=SET
-	gpio_WritePin(&IN1, SET);
-	gpio_WritePin(&IN2, RESET);
-	gpio_WritePin(&IN3, RESET);
-	gpio_WritePin(&IN4, SET);
-	angle_position++;
-	msDelay(2);
-
-
-}
-
-
-void ccw_steps(void){
-	// Paso 1: (original paso 8)
-	gpio_WritePin(&IN1, SET);
-	gpio_WritePin(&IN2, RESET);
-	gpio_WritePin(&IN3, RESET);
-	gpio_WritePin(&IN4, SET);
-	angle_position++;
-	msDelay(1);
-
-	// Paso 2: (original paso 7)
-	gpio_WritePin(&IN1, RESET);
-	gpio_WritePin(&IN2, RESET);
-	gpio_WritePin(&IN3, RESET);
-	gpio_WritePin(&IN4, SET);
-	angle_position++;
-	msDelay(1);
-
-	// Paso 3: (original paso 6)
-	gpio_WritePin(&IN1, RESET);
-	gpio_WritePin(&IN2, RESET);
-	gpio_WritePin(&IN3, SET);
-	gpio_WritePin(&IN4, SET);
-	angle_position++;
-	msDelay(1);
-
-	// Paso 4: (original paso 5)
-	gpio_WritePin(&IN1, RESET);
-	gpio_WritePin(&IN2, RESET);
-	gpio_WritePin(&IN3, SET);
-	gpio_WritePin(&IN4, RESET);
-	angle_position++;
-	msDelay(1);
-
-	// Paso 5: (original paso 4)
-	gpio_WritePin(&IN1, RESET);
-	gpio_WritePin(&IN2, SET);
-	gpio_WritePin(&IN3, SET);
-	gpio_WritePin(&IN4, RESET);
-	angle_position++;
-	msDelay(1);
-
-	// Paso 6: (original paso 3)
-	gpio_WritePin(&IN1, RESET);
-	gpio_WritePin(&IN2, SET);
-	gpio_WritePin(&IN3, RESET);
-	gpio_WritePin(&IN4, RESET);
-	angle_position++;
-	msDelay(1);
-
-	// Paso 7: (original paso 2)
-	gpio_WritePin(&IN1, SET);
-	gpio_WritePin(&IN2, SET);
-	gpio_WritePin(&IN3, RESET);
-	gpio_WritePin(&IN4, RESET);
-	angle_position++;
-	msDelay(1);
-
-
-	// Paso 8: (original paso 1)
-	gpio_WritePin(&IN1, SET);
-	gpio_WritePin(&IN2, RESET);
-	gpio_WritePin(&IN3, RESET);
-	gpio_WritePin(&IN4, RESET);
-	angle_position++;
-	msDelay(1);
-}
-
-/*sampling of ToF */
-void sampling(void){
-
-	milimetros = (lidar_lee_mm(dir_s1))/1.0;
-	data_mm = milimetros;
-	angulo = 360.0*angle_position/4096.0;
-
-	sprintf(bufferData,"%.2f, %.2f, %.2f\n",data_mm,angulo,z_position);
-	usart_writeMsg(&hCmdTerminal,bufferData);
-	milimetros = 0;
-}
-
 
 
 
 void start(void){
+
+	setHome();
+
+	while(1){
+
 	usart_writeMsg(&hCmdTerminal,"Sampling begins...\n");
 	usart_writeMsg(&hCmdTerminal,"Distance(mm) vs Angle(°)\n");
 
-	while(1){
-		/*iniciar en posición z = 0*/
-		// inicia con el sampling en sentido cw
-		while(1){
-			sampling();
-			cw_steps();
-			number_of_samples_cw++;
-			if (number_of_samples_cw == 127){ // equivale a 90
-			//if (number_of_samples_cw == 256){  // equivale a 180°
-				angle_position = 0; // reinicion el contador de pasos
-				break;
-			}
-		}
-
-		/*going home*/
-		while(1){
-			ccw_steps();
-			number_of_samples_cw--; // resto para disminuir y llegar a 0°
-			if (number_of_samples_cw == 0){
-				number_of_samples_cw = 0;
-				angle_position = 0;
-				break;
-			}
-		}
-
-		/* aumenta en z*/
+	CCW_Sampling();
 
 
-		z_position+=5;
-		z_down_positioning(5);
+	fsm_giro.fsmState_cw = NO_STATE;
+	sampling_counter = 9;
 
-		if (z_position == 50){
-			break;
+	CW_Sampling();
+
+	start_counter++;
+	if (start_counter == 5){
+		break;
 		}
 	}
-
-
-
 }
 
 
@@ -746,9 +584,9 @@ void init_config(void) {
     /*configuracion de pines del stepper para dar pasos*/
     stepper_config();
 
-/* inicia girando en sentido horario*/
-    gpio_WritePin(&DIR, RESET);
 
+    /*configuración de pines y extis*/
+//    exti_limit_switch_config();
 
     /*configuración de usart2 para parse y mirar tabla de datos*/
     usart_init_config();
@@ -816,29 +654,6 @@ void config_i2c(void){
 }
 
 void stepper_config(void){
-    // GPIO config para Led de estado
-    DIR.pGPIOx							= GPIOB;
-    DIR.pinConfig.GPIO_PinNumber		= PIN_7;
-    DIR.pinConfig.GPIO_PinMode			= GPIO_MODE_OUT;
-    DIR.pinConfig.GPIO_PinOutputType	= GPIO_OTYPE_PUSHPULL;
-    DIR.pinConfig.GPIO_PinOutputSpeed	= GPIO_OSPEED_MEDIUM;
-    DIR.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
-    gpio_Config(&DIR);
-
-    STEP.pGPIOx							= GPIOC;
-    STEP.pinConfig.GPIO_PinNumber		= PIN_13;
-    STEP.pinConfig.GPIO_PinMode			= GPIO_MODE_OUT;
-    STEP.pinConfig.GPIO_PinOutputType	= GPIO_OTYPE_PUSHPULL;
-    STEP.pinConfig.GPIO_PinOutputSpeed	= GPIO_OSPEED_MEDIUM;
-    STEP.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
-    gpio_Config(&STEP);
-
-    gpio_WritePin(&DIR, SET);
-    gpio_WritePin(&STEP, SET);
-
-
-
-
 
     /// 1
     IN1.pGPIOx							= GPIOA;
@@ -880,15 +695,6 @@ void stepper_config(void){
     IN4.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
     gpio_Config(&IN4);
 
-
-
-
-
-
-
-
-
-
 }
 
 void usart_init_config(void){
@@ -925,6 +731,38 @@ void usart_init_config(void){
 
 		 /* Fin de la config del USART6 */
 }
+
+void exti_limit_switch_config(void){
+	/* Se configura GPIO con su EXTI excepto para el userData*/
+
+	// GPIO mode in para el final de carrera horario
+	limit_switch_CCW.pGPIOx							= GPIOB;
+	limit_switch_CCW.pinConfig.GPIO_PinNumber		= PIN_2;
+	limit_switch_CCW.pinConfig.GPIO_PinMode			= GPIO_MODE_IN;
+	limit_switch_CCW.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
+	gpio_Config(&limit_switch_CCW);
+
+	// Configuración EXTI para el final de carrera horario
+	exti_CCW.pGPIOHandler						= &limit_switch_CCW;
+	exti_CCW.edgeType							= EXTERNAL_INTERRUPT_FALLING_EDGE;
+	exti_Config(&exti_CCW);
+
+	// GPIO mode in para el final de carrera antihorario
+	limit_switch_CW.pGPIOx							= GPIOB;
+	limit_switch_CW.pinConfig.GPIO_PinNumber		= PIN_15;
+	limit_switch_CW.pinConfig.GPIO_PinMode			= GPIO_MODE_IN;
+	limit_switch_CW.pinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
+	gpio_Config(&limit_switch_CW);
+
+	// Configuración EXTI para el final de carrera horario
+	exti_CW.pGPIOHandler						= &limit_switch_CW;
+	exti_CW.edgeType							= EXTERNAL_INTERRUPT_FALLING_EDGE;
+	exti_Config(&exti_CW);
+
+			/* FIN de GPIO and EXTI config */
+}
+
+
 
 
 
